@@ -96,7 +96,7 @@ function getCountdown(now: number) {
 }
 
 export function CoastalReverieInvitation() {
-  const [phase, setPhase] = useState<"sealed" | "opening" | "gone">("sealed");
+  const [phase, setPhase] = useState<"sealed" | "opening" | "flash" | "gone">("sealed");
   const [replay, setReplay] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const countdown = getCountdown(now);
@@ -112,7 +112,11 @@ export function CoastalReverieInvitation() {
       return () => window.clearTimeout(timer);
     }
     if (phase === "opening") {
-      const timer = window.setTimeout(() => setPhase("gone"), 2_700);
+      const timer = window.setTimeout(() => setPhase("flash"), 1_650);
+      return () => window.clearTimeout(timer);
+    }
+    if (phase === "flash") {
+      const timer = window.setTimeout(() => setPhase("gone"), 720);
       return () => window.clearTimeout(timer);
     }
   }, [phase, replay]);
@@ -143,15 +147,12 @@ export function CoastalReverieInvitation() {
 
   return (
     <main className={styles.invitation} id="invitation-top">
-      <div className={`${styles.envelopeIntro} ${phase === "opening" ? styles.opening : phase === "gone" ? styles.gone : ""}`} aria-hidden={phase === "gone"}>
+      <div className={`${styles.envelopeIntro} ${phase === "sealed" ? styles.sealed : phase === "opening" ? styles.opening : phase === "flash" ? styles.flash : styles.gone}`} aria-hidden={phase === "gone"}>
+        <div className={styles.openingFlash} aria-hidden="true" />
         <p className={styles.letterFor}>A letter for you</p>
         <div className={styles.envelopeScene}>
           <div className={styles.envelopeGlow} />
           <img className={styles.envelopeImage} src="/images/digital-envelope.webp" alt="Ivory envelope opening with a wax seal" />
-          <div className={styles.invitationSlip}>
-            <span>S · S</span>
-            <strong>17 · 09 · 27</strong>
-          </div>
           <button className={styles.waxSeal} type="button" onClick={() => setPhase("opening")} aria-label="Open the invitation">
             <Leaf aria-hidden="true" />
           </button>
