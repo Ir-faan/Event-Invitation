@@ -146,7 +146,7 @@ export function CoastalReverieInvitation() {
   };
 
   return (
-    <main className={styles.invitation} id="invitation-top">
+    <main className={`${styles.invitation} ${phase === "gone" ? styles.invitationReady : ""}`} id="invitation-top">
       <div className={`${styles.envelopeIntro} ${phase === "sealed" ? styles.sealed : phase === "opening" ? styles.opening : phase === "flash" ? styles.flash : styles.gone}`} aria-hidden={phase === "gone"}>
         <div className={styles.openingFlash} aria-hidden="true" />
         <p className={styles.letterFor}>A letter for you</p>
@@ -163,8 +163,8 @@ export function CoastalReverieInvitation() {
       <a className={styles.backButton} href="/#collection"><ArrowLeft aria-hidden="true" /> <span>Collection</span></a>
       <button className={styles.replayButton} type="button" onClick={replayOpening}><Sparkles aria-hidden="true" /> <span>Replay opening</span></button>
       <div className={styles.pageSparkles} aria-hidden="true">
-        {Array.from({ length: 14 }, (_, index) => (
-          <span key={index} style={{ "--x": `${(index * 43) % 100}%`, "--delay": `${-(index % 7) * 2.4}s`, "--duration": `${16 + (index % 5) * 2.3}s` } as CSSProperties}>{index % 3 === 0 ? "✦" : "·"}</span>
+        {Array.from({ length: 22 }, (_, index) => (
+          <span key={index} style={{ "--x": `${(index * 43) % 100}%`, "--delay": `${-(index % 9) * 2.1}s`, "--duration": `${15 + (index % 6) * 2.1}s` } as CSSProperties}>{index % 5 === 0 ? "♥" : index % 3 === 0 ? "❀" : index % 2 === 0 ? "✦" : "·"}</span>
         ))}
       </div>
 
@@ -173,7 +173,7 @@ export function CoastalReverieInvitation() {
         <div className={styles.heroVeil} />
         <div className={styles.petals} aria-hidden="true">
           {Array.from({ length: 16 }, (_, index) => (
-            <span key={index} style={{ "--x": `${(index * 41) % 100}%`, "--delay": `${-(index % 8) * 2}s`, "--duration": `${13 + (index % 5) * 2}s` } as CSSProperties}>✦</span>
+            <span key={index} style={{ "--x": `${(index * 41) % 100}%`, "--delay": `${-(index % 8) * 2}s`, "--duration": `${13 + (index % 5) * 2}s` } as CSSProperties}>{index % 3 === 0 ? "❀" : index % 2 === 0 ? "❧" : "·"}</span>
           ))}
         </div>
         <div className={styles.heroCopy}>
