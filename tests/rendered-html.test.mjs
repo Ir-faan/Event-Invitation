@@ -9,12 +9,13 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const vite = await createServer({ appType: "custom", configFile: false, root, resolve: { alias: { "@": root } }, server: { middlewareMode: true } });
 after(async () => vite.close());
 
-test("renders the Event Invitations landing page", async () => {
+test("renders the complete Event Invitations landing page", async () => {
   const { default: Home } = await vite.ssrLoadModule("/app/page.tsx");
   const html = renderToStaticMarkup(React.createElement(Home));
-  assert.match(html, /Event Invitations/);
-  assert.match(html, /Your celebration deserves more than a message/);
-  assert.match(html, /Heritage Night/);
-  assert.match(html, /Rose Garden/);
-  assert.match(html, /Midnight Vows/);
+  assert.match(html, /The most elegant/);
+  assert.match(html, /Coastal Reverie/);
+  assert.match(html, /The magic begins/);
+  assert.match(html, /Paper or digital/);
+  assert.match(html, /Simple, considered pricing/);
+  assert.match(html, /Bookings opening soon/);
 });

@@ -2,12 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: {
-    default: "Event Invitations — Beautiful celebrations, beautifully shared",
-    template: "%s — Event Invitations",
-  },
+  title: "Event Invitations — The most elegant save the date",
   description:
-    "Create an elegant, personalized digital invitation for your wedding, engagement, birthday, or special celebration.",
+    "Modern digital invitations for weddings, engagements, birthdays and the celebrations worth remembering.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
