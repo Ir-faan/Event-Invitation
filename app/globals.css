@@ -108,7 +108,7 @@ section { scroll-margin-top: 6rem; }
 
 .collection { overflow: hidden; background: var(--ivory); }
 .collection::before { content: "✦"; position: absolute; top: 8rem; right: 8vw; color: rgba(211,164,73,.55); font-size: 1.2rem; animation: twinkle 2.6s ease-in-out infinite; }
-.collection-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1rem, 2vw, 1.8rem); perspective: 1200px; }
+.collection-grid { width: 75%; margin: 0 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1rem, 2vw, 1.8rem); perspective: 1200px; }
 .collection-card { --rotate-x: 0deg; --rotate-y: 0deg; --spot-x: 50%; --spot-y: 50%; position: relative; aspect-ratio: .72; overflow: hidden; transform: rotateX(var(--rotate-x)) rotateY(var(--rotate-y)); transform-style: preserve-3d; border-radius: 1.35rem; background: #5c3438; box-shadow: 0 1.5rem 4rem rgba(63,34,37,.15); transition: transform .14s ease, box-shadow .4s ease, opacity .8s var(--reveal-delay, 0ms); }
 .collection-card.is-visible { transform: rotateX(var(--rotate-x)) rotateY(var(--rotate-y)); }
 .collection-card:hover { box-shadow: 0 2.6rem 5rem rgba(63,34,37,.25); }
@@ -187,8 +187,8 @@ section { scroll-margin-top: 6rem; }
 .pricing-heading .eyebrow, .pricing-heading h2 { grid-column: 1; }
 .pricing-heading h2 { font-size: clamp(3.2rem, 5.5vw, 6rem); }
 .pricing-heading > p:last-child { grid-column: 2; grid-row: 1 / span 2; align-self: end; }
-.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; align-items: stretch; }
-.price-card { position: relative; display: flex; flex-direction: column; min-height: 36rem; padding: clamp(1.7rem, 3vw, 2.7rem); border: 1px solid var(--line); border-radius: 1.2rem; background: var(--ivory); transition: transform .35s, box-shadow .35s; }
+.pricing-grid { width: 75%; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; align-items: stretch; }
+.price-card { position: relative; display: flex; flex-direction: column; min-height: 31rem; padding: clamp(1.5rem, 2.4vw, 2.15rem); border: 1px solid var(--line); border-radius: 1.2rem; background: var(--ivory); transition: transform .35s, box-shadow .35s; }
 .price-card:hover { transform: translateY(-.7rem); box-shadow: 0 2rem 4rem rgba(65,31,37,.11); }
 .price-card.featured { color: white; background: var(--wine); transform: translateY(-1rem); box-shadow: 0 2rem 4rem rgba(74,25,34,.2); }
 .price-card.featured:hover { transform: translateY(-1.5rem); }
@@ -260,7 +260,7 @@ section { scroll-margin-top: 6rem; }
   .mobile-menu div { position: absolute; top: 3.6rem; right: 0; width: 14rem; display: grid; padding: .8rem; border: 1px solid var(--line); border-radius: 1rem; background: rgba(255,253,250,.96); box-shadow: 0 1rem 3rem rgba(55,28,28,.16); }
   .mobile-menu div a { padding: .75rem; color: var(--wine); font-size: .8rem; }
   .hero { min-height: 68rem; }
-  .collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; margin-right: 0; padding-right: 0; padding-bottom: 0; }
+  .collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; margin: 0 auto; padding-right: 0; padding-bottom: 0; }
   .collection-card:last-child { grid-column: 1 / -1; width: min(28rem, 100%); justify-self: center; }
   .envelope-section { grid-template-columns: 1fr 1fr; padding-left: 3vw; padding-right: 3vw; }
   .process-line { display: none; }
@@ -288,7 +288,7 @@ section { scroll-margin-top: 6rem; }
   .scroll-cue { display: none; }
   .section { padding-left: 1.25rem; padding-right: 1.25rem; }
   .section-heading h2, .envelope-copy h2, .pricing-heading h2, .contact h2 { font-size: clamp(3rem, 15vw, 5rem); }
-  .collection-grid { width: min(100%, 22rem); grid-template-columns: 1fr; gap: 1.5rem; margin: 0 auto; padding: 0; overflow: visible; }
+  .collection-grid { width: min(75%, 16.5rem); grid-template-columns: 1fr; gap: 1.5rem; margin: 0 auto; padding: 0; overflow: visible; }
   .collection-card, .collection-card:last-child { width: 100%; grid-column: auto; justify-self: stretch; aspect-ratio: .78; }
   .ticker { width: calc(100% + 2.5rem); margin-left: -1.25rem; margin-right: -1.25rem; }
   .envelope-section { grid-template-columns: 1fr; padding: 5rem 1.25rem; }
@@ -309,8 +309,8 @@ section { scroll-margin-top: 6rem; }
   .digital-card li { grid-template-columns: 2.7rem 1fr auto; }
   .pricing-heading { grid-template-columns: 1fr; gap: 1rem; }
   .pricing-heading > p:last-child { grid-column: 1; grid-row: auto; }
-  .pricing-grid { width: min(100%, 22rem); grid-template-columns: 1fr; gap: 1.4rem; margin: 0 auto; }
-  .price-card { width: 100%; min-width: 0; min-height: 31rem; padding: 1.7rem 1.35rem; }
+  .pricing-grid { width: min(75%, 16.5rem); grid-template-columns: 1fr; gap: 1.4rem; margin: 0 auto; }
+  .price-card { width: 100%; min-width: 0; min-height: 28rem; padding: 1.45rem 1.15rem; }
   .price-card > a { gap: .8rem; }
   .price-card.featured, .price-card.featured:hover { transform: none; }
   .contact { min-height: 42rem; }
