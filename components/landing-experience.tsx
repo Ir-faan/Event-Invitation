@@ -180,7 +180,7 @@ export function LandingExperience() {
                 <h3>{item.name}</h3>
                 <p>Collection preview</p>
               </div>
-              <a href="#contact" aria-label={`Enquire about ${item.name}`}><ArrowDownRight aria-hidden="true" /></a>
+              <a href={index === 0 ? "/templates/coastal-reverie" : "#contact"} aria-label={index === 0 ? `Open the ${item.name} invitation` : `Enquire about ${item.name}`}><ArrowDownRight aria-hidden="true" /></a>
             </article>
           ))}
         </div>

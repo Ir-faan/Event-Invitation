@@ -18,4 +18,16 @@ test("renders the complete Event Invitations landing page", async () => {
   assert.match(html, /Paper or digital/);
   assert.match(html, /Simple, considered pricing/);
   assert.match(html, /Bookings opening soon/);
+  assert.match(html, /\/templates\/coastal-reverie/);
+});
+
+test("renders the complete Coastal Reverie invitation", async () => {
+  const { default: Invitation } = await vite.ssrLoadModule("/app/templates/coastal-reverie/page.tsx");
+  const html = renderToStaticMarkup(React.createElement(Invitation));
+  assert.match(html, /Salma/);
+  assert.match(html, /Counting the days/);
+  assert.match(html, /Our Story/);
+  assert.match(html, /In Loving Memory/);
+  assert.match(html, /Mehendi Evening/);
+  assert.match(html, /Day Programme/);
 });
