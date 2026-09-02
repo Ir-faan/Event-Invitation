@@ -26,7 +26,7 @@ test("renders the complete Coastal Reverie invitation", async () => {
   const html = renderToStaticMarkup(React.createElement(Invitation));
   assert.match(html, /Salma/);
   assert.match(html, /Counting the days/);
-  assert.match(html, /Our Story/);
+  assert.match(html, /Our Journey/);
   assert.match(html, /In Loving Memory/);
   assert.match(html, /Mehendi Evening/);
   assert.match(html, /Day Programme/);

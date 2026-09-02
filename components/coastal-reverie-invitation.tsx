@@ -161,6 +161,11 @@ export function CoastalReverieInvitation() {
 
       <a className={styles.backButton} href="/#collection"><ArrowLeft aria-hidden="true" /> <span>Collection</span></a>
       <button className={styles.replayButton} type="button" onClick={replayOpening}><Sparkles aria-hidden="true" /> <span>Replay opening</span></button>
+      <div className={styles.pageSparkles} aria-hidden="true">
+        {Array.from({ length: 14 }, (_, index) => (
+          <span key={index} style={{ "--x": `${(index * 43) % 100}%`, "--delay": `${-(index % 7) * 2.4}s`, "--duration": `${16 + (index % 5) * 2.3}s` } as CSSProperties}>{index % 3 === 0 ? "✦" : "·"}</span>
+        ))}
+      </div>
 
       <section className={styles.hero} aria-labelledby="couple-names">
         <div className={styles.heroImage}><img src="/images/coastal-reverie.webp" alt="Sunlit coastal garden overlooking the sea" /></div>
@@ -181,7 +186,8 @@ export function CoastalReverieInvitation() {
       </section>
 
       <section className={styles.countdownSection} id="counting" aria-labelledby="countdown-title">
-        <div className={styles.gardenPortal} aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /><span /></div>
+        <div className={`${styles.gardenPortal} ${styles.portalLeft}`} aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
+        <div className={`${styles.gardenPortal} ${styles.portalRight}`} aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
         <div className={styles.countdownContent} data-wedding-reveal>
           <p className={styles.eyebrow}>You are invited to our big day</p>
           <h2 id="countdown-title">Counting the days</h2>
@@ -196,9 +202,11 @@ export function CoastalReverieInvitation() {
       </section>
 
       <section className={styles.storySection} aria-labelledby="story-title">
+        <div className={`${styles.storyBloom} ${styles.storyBloomLeft}`} aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
+        <div className={`${styles.storyBloom} ${styles.storyBloomRight}`} aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
         <div className={styles.sectionTitle} data-wedding-reveal>
           <p>From a beautiful beginning</p>
-          <h2 id="story-title">Our Story</h2>
+          <h2 id="story-title">Our Journey</h2>
           <div className={styles.heartRule}><span /><Heart aria-hidden="true" /><span /></div>
         </div>
         <div className={styles.storyTimeline}>
@@ -216,15 +224,21 @@ export function CoastalReverieInvitation() {
       </section>
 
       <section className={styles.memorySection} aria-labelledby="memory-title">
-        <div className={styles.memoryImage} data-wedding-reveal><img src="/images/rose-afterglow.webp" alt="A rose garden glowing at sunset" /></div>
-        <div className={styles.memoryCard} data-wedding-reveal>
-          <Leaf aria-hidden="true" />
+        <div className={styles.memoryBackdrop} aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
+        <article className={styles.memoryCard} data-wedding-reveal>
+          <div className={styles.paperCorners} aria-hidden="true"><Leaf /><Leaf /><Leaf /><Leaf /></div>
           <p className={styles.eyebrow}>With love, always</p>
           <h2 id="memory-title">In Loving Memory</h2>
+          <div className={styles.memoryRule}><span /><Leaf aria-hidden="true" /><span /></div>
           <p>On this joyful day, we lovingly remember our grandparents who are no longer with us. Their prayers, gentle guidance and beautiful examples of love remain woven into who we are.</p>
+          <div className={styles.memoryDedication}>
+            <small>Remembering with gratitude</small>
+            <strong>Our beloved grandparents</strong>
+            <span>Whose love still lights our way</span>
+          </div>
           <p>Though they cannot be beside us, we carry them in our hearts as we begin this new chapter. Their memory is a blessing, and their love will always be part of our story.</p>
           <div className={styles.memorySignature}>Forever remembered · Forever loved</div>
-        </div>
+        </article>
       </section>
 
       <section className={styles.eventsSection} aria-labelledby="events-title">

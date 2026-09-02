@@ -85,7 +85,7 @@ section { scroll-margin-top: 6rem; }
 .showcase-card.seal { display: grid; place-items: center; align-content: center; gap: 1.2rem; color: #fff; background: radial-gradient(circle at 50% 35%, #a0646e, var(--wine) 56%, var(--wine-deep)); }
 .showcase-card.seal strong { font: italic 1.6rem var(--serif); }
 .mini-seal { display: grid; place-items: center; width: 5rem; height: 5rem; border: .35rem double #efc778; border-radius: 50%; color: #f8d98d; background: #8f2937; box-shadow: 0 .7rem 1.5rem rgba(0,0,0,.24); font: italic 1.1rem var(--serif); animation: seal-pulse 4s ease-in-out infinite; }
-.spotlight-phone { --rotate-x: 0deg; --rotate-y: 0deg; position: absolute; z-index: 12; top: 4rem; left: 50%; width: 17.8rem; height: 35rem; padding: .55rem; transform: translateX(-50%) rotateX(var(--rotate-x)) rotateY(var(--rotate-y)) rotateZ(2deg); transform-style: preserve-3d; border: .18rem solid #31151a; border-radius: 2.8rem; background: #190d10; box-shadow: 0 3rem 7rem rgba(53,22,28,.4); transition: transform .12s ease; }
+.spotlight-phone { position: absolute; z-index: 12; top: 4rem; left: 50%; width: 17.8rem; height: 35rem; padding: .55rem; transform: translateX(-50%); border: .18rem solid #31151a; border-radius: 2.8rem; background: #190d10; box-shadow: 0 3rem 7rem rgba(53,22,28,.4); transition: transform .3s ease, box-shadow .3s ease; }
 .spotlight-phone::after { content: ""; position: absolute; inset: .6rem; border-radius: 2.15rem; background: linear-gradient(120deg, rgba(255,255,255,.25), transparent 22%, transparent 70%, rgba(255,255,255,.1)); pointer-events: none; }
 .spotlight-phone img { width: 100%; height: 100%; border-radius: 2.15rem; object-fit: cover; filter: saturate(.88) brightness(.98); }
 .phone-speaker { position: absolute; z-index: 4; top: 1rem; left: 50%; width: 5rem; height: 1.3rem; transform: translateX(-50%); border-radius: 999px; background: #180c0f; }
@@ -126,7 +126,8 @@ section { scroll-margin-top: 6rem; }
 .collection-card > a:hover { transform: rotate(-45deg); background: white; color: var(--wine); }
 .collection-card > a svg { width: 1rem; }
 .ticker { width: calc(100% + 10vw); margin: clamp(5rem, 8vw, 8rem) -5vw -3rem; overflow: hidden; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: none; background: var(--blush); }
-.ticker div { width: max-content; padding: 1.1rem 0; color: #8a4a56; font: italic 1rem var(--serif); letter-spacing: .14em; white-space: nowrap; animation: ticker 35s linear infinite; }
+.ticker div { display: flex; width: max-content; color: #8a4a56; font: italic 1rem var(--serif); letter-spacing: .14em; white-space: nowrap; animation: ticker 52s linear infinite; }
+.ticker span { flex: 0 0 auto; padding: 1.1rem 1.4rem; }
 
 .envelope-section { position: relative; min-height: 48rem; display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: 2vw; padding: clamp(5rem, 8vw, 8rem) 7vw; overflow: hidden; color: white; background: radial-gradient(circle at 20% 45%, #793846 0, var(--wine) 38%, var(--wine-deep) 82%); }
 .envelope-section::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.15) .6px, transparent .6px); background-size: 12px 12px; opacity: .18; }
@@ -239,7 +240,7 @@ section { scroll-margin-top: 6rem; }
 @keyframes hero-rise { from { opacity: 0; transform: translateY(2rem); } to { opacity: 1; transform: none; } }
 @keyframes marquee { to { transform: translateX(calc(-50% - .5rem)); } }
 @keyframes marquee-reverse { from { transform: translateX(calc(-50% - .5rem)); } to { transform: translateX(0); } }
-@keyframes ticker { to { transform: translateX(-50%); } }
+@keyframes ticker { to { transform: translateX(-25%); } }
 @keyframes sparkle-fall { 0% { transform: translate3d(0,-10vh,0) rotate(0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translate3d(4rem,115vh,0) rotate(220deg); opacity: 0; } }
 @keyframes orbit { to { transform: rotate(360deg); } }
 @keyframes seal-pulse { 50% { transform: translateY(-.3rem) rotate(4deg); box-shadow: 0 1rem 2rem rgba(0,0,0,.3); } }

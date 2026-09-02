@@ -45,6 +45,8 @@ const heroCards = [
   { kind: "image", image: collection[2].image, label: "moonlit" },
 ];
 
+const ribbonMessage = "LOVE STORIES IN MOTION ✦ WEDDINGS WITH SOUL ✦ ENGAGEMENTS TO REMEMBER ✦ SAVE THE DATES, BEAUTIFULLY MADE ✦ YOUR MOMENT, YOUR STORY ✦ WHERE FOREVER BEGINS ✦";
+
 export function LandingExperience() {
   useEffect(() => {
     const reveals = document.querySelectorAll<HTMLElement>(".reveal");
@@ -154,7 +156,7 @@ export function LandingExperience() {
               {[...heroCards.slice().reverse(), ...heroCards.slice().reverse()].map((card, index) => <ShowcaseCard key={`two-${index}`} card={card} small />)}
             </div>
           </div>
-          <div className="spotlight-phone tilt-card" aria-hidden="true">
+          <div className="spotlight-phone" aria-hidden="true">
             <div className="phone-speaker" />
             <img src="/images/coastal-reverie.webp" alt="" />
             <div className="phone-copy"><span>COMING SOON</span><strong>Your story<br />begins here</strong><i>Save the date</i></div>
@@ -185,7 +187,7 @@ export function LandingExperience() {
           ))}
         </div>
         <div className="ticker" aria-hidden="true">
-          <div>WEDDINGS ✦ ENGAGEMENTS ✦ BIRTHDAYS ✦ SAVE THE DATES ✦ BEAUTIFUL BEGINNINGS ✦ WEDDINGS ✦ ENGAGEMENTS ✦ BIRTHDAYS ✦ SAVE THE DATES ✦ BEAUTIFUL BEGINNINGS ✦</div>
+          <div>{Array.from({ length: 4 }, (_, index) => <span key={index}>{ribbonMessage}</span>)}</div>
         </div>
       </section>
 
