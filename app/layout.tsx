@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./coastal-reverie-decorations.css";
 
 export const metadata: Metadata = {
   title: "Event Invitations — The most elegant save the date",
