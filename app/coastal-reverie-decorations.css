@@ -1,34 +1,61 @@
-/* Decorative overlays for Coastal Reverie.
-   Scoped to #invitation-top so the landing page and other templates are unaffected. */
+/* Visible botanical decoration layer for Coastal Reverie.
+   Purely decorative and scoped to this invitation. */
 
-#invitation-top #counting::after,
-#invitation-top section[aria-labelledby="story-title"]::after,
-#invitation-top section[aria-labelledby="programme-title"]::after,
-#invitation-top > footer::before,
-#invitation-top > footer::after {
-  position: absolute;
-  pointer-events: none;
-  user-select: none;
-  color: rgba(185, 133, 79, .22);
-  font-family: Georgia, serif;
-  line-height: 1;
-  z-index: 1;
+#invitation-top #counting,
+#invitation-top section[aria-labelledby="story-title"],
+#invitation-top section[aria-labelledby="events-title"],
+#invitation-top section[aria-labelledby="seating-title"],
+#invitation-top section[aria-labelledby="programme-title"],
+#invitation-top > footer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
 
-/* Countdown: a soft floral spray in the open corner. */
+/* Keep all real content above the decorative artwork. */
+#invitation-top #counting > *,
+#invitation-top section[aria-labelledby="story-title"] > *,
+#invitation-top section[aria-labelledby="events-title"] > *,
+#invitation-top section[aria-labelledby="seating-title"] > *,
+#invitation-top section[aria-labelledby="programme-title"] > *,
+#invitation-top > footer > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ---------- Countdown ---------- */
 #invitation-top #counting::after {
-  content: "❀";
-  right: clamp(1.2rem, 5vw, 5rem);
-  top: clamp(1.4rem, 4vw, 3.5rem);
-  font-size: clamp(2.4rem, 5vw, 4.8rem);
-  opacity: .7;
-  text-shadow:
-    -2.4rem 1.1rem 0 rgba(170, 137, 107, .28),
-    -4rem -.35rem 0 rgba(185, 133, 79, .17),
-    1.25rem 2rem 0 rgba(196, 170, 144, .25),
-    -1rem 3.1rem 0 rgba(170, 137, 107, .16);
-  transform: rotate(13deg);
-  animation: coastalBouquetSway 9s ease-in-out infinite;
+  content: "";
+  position: absolute;
+  z-index: 1;
+  width: clamp(16rem, 27vw, 28rem);
+  aspect-ratio: 1;
+  right: clamp(-9rem, -6vw, -4rem);
+  top: clamp(-8rem, -5vw, -3rem);
+  pointer-events: none;
+  background: url("/images/coastal-floral-corner.svg") center / contain no-repeat;
+  opacity: .78;
+  transform: scaleX(-1) rotate(-5deg);
+  filter: drop-shadow(0 1rem 2.4rem rgba(101, 75, 57, .08));
+  animation: coastalFloralFloat 10s ease-in-out infinite;
+}
+
+#invitation-top #countdown-title {
+  position: relative;
+  display: inline-block;
+}
+
+#invitation-top #countdown-title::after {
+  content: "";
+  position: absolute;
+  width: clamp(7rem, 13vw, 11rem);
+  height: 3rem;
+  left: 50%;
+  top: calc(100% + .1rem);
+  transform: translateX(-50%);
+  background: url("/images/coastal-floral-sprig.svg") center / contain no-repeat;
+  opacity: .48;
+  pointer-events: none;
 }
 
 #invitation-top #counting [aria-live="polite"] > div {
@@ -36,23 +63,38 @@
 }
 
 #invitation-top #counting [aria-live="polite"] > div::before {
-  content: "✦";
+  content: "♥";
   position: absolute;
   left: 50%;
   top: -.65rem;
-  color: rgba(185, 133, 79, .3);
-  font-size: .46rem;
+  color: rgba(185, 133, 79, .48);
+  font-size: .48rem;
   transform: translateX(-50%);
   animation: coastalPetalPulse 4.8s ease-in-out infinite;
 }
 
 #invitation-top #counting [aria-live="polite"] > div:nth-child(even)::before {
-  content: "♥";
-  font-size: .38rem;
-  animation-delay: -2.1s;
+  content: "✦";
+  animation-delay: -2.2s;
 }
 
-/* Story: keep the timeline intact, but frame it with a light botanical gesture. */
+/* ---------- Story ---------- */
+#invitation-top section[aria-labelledby="story-title"]::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  width: clamp(17rem, 29vw, 30rem);
+  aspect-ratio: 1;
+  right: clamp(-10rem, -7vw, -4rem);
+  bottom: clamp(-10rem, -6vw, -4rem);
+  pointer-events: none;
+  background: url("/images/coastal-floral-corner.svg") center / contain no-repeat;
+  opacity: .67;
+  transform: rotate(-10deg);
+  filter: drop-shadow(0 1rem 2.5rem rgba(101, 75, 57, .07));
+  animation: coastalFloralFloat 12s ease-in-out -4s infinite reverse;
+}
+
 #invitation-top #story-title {
   position: relative;
   display: inline-block;
@@ -60,46 +102,52 @@
 
 #invitation-top #story-title::before,
 #invitation-top #story-title::after {
+  content: "";
   position: absolute;
   top: 50%;
-  color: rgba(170, 137, 107, .35);
-  font-size: clamp(1rem, 1.8vw, 1.5rem);
-  line-height: 1;
-  transform: translateY(-50%);
-  animation: coastalLeafBreathe 7s ease-in-out infinite;
+  width: clamp(5.6rem, 9vw, 8rem);
+  height: 2.8rem;
+  background: url("/images/coastal-floral-sprig.svg") center / contain no-repeat;
+  opacity: .5;
+  pointer-events: none;
 }
 
 #invitation-top #story-title::before {
-  content: "❧";
   right: calc(100% + .8rem);
-  transform: translateY(-50%) rotate(-28deg);
+  transform: translateY(-50%) scaleX(-1);
 }
 
 #invitation-top #story-title::after {
-  content: "❧";
   left: calc(100% + .8rem);
-  transform: translateY(-50%) rotate(152deg);
-  animation-delay: -3s;
+  transform: translateY(-50%);
 }
 
-#invitation-top section[aria-labelledby="story-title"]::after {
-  content: "❀";
-  right: clamp(-1.2rem, 1vw, .5rem);
-  bottom: clamp(1rem, 4vw, 3.5rem);
-  font-size: clamp(3rem, 7vw, 6.4rem);
-  opacity: .58;
-  text-shadow:
-    -2.3rem -.9rem 0 rgba(185, 133, 79, .16),
-    -4.2rem .7rem 0 rgba(170, 137, 107, .2),
-    -1.2rem 2.2rem 0 rgba(196, 170, 144, .2);
-  transform: rotate(-18deg);
-  animation: coastalBouquetSway 11s ease-in-out -3s infinite reverse;
+/* ---------- Event details ---------- */
+#invitation-top section[aria-labelledby="events-title"]::before,
+#invitation-top section[aria-labelledby="events-title"]::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  width: clamp(17rem, 26vw, 27rem);
+  aspect-ratio: 1;
+  pointer-events: none;
+  background: url("/images/coastal-floral-corner.svg") center / contain no-repeat;
+  opacity: .72;
+  filter: drop-shadow(0 1.2rem 2.8rem rgba(101, 75, 57, .08));
 }
 
-/* Event details: small floral corners on the existing cards, no layout changes. */
-#invitation-top section[aria-labelledby="events-title"] {
-  position: relative;
-  overflow: hidden;
+#invitation-top section[aria-labelledby="events-title"]::before {
+  left: clamp(-9rem, -6vw, -4rem);
+  bottom: clamp(-10rem, -7vw, -5rem);
+  transform: rotate(8deg);
+  animation: coastalFloralFloat 11s ease-in-out infinite;
+}
+
+#invitation-top section[aria-labelledby="events-title"]::after {
+  right: clamp(-9rem, -6vw, -4rem);
+  top: clamp(-9rem, -6vw, -4rem);
+  transform: scaleX(-1) rotate(6deg);
+  animation: coastalFloralFloat 12s ease-in-out -5s infinite reverse;
 }
 
 #invitation-top #events-title {
@@ -107,17 +155,18 @@
   display: inline-block;
 }
 
-#invitation-top #events-title::before,
 #invitation-top #events-title::after {
-  content: "✦";
+  content: "";
   position: absolute;
-  top: 48%;
-  color: rgba(185, 133, 79, .4);
-  font-size: .55rem;
+  width: clamp(7rem, 12vw, 10.5rem);
+  height: 3rem;
+  left: 50%;
+  top: calc(100% + .1rem);
+  transform: translateX(-50%);
+  background: url("/images/coastal-floral-sprig.svg") center / contain no-repeat;
+  opacity: .55;
+  pointer-events: none;
 }
-
-#invitation-top #events-title::before { right: calc(100% + 1rem); }
-#invitation-top #events-title::after { left: calc(100% + 1rem); }
 
 #invitation-top section[aria-labelledby="events-title"] article {
   position: relative;
@@ -126,39 +175,90 @@
 
 #invitation-top section[aria-labelledby="events-title"] article::before,
 #invitation-top section[aria-labelledby="events-title"] article::after {
+  content: "";
   position: absolute;
   z-index: 0;
+  width: 6.4rem;
+  height: 4rem;
   pointer-events: none;
-  color: rgba(185, 133, 79, .17);
-  line-height: 1;
-  transition: opacity .35s ease, transform .45s ease;
+  background: url("/images/coastal-floral-sprig.svg") center / contain no-repeat;
+  opacity: .31;
+  transition: opacity .3s ease, scale .35s ease;
 }
 
 #invitation-top section[aria-labelledby="events-title"] article::before {
-  content: "❧";
-  left: .65rem;
-  top: .55rem;
-  font-size: 2.2rem;
-  transform: rotate(-35deg);
+  left: -1.6rem;
+  top: .9rem;
+  transform: rotate(-24deg);
 }
 
 #invitation-top section[aria-labelledby="events-title"] article::after {
-  content: "❀";
-  right: .65rem;
-  bottom: .55rem;
-  font-size: 1.35rem;
-  transform: rotate(16deg);
+  right: -1.5rem;
+  bottom: .8rem;
+  transform: scaleX(-1) rotate(-22deg);
+}
+
+#invitation-top section[aria-labelledby="events-title"] article > * {
+  position: relative;
+  z-index: 1;
 }
 
 @media (hover: hover) and (pointer: fine) {
   #invitation-top section[aria-labelledby="events-title"] article:hover::before,
   #invitation-top section[aria-labelledby="events-title"] article:hover::after {
-    opacity: .9;
-    transform: rotate(0deg) scale(1.08);
+    opacity: .52;
+    scale: 1.07;
   }
 }
 
-/* Programme: tiny petals/hearts between the existing schedule details. */
+/* ---------- Seating arrangement ---------- */
+#invitation-top section[aria-labelledby="seating-title"]::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  width: clamp(16rem, 25vw, 25rem);
+  aspect-ratio: 1;
+  right: clamp(-8rem, -5vw, -3rem);
+  bottom: clamp(-10rem, -7vw, -5rem);
+  pointer-events: none;
+  background: url("/images/coastal-floral-corner.svg") center / contain no-repeat;
+  opacity: .62;
+  transform: scaleX(-1) rotate(-4deg);
+  animation: coastalFloralFloat 12s ease-in-out -3s infinite;
+}
+
+#invitation-top #seating-title {
+  position: relative;
+}
+
+#invitation-top #seating-title::after {
+  content: "";
+  position: absolute;
+  width: clamp(7rem, 11vw, 10rem);
+  height: 3rem;
+  left: 0;
+  top: calc(100% + .75rem);
+  background: url("/images/coastal-floral-sprig.svg") left center / contain no-repeat;
+  opacity: .52;
+  pointer-events: none;
+}
+
+/* ---------- Programme ---------- */
+#invitation-top section[aria-labelledby="programme-title"]::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  width: clamp(18rem, 29vw, 30rem);
+  aspect-ratio: 1;
+  left: clamp(-10rem, -7vw, -5rem);
+  bottom: clamp(-11rem, -7vw, -5rem);
+  pointer-events: none;
+  background: url("/images/coastal-floral-corner.svg") center / contain no-repeat;
+  opacity: .72;
+  transform: rotate(8deg);
+  animation: coastalFloralFloat 11s ease-in-out -2s infinite;
+}
+
 #invitation-top #programme-title {
   position: relative;
   display: inline-block;
@@ -166,116 +266,94 @@
 
 #invitation-top #programme-title::before,
 #invitation-top #programme-title::after {
-  content: "❧";
+  content: "";
   position: absolute;
-  top: 48%;
-  color: rgba(101, 75, 57, .28);
-  font-size: 1.2rem;
+  top: 53%;
+  width: clamp(6rem, 10vw, 9rem);
+  height: 3rem;
+  background: url("/images/coastal-floral-sprig.svg") center / contain no-repeat;
+  opacity: .56;
+  pointer-events: none;
 }
 
 #invitation-top #programme-title::before {
   right: calc(100% + 1rem);
-  transform: rotate(-26deg);
+  transform: translateY(-50%) scaleX(-1);
 }
 
 #invitation-top #programme-title::after {
   left: calc(100% + 1rem);
-  transform: rotate(154deg);
-}
-
-#invitation-top section[aria-labelledby="programme-title"]::after {
-  content: "❀";
-  left: clamp(1rem, 4vw, 4rem);
-  bottom: clamp(.8rem, 3vw, 2.5rem);
-  font-size: clamp(2.6rem, 6vw, 5.2rem);
-  opacity: .58;
-  text-shadow:
-    2rem -1.2rem 0 rgba(101, 75, 57, .14),
-    3.8rem .2rem 0 rgba(185, 133, 79, .16),
-    1rem 2rem 0 rgba(101, 75, 57, .1);
-  transform: rotate(18deg);
-  animation: coastalBouquetSway 10s ease-in-out -4s infinite;
-}
-
-#invitation-top section[aria-labelledby="programme-title"] article {
-  position: relative;
+  transform: translateY(-50%);
 }
 
 #invitation-top section[aria-labelledby="programme-title"] article::after {
   content: "♥";
   display: block;
-  width: 100%;
   margin-top: .7rem;
-  color: rgba(101, 75, 57, .2);
-  font-size: .46rem;
+  color: rgba(101, 75, 57, .4);
+  font-size: .55rem;
   text-align: center;
-  animation: coastalPetalPulse 5s ease-in-out infinite;
+  animation: coastalPetalPulseSimple 5.2s ease-in-out infinite;
 }
 
 #invitation-top section[aria-labelledby="programme-title"] article:nth-child(even)::after {
   content: "✦";
-  animation-delay: -2.5s;
+  animation-delay: -2.6s;
 }
 
-/* Footer: a soft bouquet-like closing at both lower corners. */
-#invitation-top > footer {
-  position: relative;
-  overflow: hidden;
-}
-
+/* ---------- Footer ---------- */
 #invitation-top > footer::before,
 #invitation-top > footer::after {
-  content: "❀";
-  bottom: -.55rem;
-  font-size: clamp(3.4rem, 8vw, 7rem);
-  opacity: .7;
+  content: "";
+  position: absolute;
+  z-index: 1;
+  width: clamp(17rem, 27vw, 28rem);
+  aspect-ratio: 1;
+  bottom: clamp(-10rem, -7vw, -5rem);
+  pointer-events: none;
+  background: url("/images/coastal-floral-corner.svg") center / contain no-repeat;
+  opacity: .75;
 }
 
 #invitation-top > footer::before {
-  left: clamp(-.8rem, 1vw, .5rem);
-  text-shadow:
-    2.5rem -1.5rem 0 rgba(170, 137, 107, .21),
-    4.7rem -.25rem 0 rgba(185, 133, 79, .16),
-    1.1rem -3.2rem 0 rgba(196, 170, 144, .22);
-  transform: rotate(16deg);
-  animation: coastalBouquetSway 11s ease-in-out infinite;
+  left: clamp(-9rem, -6vw, -4rem);
+  transform: rotate(8deg);
+  animation: coastalFloralFloat 12s ease-in-out infinite;
 }
 
 #invitation-top > footer::after {
-  right: clamp(-.8rem, 1vw, .5rem);
-  text-shadow:
-    -2.5rem -1.5rem 0 rgba(170, 137, 107, .21),
-    -4.7rem -.25rem 0 rgba(185, 133, 79, .16),
-    -1.1rem -3.2rem 0 rgba(196, 170, 144, .22);
-  transform: rotate(-16deg);
-  animation: coastalBouquetSway 11s ease-in-out -5s infinite reverse;
+  right: clamp(-9rem, -6vw, -4rem);
+  transform: scaleX(-1) rotate(8deg);
+  animation: coastalFloralFloat 12s ease-in-out -5s infinite reverse;
 }
 
-#invitation-top > footer > * {
-  position: relative;
-  z-index: 2;
-}
-
-@keyframes coastalBouquetSway {
+/* ---------- Motion ---------- */
+@keyframes coastalFloralFloat {
   0%, 100% { translate: 0 0; rotate: 0deg; }
-  50% { translate: 0 -.35rem; rotate: 3deg; }
-}
-
-@keyframes coastalLeafBreathe {
-  0%, 100% { opacity: .42; }
-  50% { opacity: .8; }
+  50% { translate: 0 -.55rem; rotate: 2.2deg; }
 }
 
 @keyframes coastalPetalPulse {
-  0%, 100% { opacity: .28; transform: translateX(-50%) scale(.8); }
+  0%, 100% { opacity: .25; transform: translateX(-50%) scale(.85); }
   50% { opacity: .7; transform: translateX(-50%) scale(1.15); }
+}
+
+@keyframes coastalPetalPulseSimple {
+  0%, 100% { opacity: .28; transform: translateY(0) scale(.85); }
+  50% { opacity: .72; transform: translateY(-.18rem) scale(1.15); }
 }
 
 @media (max-width: 760px) {
   #invitation-top #counting::after,
   #invitation-top section[aria-labelledby="story-title"]::after,
-  #invitation-top section[aria-labelledby="programme-title"]::after {
-    opacity: .4;
+  #invitation-top section[aria-labelledby="events-title"]::before,
+  #invitation-top section[aria-labelledby="events-title"]::after,
+  #invitation-top section[aria-labelledby="seating-title"]::after,
+  #invitation-top section[aria-labelledby="programme-title"]::after,
+  #invitation-top > footer::before,
+  #invitation-top > footer::after {
+    width: 13rem;
+    opacity: .58;
   }
 
   #invitation-top #story-title::before,
@@ -285,23 +363,25 @@
     display: none;
   }
 
-  #invitation-top section[aria-labelledby="events-title"] article::before {
-    font-size: 1.6rem;
+  #invitation-top section[aria-labelledby="events-title"] article::before,
+  #invitation-top section[aria-labelledby="events-title"] article::after {
+    width: 4.7rem;
+    opacity: .25;
   }
 
-  #invitation-top > footer::before,
-  #invitation-top > footer::after {
-    font-size: 3.5rem;
-    opacity: .45;
+  #invitation-top #seating-title::after {
+    width: 6.5rem;
+    top: calc(100% + .45rem);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   #invitation-top #counting::after,
   #invitation-top #counting [aria-live="polite"] > div::before,
-  #invitation-top #story-title::before,
-  #invitation-top #story-title::after,
   #invitation-top section[aria-labelledby="story-title"]::after,
+  #invitation-top section[aria-labelledby="events-title"]::before,
+  #invitation-top section[aria-labelledby="events-title"]::after,
+  #invitation-top section[aria-labelledby="seating-title"]::after,
   #invitation-top section[aria-labelledby="programme-title"]::after,
   #invitation-top section[aria-labelledby="programme-title"] article::after,
   #invitation-top > footer::before,
