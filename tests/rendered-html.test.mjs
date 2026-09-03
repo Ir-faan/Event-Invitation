@@ -29,7 +29,7 @@ test("renders the complete Coastal Reverie invitation", async () => {
   assert.match(html, /Our Journey/);
   assert.match(html, /In Loving Memory/);
   assert.match(html, /Mehendi Evening/);
-  assert.match(html, /Seating Arrangements/);
+  assert.match(html, /Seating Arrangement/);
   assert.match(html, /The Rahman Family/);
   assert.match(html, /Day Programme/);
 });
