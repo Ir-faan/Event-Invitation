@@ -21,6 +21,7 @@ import {
   Wine,
 } from "lucide-react";
 import styles from "@/app/templates/coastal-reverie/coastal-reverie.module.css";
+import { SeatingArrangement, type SeatingAssignment } from "@/components/seating-arrangement";
 
 const weddingTime = new Date("2027-09-17T16:30:00+04:00").getTime();
 
@@ -73,6 +74,21 @@ const events = [
     map: "https://www.google.com/maps?q=The%20Ravenala%20Attitude%20Mauritius&output=embed",
     directions: "https://www.google.com/maps/search/?api=1&query=The+Ravenala+Attitude+Mauritius",
   },
+];
+
+const seatingAssignments: SeatingAssignment[] = [
+  { table: "01", family: "The Rahman Family", note: "Bride's family" },
+  { table: "02", family: "The Patel Family", note: "Groom's family" },
+  { table: "03", family: "The Osman Family" },
+  { table: "04", family: "The Issack Family" },
+  { table: "05", family: "The Boodhoo Family" },
+  { table: "06", family: "The Khan Family" },
+  { table: "07", family: "The Peerbux Family" },
+  { table: "08", family: "The Joomun Family" },
+  { table: "09", family: "The Mamode Family" },
+  { table: "10", family: "The Hossen Family" },
+  { table: "11", family: "The Moosun Family" },
+  { table: "12", family: "The Aumeer Family" },
 ];
 
 const programme = [
@@ -269,6 +285,8 @@ export function CoastalReverieInvitation() {
           ))}
         </div>
       </section>
+
+      <SeatingArrangement assignments={seatingAssignments} />
 
       <section className={styles.programmeSection} aria-labelledby="programme-title">
         <div className={styles.programmeTitle} data-wedding-reveal>
