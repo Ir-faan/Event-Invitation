@@ -96,7 +96,7 @@ function getCountdown(now: number) {
 }
 
 export function CoastalReverieInvitation() {
-  const [phase, setPhase] = useState<"sealed" | "opening" | "flash" | "gone">("sealed");
+  const [phase, setPhase] = useState<"sealed" | "opening" | "gone">("sealed");
   const [replay, setReplay] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const countdown = getCountdown(now);
@@ -108,15 +108,11 @@ export function CoastalReverieInvitation() {
 
   useEffect(() => {
     if (phase === "sealed") {
-      const timer = window.setTimeout(() => setPhase("opening"), 1_000);
+      const timer = window.setTimeout(() => setPhase("opening"), 1_450);
       return () => window.clearTimeout(timer);
     }
     if (phase === "opening") {
-      const timer = window.setTimeout(() => setPhase("flash"), 1_650);
-      return () => window.clearTimeout(timer);
-    }
-    if (phase === "flash") {
-      const timer = window.setTimeout(() => setPhase("gone"), 720);
+      const timer = window.setTimeout(() => setPhase("gone"), 1_750);
       return () => window.clearTimeout(timer);
     }
   }, [phase, replay]);
@@ -147,17 +143,18 @@ export function CoastalReverieInvitation() {
 
   return (
     <main className={`${styles.invitation} ${phase === "gone" ? styles.invitationReady : ""}`} id="invitation-top">
-      <div className={`${styles.envelopeIntro} ${phase === "sealed" ? styles.sealed : phase === "opening" ? styles.opening : phase === "flash" ? styles.flash : styles.gone}`} aria-hidden={phase === "gone"}>
-        <div className={styles.openingFlash} aria-hidden="true" />
-        <p className={styles.letterFor}>A letter for you</p>
-        <div className={styles.envelopeScene}>
-          <div className={styles.envelopeGlow} />
-          <img className={styles.envelopeImage} src="/images/digital-envelope.webp" alt="Ivory envelope opening with a wax seal" />
-          <button className={styles.waxSeal} type="button" onClick={() => setPhase("opening")} aria-label="Open the invitation">
-            <Leaf aria-hidden="true" />
-          </button>
+      <div className={`${styles.envelopeIntro} ${phase === "sealed" ? styles.sealed : phase === "opening" ? styles.opening : styles.gone}`} aria-hidden={phase === "gone"}>
+        <div className={styles.envelopeGlow} aria-hidden="true" />
+        <div className={`${styles.envelopePanel} ${styles.envelopePanelLeft}`} aria-hidden="true">
+          <img src="/images/ornate-envelope.webp" alt="" />
         </div>
-        <p className={styles.openPrompt}>Opening your invitation</p>
+        <div className={`${styles.envelopePanel} ${styles.envelopePanelRight}`} aria-hidden="true">
+          <img src="/images/ornate-envelope.webp" alt="" />
+        </div>
+        <div className={styles.envelopeSeam} aria-hidden="true" />
+        <button className={styles.envelopeTrigger} type="button" onClick={() => setPhase("opening")} aria-label="Open Salma and Sam's wedding invitation">
+          <span>Open invitation</span>
+        </button>
       </div>
 
       <a className={styles.backButton} href="/#collection"><ArrowLeft aria-hidden="true" /> <span>Collection</span></a>
