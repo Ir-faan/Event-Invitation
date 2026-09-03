@@ -12,12 +12,19 @@
   isolation: isolate;
 }
 
-/* Keep all real content above the decorative artwork. */
-#invitation-top #counting > *,
-#invitation-top section[aria-labelledby="story-title"] > *,
-#invitation-top section[aria-labelledby="events-title"] > *,
-#invitation-top section[aria-labelledby="seating-title"] > *,
-#invitation-top section[aria-labelledby="programme-title"] > *,
+/* Keep the existing content above the decorative artwork without changing
+   the positioning rules of portals, timelines or other template elements. */
+#invitation-top #counting > [data-wedding-reveal] {
+  position: relative;
+  z-index: 3;
+}
+
+#invitation-top section[aria-labelledby="story-title"] [data-wedding-reveal],
+#invitation-top section[aria-labelledby="events-title"] > [data-wedding-reveal],
+#invitation-top section[aria-labelledby="events-title"] article,
+#invitation-top section[aria-labelledby="programme-title"] > [data-wedding-reveal],
+#invitation-top section[aria-labelledby="programme-title"] article,
+#invitation-top section[aria-labelledby="seating-title"] > div,
 #invitation-top > footer > * {
   position: relative;
   z-index: 2;
@@ -169,7 +176,6 @@
 }
 
 #invitation-top section[aria-labelledby="events-title"] article {
-  position: relative;
   overflow: hidden;
 }
 
