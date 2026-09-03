@@ -8,18 +8,18 @@ export type SeatingAssignment = {
 };
 
 const placements = [
-  { x: 18, y: 15 },
-  { x: 70, y: 11 },
-  { x: 82, y: 34 },
-  { x: 67, y: 59 },
-  { x: 84, y: 79 },
-  { x: 51, y: 82 },
-  { x: 24, y: 73 },
-  { x: 8, y: 51 },
-  { x: 12, y: 31 },
-  { x: 47, y: 25 },
-  { x: 36, y: 7 },
-  { x: 58, y: 45 },
+  { x: 24, y: 18 },
+  { x: 50, y: 14 },
+  { x: 76, y: 20 },
+  { x: 14, y: 39 },
+  { x: 38, y: 34 },
+  { x: 62, y: 38 },
+  { x: 86, y: 41 },
+  { x: 24, y: 58 },
+  { x: 50, y: 54 },
+  { x: 76, y: 59 },
+  { x: 38, y: 77 },
+  { x: 64, y: 77 },
 ];
 
 function getPlacement(index: number) {
@@ -29,8 +29,8 @@ function getPlacement(index: number) {
   if (cycle === 0) return base;
 
   return {
-    x: Math.max(5, Math.min(91, base.x + ((cycle * 13 + index * 7) % 17) - 8)),
-    y: Math.max(5, Math.min(88, base.y + ((cycle * 11 + index * 5) % 15) - 7)),
+    x: Math.max(10, Math.min(90, base.x + ((cycle * 9 + index * 5) % 9) - 4)),
+    y: Math.max(10, Math.min(86, base.y + ((cycle * 7 + index * 3) % 9) - 4)),
   };
 }
 
