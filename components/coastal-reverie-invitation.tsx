@@ -114,10 +114,11 @@ function getCountdown(now: number) {
 export function CoastalReverieInvitation() {
   const [phase, setPhase] = useState<"sealed" | "opening" | "flash" | "gone">("sealed");
   const [replay, setReplay] = useState(0);
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(weddingTime);
   const countdown = getCountdown(now);
 
   useEffect(() => {
+    setNow(Date.now());
     const timer = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => window.clearInterval(timer);
   }, []);
