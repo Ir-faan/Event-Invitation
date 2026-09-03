@@ -96,7 +96,7 @@ function getCountdown(now: number) {
 }
 
 export function CoastalReverieInvitation() {
-  const [phase, setPhase] = useState<"sealed" | "opening" | "gone">("sealed");
+  const [phase, setPhase] = useState<"sealed" | "opening" | "flash" | "gone">("sealed");
   const [replay, setReplay] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const countdown = getCountdown(now);
@@ -112,7 +112,11 @@ export function CoastalReverieInvitation() {
       return () => window.clearTimeout(timer);
     }
     if (phase === "opening") {
-      const timer = window.setTimeout(() => setPhase("gone"), 1_750);
+      const timer = window.setTimeout(() => setPhase("flash"), 1_700);
+      return () => window.clearTimeout(timer);
+    }
+    if (phase === "flash") {
+      const timer = window.setTimeout(() => setPhase("gone"), 720);
       return () => window.clearTimeout(timer);
     }
   }, [phase, replay]);
@@ -143,7 +147,8 @@ export function CoastalReverieInvitation() {
 
   return (
     <main className={`${styles.invitation} ${phase === "gone" ? styles.invitationReady : ""}`} id="invitation-top">
-      <div className={`${styles.envelopeIntro} ${phase === "sealed" ? styles.sealed : phase === "opening" ? styles.opening : styles.gone}`} aria-hidden={phase === "gone"}>
+      <div className={`${styles.envelopeIntro} ${phase === "sealed" ? styles.sealed : phase === "opening" ? styles.opening : phase === "flash" ? styles.flash : styles.gone}`} aria-hidden={phase === "gone"}>
+        <div className={styles.openingFlash} aria-hidden="true" />
         <div className={styles.envelopeGlow} aria-hidden="true" />
         <div className={`${styles.envelopePanel} ${styles.envelopePanelLeft}`} aria-hidden="true">
           <img src="/images/ornate-envelope.webp" alt="" />

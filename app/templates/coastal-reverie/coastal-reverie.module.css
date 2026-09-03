@@ -30,8 +30,9 @@
 .invitation section { scroll-margin-top: 0; }
 
 .envelopeIntro { --envelope-width: min(100vw, 66.667svh); position: fixed; z-index: 1000; inset: 0; overflow: hidden; perspective: 1400px; background: #e9dfd3; transition: opacity .55s ease, visibility .55s, background .5s ease; }
-.envelopeIntro::before { content: ""; position: absolute; z-index: 0; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(255,253,248,.96), rgba(218,200,181,.55) 66%, rgba(177,144,114,.35)); }
+.envelopeIntro::before { content: ""; position: absolute; z-index: 0; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(255,253,248,.96), rgba(218,200,181,.55) 66%, rgba(177,144,114,.35)); transition: opacity .45s ease; }
 .envelopeIntro.gone { opacity: 0; visibility: hidden; pointer-events: none; background: transparent; }
+.openingFlash { position: absolute; z-index: 20; inset: -20%; pointer-events: none; opacity: 0; transform: scale(.04); border-radius: 50%; background: radial-gradient(circle, #fff 0 38%, #fff9ef 58%, rgba(244,221,195,.88) 70%, transparent 76%); }
 .envelopeGlow { position: absolute; z-index: 1; left: 50%; top: 50%; width: min(72svh, 105vw); aspect-ratio: 1; border-radius: 50%; background: rgba(255,249,238,.8); filter: blur(64px); transform: translate(-50%,-50%); animation: glowBreathe 2.8s ease-in-out infinite; transition: opacity .6s ease; }
 .envelopePanel { position: absolute; z-index: 3; top: 0; bottom: 0; width: calc(var(--envelope-width) / 2); overflow: hidden; backface-visibility: hidden; box-shadow: 0 0 3rem rgba(82,57,38,.12); transition: transform 1.65s cubic-bezier(.72,.02,.18,1), filter 1.1s ease; will-change: transform; }
 .envelopePanel img { position: absolute; top: 0; width: var(--envelope-width); max-width: none; height: 100%; object-fit: fill; filter: saturate(.92) contrast(1.015); }
@@ -47,11 +48,17 @@
 .envelopeTrigger span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .sealed .envelopePanel { animation: envelopeSettle 1.15s cubic-bezier(.2,.8,.2,1) both; }
 .sealed .envelopeTrigger { animation: sealPulse 1.8s ease-in-out infinite; }
-.opening { background: transparent; }
-.opening::before { opacity: 0; transition: opacity .65s ease; }
+.opening { background: #f7efe5; }
 .opening .envelopeGlow, .opening .envelopeSeam, .opening .envelopeTrigger { opacity: 0; pointer-events: none; }
-.opening .envelopePanelLeft { transform: translate3d(-110vw,0,0) rotateY(12deg); filter: brightness(1.08); }
-.opening .envelopePanelRight { transform: translate3d(110vw,0,0) rotateY(-12deg); filter: brightness(1.08); }
+.opening .envelopePanelLeft { animation: envelopeLeftOpen 1.7s cubic-bezier(.72,.02,.18,1) forwards; }
+.opening .envelopePanelRight { animation: envelopeRightOpen 1.7s cubic-bezier(.72,.02,.18,1) forwards; }
+.flash { background: #fffaf4; }
+.flash::before { opacity: 0; }
+.flash .envelopePanelLeft, .gone .envelopePanelLeft { transform: translate3d(-110vw,0,0) rotateY(16deg); opacity: 0; visibility: hidden; }
+.flash .envelopePanelRight, .gone .envelopePanelRight { transform: translate3d(110vw,0,0) rotateY(-16deg); opacity: 0; visibility: hidden; }
+.flash .envelopeGlow, .flash .envelopeSeam, .flash .envelopeTrigger, .gone .envelopeGlow, .gone .envelopeSeam, .gone .envelopeTrigger { opacity: 0; pointer-events: none; }
+.flash .openingFlash { animation: invitationFlash .72s cubic-bezier(.2,.72,.2,1) both; }
+.gone .openingFlash { opacity: 1; transform: scale(2.4); }
 
 .backButton, .replayButton { position: fixed; z-index: 50; top: 1rem; display: inline-flex; align-items: center; gap: .55rem; min-height: 2.8rem; padding: 0 1rem; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; color: white; background: rgba(63,45,34,.46); backdrop-filter: blur(14px); font: 600 .72rem var(--sans); letter-spacing: .04em; transition: transform .25s, background .25s; }
 .backButton { left: 1rem; text-decoration: none; }
@@ -215,6 +222,9 @@
 .sectionTitle[data-visible="true"], .lightTitle[data-visible="true"], .programmeTitle[data-visible="true"], .storyChapter[data-visible="true"], .eventCard[data-visible="true"], .memoryCard[data-visible="true"], .programmeItem[data-visible="true"] { transform: none; }
 
 @keyframes envelopeSettle { from { opacity: 0; transform: scale(1.035); } to { opacity: 1; transform: none; } }
+@keyframes envelopeLeftOpen { from { transform: translate3d(0,0,0) rotateY(0); filter: brightness(1); } to { transform: translate3d(-110vw,0,0) rotateY(16deg); filter: brightness(1.08); } }
+@keyframes envelopeRightOpen { from { transform: translate3d(0,0,0) rotateY(0); filter: brightness(1); } to { transform: translate3d(110vw,0,0) rotateY(-16deg); filter: brightness(1.08); } }
+@keyframes invitationFlash { 0% { opacity: 0; transform: scale(.04); } 38% { opacity: 1; transform: scale(.9); } 72% { opacity: 1; transform: scale(1.7); } 100% { opacity: 1; transform: scale(2.4); } }
 @keyframes glowBreathe { 0%,100% { transform: translate(-50%,-50%) scale(1); opacity: .72; } 50% { transform: translate(-50%,-50%) scale(1.14); opacity: .42; } }
 @keyframes sealPulse { 50% { transform: translate(-50%,-50%) scale(1.055); filter: drop-shadow(0 0 1.1rem rgba(182,126,73,.22)); } }
 @keyframes heroCinema { from { transform: scale(1.06) translate3d(-1%,0,0); } to { transform: scale(1.16) translate3d(1.5%,-1%,0); } }
