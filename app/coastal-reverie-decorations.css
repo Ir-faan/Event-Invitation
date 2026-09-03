@@ -1,0 +1,311 @@
+/* Decorative overlays for Coastal Reverie.
+   Scoped to #invitation-top so the landing page and other templates are unaffected. */
+
+#invitation-top #counting::after,
+#invitation-top section[aria-labelledby="story-title"]::after,
+#invitation-top section[aria-labelledby="programme-title"]::after,
+#invitation-top > footer::before,
+#invitation-top > footer::after {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  color: rgba(185, 133, 79, .22);
+  font-family: Georgia, serif;
+  line-height: 1;
+  z-index: 1;
+}
+
+/* Countdown: a soft floral spray in the open corner. */
+#invitation-top #counting::after {
+  content: "❀";
+  right: clamp(1.2rem, 5vw, 5rem);
+  top: clamp(1.4rem, 4vw, 3.5rem);
+  font-size: clamp(2.4rem, 5vw, 4.8rem);
+  opacity: .7;
+  text-shadow:
+    -2.4rem 1.1rem 0 rgba(170, 137, 107, .28),
+    -4rem -.35rem 0 rgba(185, 133, 79, .17),
+    1.25rem 2rem 0 rgba(196, 170, 144, .25),
+    -1rem 3.1rem 0 rgba(170, 137, 107, .16);
+  transform: rotate(13deg);
+  animation: coastalBouquetSway 9s ease-in-out infinite;
+}
+
+#invitation-top #counting [aria-live="polite"] > div {
+  position: relative;
+}
+
+#invitation-top #counting [aria-live="polite"] > div::before {
+  content: "✦";
+  position: absolute;
+  left: 50%;
+  top: -.65rem;
+  color: rgba(185, 133, 79, .3);
+  font-size: .46rem;
+  transform: translateX(-50%);
+  animation: coastalPetalPulse 4.8s ease-in-out infinite;
+}
+
+#invitation-top #counting [aria-live="polite"] > div:nth-child(even)::before {
+  content: "♥";
+  font-size: .38rem;
+  animation-delay: -2.1s;
+}
+
+/* Story: keep the timeline intact, but frame it with a light botanical gesture. */
+#invitation-top #story-title {
+  position: relative;
+  display: inline-block;
+}
+
+#invitation-top #story-title::before,
+#invitation-top #story-title::after {
+  position: absolute;
+  top: 50%;
+  color: rgba(170, 137, 107, .35);
+  font-size: clamp(1rem, 1.8vw, 1.5rem);
+  line-height: 1;
+  transform: translateY(-50%);
+  animation: coastalLeafBreathe 7s ease-in-out infinite;
+}
+
+#invitation-top #story-title::before {
+  content: "❧";
+  right: calc(100% + .8rem);
+  transform: translateY(-50%) rotate(-28deg);
+}
+
+#invitation-top #story-title::after {
+  content: "❧";
+  left: calc(100% + .8rem);
+  transform: translateY(-50%) rotate(152deg);
+  animation-delay: -3s;
+}
+
+#invitation-top section[aria-labelledby="story-title"]::after {
+  content: "❀";
+  right: clamp(-1.2rem, 1vw, .5rem);
+  bottom: clamp(1rem, 4vw, 3.5rem);
+  font-size: clamp(3rem, 7vw, 6.4rem);
+  opacity: .58;
+  text-shadow:
+    -2.3rem -.9rem 0 rgba(185, 133, 79, .16),
+    -4.2rem .7rem 0 rgba(170, 137, 107, .2),
+    -1.2rem 2.2rem 0 rgba(196, 170, 144, .2);
+  transform: rotate(-18deg);
+  animation: coastalBouquetSway 11s ease-in-out -3s infinite reverse;
+}
+
+/* Event details: small floral corners on the existing cards, no layout changes. */
+#invitation-top section[aria-labelledby="events-title"] {
+  position: relative;
+  overflow: hidden;
+}
+
+#invitation-top #events-title {
+  position: relative;
+  display: inline-block;
+}
+
+#invitation-top #events-title::before,
+#invitation-top #events-title::after {
+  content: "✦";
+  position: absolute;
+  top: 48%;
+  color: rgba(185, 133, 79, .4);
+  font-size: .55rem;
+}
+
+#invitation-top #events-title::before { right: calc(100% + 1rem); }
+#invitation-top #events-title::after { left: calc(100% + 1rem); }
+
+#invitation-top section[aria-labelledby="events-title"] article {
+  position: relative;
+  overflow: hidden;
+}
+
+#invitation-top section[aria-labelledby="events-title"] article::before,
+#invitation-top section[aria-labelledby="events-title"] article::after {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  color: rgba(185, 133, 79, .17);
+  line-height: 1;
+  transition: opacity .35s ease, transform .45s ease;
+}
+
+#invitation-top section[aria-labelledby="events-title"] article::before {
+  content: "❧";
+  left: .65rem;
+  top: .55rem;
+  font-size: 2.2rem;
+  transform: rotate(-35deg);
+}
+
+#invitation-top section[aria-labelledby="events-title"] article::after {
+  content: "❀";
+  right: .65rem;
+  bottom: .55rem;
+  font-size: 1.35rem;
+  transform: rotate(16deg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #invitation-top section[aria-labelledby="events-title"] article:hover::before,
+  #invitation-top section[aria-labelledby="events-title"] article:hover::after {
+    opacity: .9;
+    transform: rotate(0deg) scale(1.08);
+  }
+}
+
+/* Programme: tiny petals/hearts between the existing schedule details. */
+#invitation-top #programme-title {
+  position: relative;
+  display: inline-block;
+}
+
+#invitation-top #programme-title::before,
+#invitation-top #programme-title::after {
+  content: "❧";
+  position: absolute;
+  top: 48%;
+  color: rgba(101, 75, 57, .28);
+  font-size: 1.2rem;
+}
+
+#invitation-top #programme-title::before {
+  right: calc(100% + 1rem);
+  transform: rotate(-26deg);
+}
+
+#invitation-top #programme-title::after {
+  left: calc(100% + 1rem);
+  transform: rotate(154deg);
+}
+
+#invitation-top section[aria-labelledby="programme-title"]::after {
+  content: "❀";
+  left: clamp(1rem, 4vw, 4rem);
+  bottom: clamp(.8rem, 3vw, 2.5rem);
+  font-size: clamp(2.6rem, 6vw, 5.2rem);
+  opacity: .58;
+  text-shadow:
+    2rem -1.2rem 0 rgba(101, 75, 57, .14),
+    3.8rem .2rem 0 rgba(185, 133, 79, .16),
+    1rem 2rem 0 rgba(101, 75, 57, .1);
+  transform: rotate(18deg);
+  animation: coastalBouquetSway 10s ease-in-out -4s infinite;
+}
+
+#invitation-top section[aria-labelledby="programme-title"] article {
+  position: relative;
+}
+
+#invitation-top section[aria-labelledby="programme-title"] article::after {
+  content: "♥";
+  display: block;
+  width: 100%;
+  margin-top: .7rem;
+  color: rgba(101, 75, 57, .2);
+  font-size: .46rem;
+  text-align: center;
+  animation: coastalPetalPulse 5s ease-in-out infinite;
+}
+
+#invitation-top section[aria-labelledby="programme-title"] article:nth-child(even)::after {
+  content: "✦";
+  animation-delay: -2.5s;
+}
+
+/* Footer: a soft bouquet-like closing at both lower corners. */
+#invitation-top > footer {
+  position: relative;
+  overflow: hidden;
+}
+
+#invitation-top > footer::before,
+#invitation-top > footer::after {
+  content: "❀";
+  bottom: -.55rem;
+  font-size: clamp(3.4rem, 8vw, 7rem);
+  opacity: .7;
+}
+
+#invitation-top > footer::before {
+  left: clamp(-.8rem, 1vw, .5rem);
+  text-shadow:
+    2.5rem -1.5rem 0 rgba(170, 137, 107, .21),
+    4.7rem -.25rem 0 rgba(185, 133, 79, .16),
+    1.1rem -3.2rem 0 rgba(196, 170, 144, .22);
+  transform: rotate(16deg);
+  animation: coastalBouquetSway 11s ease-in-out infinite;
+}
+
+#invitation-top > footer::after {
+  right: clamp(-.8rem, 1vw, .5rem);
+  text-shadow:
+    -2.5rem -1.5rem 0 rgba(170, 137, 107, .21),
+    -4.7rem -.25rem 0 rgba(185, 133, 79, .16),
+    -1.1rem -3.2rem 0 rgba(196, 170, 144, .22);
+  transform: rotate(-16deg);
+  animation: coastalBouquetSway 11s ease-in-out -5s infinite reverse;
+}
+
+#invitation-top > footer > * {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes coastalBouquetSway {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  50% { translate: 0 -.35rem; rotate: 3deg; }
+}
+
+@keyframes coastalLeafBreathe {
+  0%, 100% { opacity: .42; }
+  50% { opacity: .8; }
+}
+
+@keyframes coastalPetalPulse {
+  0%, 100% { opacity: .28; transform: translateX(-50%) scale(.8); }
+  50% { opacity: .7; transform: translateX(-50%) scale(1.15); }
+}
+
+@media (max-width: 760px) {
+  #invitation-top #counting::after,
+  #invitation-top section[aria-labelledby="story-title"]::after,
+  #invitation-top section[aria-labelledby="programme-title"]::after {
+    opacity: .4;
+  }
+
+  #invitation-top #story-title::before,
+  #invitation-top #story-title::after,
+  #invitation-top #programme-title::before,
+  #invitation-top #programme-title::after {
+    display: none;
+  }
+
+  #invitation-top section[aria-labelledby="events-title"] article::before {
+    font-size: 1.6rem;
+  }
+
+  #invitation-top > footer::before,
+  #invitation-top > footer::after {
+    font-size: 3.5rem;
+    opacity: .45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #invitation-top #counting::after,
+  #invitation-top #counting [aria-live="polite"] > div::before,
+  #invitation-top #story-title::before,
+  #invitation-top #story-title::after,
+  #invitation-top section[aria-labelledby="story-title"]::after,
+  #invitation-top section[aria-labelledby="programme-title"]::after,
+  #invitation-top section[aria-labelledby="programme-title"] article::after,
+  #invitation-top > footer::before,
+  #invitation-top > footer::after {
+    animation: none !important;
+  }
+}
