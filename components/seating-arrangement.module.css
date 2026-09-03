@@ -77,7 +77,7 @@
   position: relative;
   width: 100%;
   min-width: 0;
-  min-height: clamp(32rem, 46vw, 43rem);
+  min-height: clamp(28rem, 39vw, 36rem);
   isolation: isolate;
 }
 
@@ -201,7 +201,7 @@
   .section { padding-left: 3vw; padding-right: 3vw; }
   .layout { grid-template-columns: minmax(12rem, .68fr) minmax(0, 1.4fr); gap: 1.5rem; }
   .heading h2 { font-size: clamp(3rem, 7vw, 4.6rem); }
-  .seatingField { min-height: 34rem; }
+  .seatingField { min-height: 30rem; }
   .assignment { width: 9.4rem; }
 }
 
@@ -213,7 +213,7 @@
   .heading h2 { max-width: 7ch; font-size: clamp(2.45rem, 12vw, 3.55rem); line-height: .86; }
   .flourish { width: 6.8rem; margin: 1rem 0; }
   .intro { max-width: 9.5rem; font-size: .88rem; line-height: 1.45; }
-  .seatingField { min-height: 30rem; }
+  .seatingField { min-height: 26rem; }
   .assignment { width: 7.2rem; padding-inline: .15rem; }
   .assignment::before { display: none; }
   .assignment span { font-size: 1.18rem; }
