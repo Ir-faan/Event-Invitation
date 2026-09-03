@@ -1,5 +1,6 @@
-/* Section-specific botanical artwork for Coastal Reverie.
-   Scoped to this invitation and intentionally decorative only. */
+/* Photographic botanical decoration layer for Coastal Reverie.
+   Uses a single transparent sprite built from the supplied floral references.
+   Each section displays a different crop so the decoration language stays varied. */
 
 #invitation-top #counting,
 #invitation-top section[aria-labelledby="story-title"],
@@ -24,94 +25,85 @@
   z-index: 3;
 }
 
-/* Countdown — airy peach blossom branch */
-#invitation-top #counting::after {
+#invitation-top #counting::after,
+#invitation-top section[aria-labelledby="story-title"]::before,
+#invitation-top section[aria-labelledby="story-title"]::after,
+#invitation-top section[aria-labelledby="events-title"]::before,
+#invitation-top section[aria-labelledby="events-title"]::after,
+#invitation-top section[aria-labelledby="seating-title"]::before,
+#invitation-top section[aria-labelledby="seating-title"]::after,
+#invitation-top section[aria-labelledby="programme-title"]::before,
+#invitation-top section[aria-labelledby="programme-title"]::after,
+#invitation-top > footer::before,
+#invitation-top > footer::after {
   content: "";
   position: absolute;
   z-index: 1;
-  width: clamp(20rem, 34vw, 34rem);
   aspect-ratio: 1;
-  right: clamp(-11rem, -7vw, -4rem);
-  top: clamp(-10rem, -6vw, -4rem);
-  background: url("/images/decor-countdown-blossom.svg") center / contain no-repeat;
-  opacity: .82;
   pointer-events: none;
-  filter: drop-shadow(0 1rem 2.6rem rgba(101,75,57,.09));
-  animation: blossomSway 10s ease-in-out infinite;
+  background-image: url("/images/decor-photo-florals.webp");
+  background-repeat: no-repeat;
+  background-size: 300% 200%;
+  filter: drop-shadow(0 1rem 2.5rem rgba(73, 56, 44, .08));
+  will-change: transform;
 }
 
-#invitation-top #counting::before {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  width: 13rem;
-  height: 13rem;
-  left: 6%;
-  bottom: 7%;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 24% 38%, rgba(232,198,178,.72) 0 .2rem, transparent .24rem),
-    radial-gradient(circle at 62% 18%, rgba(185,133,79,.5) 0 .16rem, transparent .2rem),
-    radial-gradient(circle at 74% 65%, rgba(242,216,199,.8) 0 .23rem, transparent .27rem),
-    radial-gradient(circle at 36% 82%, rgba(196,170,144,.65) 0 .18rem, transparent .22rem);
-  animation: petalDrift 9s ease-in-out infinite;
+/* Countdown — pink rose corner with loose petals. */
+#invitation-top #counting::after {
+  width: clamp(19rem, 33vw, 33rem);
+  right: clamp(-10rem, -6vw, -4rem);
+  top: clamp(-9rem, -5vw, -3rem);
+  background-position: 0% 0%;
+  opacity: .78;
+  transform: scaleX(-1) rotate(-4deg);
+  animation: photoRoseSway 11s ease-in-out infinite;
 }
 
-/* Story — tall trailing vine, intentionally very different from the bouquet sections */
+/* Story — a taller, narrower rose cascade rather than a corner bouquet. */
 #invitation-top section[aria-labelledby="story-title"]::before,
 #invitation-top section[aria-labelledby="story-title"]::after {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  width: clamp(10rem, 18vw, 16rem);
-  height: min(82%, 45rem);
-  top: 9%;
-  background: url("/images/decor-story-vine.svg") center / contain no-repeat;
-  opacity: .68;
-  pointer-events: none;
-  filter: drop-shadow(0 .8rem 2rem rgba(101,75,57,.07));
+  width: clamp(13rem, 21vw, 20rem);
+  top: 12%;
+  background-position: 50% 0%;
+  opacity: .52;
 }
 
 #invitation-top section[aria-labelledby="story-title"]::before {
-  left: clamp(-5rem, -3vw, -1rem);
-  transform: rotate(-5deg);
-  animation: vineBreathe 12s ease-in-out infinite;
+  left: clamp(-7rem, -4vw, -2rem);
+  transform: rotate(-7deg);
+  animation: photoVineFloat 13s ease-in-out infinite;
 }
 
 #invitation-top section[aria-labelledby="story-title"]::after {
-  right: clamp(-6rem, -4vw, -2rem);
-  transform: scaleX(-1) rotate(4deg);
-  opacity: .44;
-  animation: vineBreathe 13s ease-in-out -6s infinite reverse;
+  right: clamp(-8rem, -5vw, -3rem);
+  bottom: 8%;
+  top: auto;
+  transform: scaleX(-1) rotate(8deg);
+  opacity: .34;
+  animation: photoVineFloat 14s ease-in-out -7s infinite reverse;
 }
 
-/* Event details — compact blush bouquets, plus small card-corner blooms */
+/* Event details — fuller rose bouquet, different crop from countdown/story. */
 #invitation-top section[aria-labelledby="events-title"]::before,
 #invitation-top section[aria-labelledby="events-title"]::after {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  width: clamp(18rem, 30vw, 31rem);
-  aspect-ratio: 1.32;
-  background: url("/images/decor-events-bouquet.svg") center / contain no-repeat;
-  opacity: .78;
-  pointer-events: none;
-  filter: drop-shadow(0 1rem 2.5rem rgba(101,75,57,.08));
+  width: clamp(19rem, 31vw, 31rem);
+  background-position: 100% 0%;
+  opacity: .68;
 }
 
 #invitation-top section[aria-labelledby="events-title"]::before {
-  left: clamp(-8rem, -5vw, -3rem);
-  bottom: clamp(-7rem, -4vw, -2rem);
+  left: clamp(-9rem, -6vw, -4rem);
+  bottom: clamp(-9rem, -6vw, -4rem);
   transform: rotate(7deg);
-  animation: bouquetFloat 11s ease-in-out infinite;
+  animation: photoBouquetFloat 12s ease-in-out infinite;
 }
 
 #invitation-top section[aria-labelledby="events-title"]::after {
-  right: clamp(-9rem, -6vw, -4rem);
-  top: clamp(-6rem, -4vw, -2rem);
+  right: clamp(-10rem, -7vw, -5rem);
+  top: clamp(-10rem, -6vw, -4rem);
   transform: scaleX(-1) rotate(8deg);
-  opacity: .55;
-  animation: bouquetFloat 12s ease-in-out -5s infinite reverse;
+  opacity: .46;
+  animation: photoBouquetFloat 13s ease-in-out -6s infinite reverse;
 }
 
 #invitation-top section[aria-labelledby="events-title"] article {
@@ -122,14 +114,14 @@
   content: "";
   position: absolute;
   z-index: 0;
-  width: 8rem;
-  height: 5.5rem;
-  right: -2.1rem;
-  top: -.65rem;
-  background: url("/images/decor-events-bouquet.svg") center / contain no-repeat;
-  opacity: .18;
+  width: 7.5rem;
+  aspect-ratio: 1;
+  right: -2rem;
+  top: -.8rem;
   pointer-events: none;
-  transform: scaleX(-1) rotate(-9deg);
+  background: url("/images/decor-photo-florals.webp") 100% 0% / 300% 200% no-repeat;
+  opacity: .13;
+  transform: scaleX(-1) rotate(-8deg);
   transition: opacity .35s ease, transform .4s ease;
 }
 
@@ -140,166 +132,124 @@
 
 @media (hover: hover) and (pointer: fine) {
   #invitation-top section[aria-labelledby="events-title"] article:hover::after {
-    opacity: .32;
+    opacity: .23;
     transform: scaleX(-1) rotate(-3deg) scale(1.06);
   }
 }
 
-/* Seating — light dried grasses so this section stays airy */
+/* Seating — realistic dried wreath/grasses, kept lighter so the table labels remain dominant. */
 #invitation-top section[aria-labelledby="seating-title"]::before,
 #invitation-top section[aria-labelledby="seating-title"]::after {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  width: clamp(15rem, 24vw, 24rem);
-  aspect-ratio: .93;
-  background: url("/images/decor-seating-grasses.svg") center / contain no-repeat;
-  pointer-events: none;
-  opacity: .48;
+  width: clamp(16rem, 27vw, 27rem);
+  background-position: 0% 100%;
+  opacity: .43;
 }
 
 #invitation-top section[aria-labelledby="seating-title"]::before {
-  left: clamp(-7rem, -5vw, -3rem);
-  bottom: clamp(-7rem, -4vw, -2rem);
-  transform: rotate(-6deg);
-  animation: grassSway 10s ease-in-out infinite;
+  left: clamp(-9rem, -6vw, -4rem);
+  bottom: clamp(-8rem, -5vw, -3rem);
+  transform: rotate(-5deg);
+  animation: photoGrassSway 12s ease-in-out infinite;
 }
 
 #invitation-top section[aria-labelledby="seating-title"]::after {
-  right: clamp(-8rem, -5vw, -3rem);
-  top: clamp(-5rem, -3vw, -1rem);
-  transform: scaleX(-1) rotate(5deg);
-  opacity: .35;
-  animation: grassSway 12s ease-in-out -5s infinite reverse;
+  right: clamp(-10rem, -7vw, -5rem);
+  top: clamp(-8rem, -5vw, -3rem);
+  transform: scaleX(-1) rotate(6deg);
+  opacity: .28;
+  animation: photoGrassSway 13s ease-in-out -6s infinite reverse;
 }
 
-/* Programme — long dried branch sweeping through the lower edge */
+/* Programme — sweeping dried branch, visually distinct from the seating wreath. */
 #invitation-top section[aria-labelledby="programme-title"]::before,
 #invitation-top section[aria-labelledby="programme-title"]::after {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  width: clamp(25rem, 46vw, 48rem);
-  aspect-ratio: 1.44;
-  background: url("/images/decor-programme-dried-branch.svg") center / contain no-repeat;
-  pointer-events: none;
+  width: clamp(23rem, 40vw, 40rem);
+  background-position: 50% 100%;
 }
 
 #invitation-top section[aria-labelledby="programme-title"]::before {
-  left: clamp(-11rem, -7vw, -4rem);
-  bottom: clamp(-8rem, -5vw, -3rem);
-  opacity: .62;
+  left: clamp(-12rem, -8vw, -5rem);
+  bottom: clamp(-11rem, -7vw, -5rem);
+  opacity: .56;
   transform: rotate(3deg);
-  animation: branchFloat 12s ease-in-out infinite;
+  animation: photoBranchFloat 13s ease-in-out infinite;
 }
 
 #invitation-top section[aria-labelledby="programme-title"]::after {
-  right: clamp(-14rem, -9vw, -6rem);
-  top: clamp(-10rem, -6vw, -4rem);
-  opacity: .28;
-  transform: scaleX(-1) rotate(-8deg);
-  animation: branchFloat 14s ease-in-out -6s infinite reverse;
+  right: clamp(-15rem, -10vw, -7rem);
+  top: clamp(-13rem, -8vw, -6rem);
+  opacity: .20;
+  transform: scaleX(-1) rotate(-9deg);
+  animation: photoBranchFloat 15s ease-in-out -7s infinite reverse;
 }
 
-#invitation-top section[aria-labelledby="programme-title"] article::after {
-  content: "♥";
-  display: block;
-  margin-top: .65rem;
-  color: rgba(101,75,57,.33);
-  font-size: .5rem;
-  text-align: center;
-  animation: heartPulse 5.4s ease-in-out infinite;
-}
-
-#invitation-top section[aria-labelledby="programme-title"] article:nth-child(even)::after {
-  content: "✦";
-  animation-delay: -2.7s;
-}
-
-/* Footer — fuller bouquet for a clear closing flourish */
+/* Footer — mixed rose + dried bouquet for a fuller closing flourish. */
 #invitation-top > footer::before,
 #invitation-top > footer::after {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  width: clamp(22rem, 38vw, 39rem);
-  aspect-ratio: 1.38;
-  bottom: clamp(-10rem, -6vw, -4rem);
-  background: url("/images/decor-footer-bouquet.svg") center / contain no-repeat;
-  pointer-events: none;
-  opacity: .82;
-  filter: drop-shadow(0 1rem 2.7rem rgba(101,75,57,.08));
+  width: clamp(23rem, 39vw, 40rem);
+  bottom: clamp(-12rem, -8vw, -6rem);
+  background-position: 100% 100%;
+  opacity: .74;
 }
 
 #invitation-top > footer::before {
-  left: clamp(-10rem, -6vw, -4rem);
+  left: clamp(-11rem, -7vw, -5rem);
   transform: rotate(4deg);
-  animation: bouquetFloat 12s ease-in-out infinite;
+  animation: photoBouquetFloat 13s ease-in-out infinite;
 }
 
 #invitation-top > footer::after {
-  right: clamp(-10rem, -6vw, -4rem);
+  right: clamp(-11rem, -7vw, -5rem);
   transform: scaleX(-1) rotate(4deg);
-  animation: bouquetFloat 12s ease-in-out -6s infinite reverse;
+  opacity: .55;
+  animation: photoBouquetFloat 13s ease-in-out -6s infinite reverse;
 }
 
-@keyframes blossomSway {
-  0%,100% { transform: rotate(-2deg) translateY(0); }
-  50% { transform: rotate(2deg) translateY(-.55rem); }
+@keyframes photoRoseSway {
+  0%, 100% { transform: scaleX(-1) rotate(-4deg) translateY(0); }
+  50% { transform: scaleX(-1) rotate(-1deg) translateY(-.55rem); }
 }
 
-@keyframes petalDrift {
-  0%,100% { transform: translate3d(0,0,0) rotate(0); opacity: .58; }
-  50% { transform: translate3d(1rem,-.8rem,0) rotate(12deg); opacity: .9; }
+@keyframes photoVineFloat {
+  0%, 100% { translate: 0 0; }
+  50% { translate: .3rem -.45rem; }
 }
 
-@keyframes vineBreathe {
-  0%,100% { translate: 0 0; rotate: 0deg; }
-  50% { translate: .3rem -.45rem; rotate: 1.5deg; }
-}
-
-@keyframes bouquetFloat {
-  0%,100% { translate: 0 0; }
+@keyframes photoBouquetFloat {
+  0%, 100% { translate: 0 0; }
   50% { translate: 0 -.55rem; }
 }
 
-@keyframes grassSway {
-  0%,100% { translate: 0 0; rotate: -1deg; }
-  50% { translate: .35rem -.25rem; rotate: 2deg; }
+@keyframes photoGrassSway {
+  0%, 100% { translate: 0 0; }
+  50% { translate: .4rem -.25rem; }
 }
 
-@keyframes branchFloat {
-  0%,100% { translate: 0 0; rotate: 0deg; }
-  50% { translate: .45rem -.35rem; rotate: 1deg; }
-}
-
-@keyframes heartPulse {
-  0%,100% { opacity: .25; transform: scale(.84); }
-  50% { opacity: .7; transform: scale(1.14); }
+@keyframes photoBranchFloat {
+  0%, 100% { translate: 0 0; }
+  50% { translate: .45rem -.35rem; }
 }
 
 @media (max-width: 760px) {
-  #invitation-top #counting::after { width: 16rem; right: -7rem; top: -5rem; opacity: .68; }
-  #invitation-top #counting::before { width: 8rem; height: 8rem; left: 2%; }
+  #invitation-top #counting::after { width: 15rem; right: -7rem; top: -5rem; opacity: .62; }
 
   #invitation-top section[aria-labelledby="story-title"]::before,
-  #invitation-top section[aria-labelledby="story-title"]::after { width: 8rem; height: 60%; opacity: .32; }
+  #invitation-top section[aria-labelledby="story-title"]::after { width: 9rem; opacity: .27; }
 
   #invitation-top section[aria-labelledby="events-title"]::before,
-  #invitation-top section[aria-labelledby="events-title"]::after { width: 15rem; opacity: .48; }
+  #invitation-top section[aria-labelledby="events-title"]::after { width: 15rem; opacity: .42; }
 
   #invitation-top section[aria-labelledby="seating-title"]::before,
-  #invitation-top section[aria-labelledby="seating-title"]::after { width: 10rem; opacity: .28; }
+  #invitation-top section[aria-labelledby="seating-title"]::after { width: 11rem; opacity: .24; }
 
   #invitation-top section[aria-labelledby="programme-title"]::before,
-  #invitation-top section[aria-labelledby="programme-title"]::after { width: 20rem; opacity: .34; }
+  #invitation-top section[aria-labelledby="programme-title"]::after { width: 19rem; opacity: .28; }
 
   #invitation-top > footer::before,
-  #invitation-top > footer::after { width: 16rem; opacity: .56; }
+  #invitation-top > footer::after { width: 17rem; opacity: .48; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #invitation-top #counting::before,
   #invitation-top #counting::after,
   #invitation-top section[aria-labelledby="story-title"]::before,
   #invitation-top section[aria-labelledby="story-title"]::after,
@@ -309,7 +259,8 @@
   #invitation-top section[aria-labelledby="seating-title"]::after,
   #invitation-top section[aria-labelledby="programme-title"]::before,
   #invitation-top section[aria-labelledby="programme-title"]::after,
-  #invitation-top section[aria-labelledby="programme-title"] article::after,
   #invitation-top > footer::before,
-  #invitation-top > footer::after { animation: none !important; }
+  #invitation-top > footer::after {
+    animation: none !important;
+  }
 }
