@@ -169,8 +169,7 @@
 
 @keyframes seatingFloat {
   0%, 100% { translate: 0 0; }
-  35% { translate: var(--float-x) var(--float-y); }
-  70% { translate: calc(var(--float-x) * -.65) calc(var(--float-y) * -.75); }
+  50% { translate: var(--float-x) var(--float-y); }
 }
 
 @media (hover: hover) and (pointer: fine) {
