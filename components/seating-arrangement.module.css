@@ -206,18 +206,30 @@
 }
 
 @media (max-width: 620px) {
-  .section { padding: 4.8rem .85rem; }
-  .layout { grid-template-columns: minmax(8.6rem, .72fr) minmax(0, 1.28fr); gap: .55rem; }
-  .heading { padding-right: .2rem; }
-  .heading > p:first-child { margin-bottom: .7rem; letter-spacing: .17em; font-size: .48rem; }
-  .heading h2 { max-width: 7ch; font-size: clamp(2.45rem, 12vw, 3.55rem); line-height: .86; }
-  .flourish { width: 6.8rem; margin: 1rem 0; }
-  .intro { max-width: 9.5rem; font-size: .88rem; line-height: 1.45; }
-  .seatingField { min-height: 26rem; }
-  .assignment { width: 7.2rem; padding-inline: .15rem; }
+  .section { padding: 4.9rem 1rem 5.2rem; }
+  .layout { grid-template-columns: 1fr; gap: 2.1rem; }
+  .heading { padding-right: 0; text-align: center; }
+  .heading > p:first-child { margin-bottom: .65rem; letter-spacing: .22em; font-size: .55rem; }
+  .heading h2 { max-width: 9ch; margin: 0 auto; font-size: clamp(3.15rem, 16vw, 4.65rem); line-height: .82; }
+  .flourish { width: min(13rem, 72vw); margin: 1.25rem auto 1rem; }
+  .intro { max-width: 16rem; margin: 0 auto; font-size: .92rem; line-height: 1.55; }
+  .seatingField { width: min(23rem, 100%); min-height: 29rem; margin: 0 auto; }
+  .assignment { width: 6.75rem; padding-inline: .12rem; }
   .assignment::before { display: none; }
-  .assignment span { font-size: 1.18rem; }
-  .assignment strong { font-size: .7rem; }
+  .assignment span { font-size: 1.12rem; }
+  .assignment strong { font-size: .66rem; line-height: 1.2; white-space: normal; }
+  .assignment:nth-child(1) { left: 18% !important; top: 10% !important; }
+  .assignment:nth-child(2) { left: 50% !important; top: 9% !important; }
+  .assignment:nth-child(3) { left: 82% !important; top: 12% !important; }
+  .assignment:nth-child(4) { left: 20% !important; top: 33% !important; }
+  .assignment:nth-child(5) { left: 50% !important; top: 31% !important; }
+  .assignment:nth-child(6) { left: 80% !important; top: 35% !important; }
+  .assignment:nth-child(7) { left: 18% !important; top: 56% !important; }
+  .assignment:nth-child(8) { left: 50% !important; top: 55% !important; }
+  .assignment:nth-child(9) { left: 82% !important; top: 58% !important; }
+  .assignment:nth-child(10) { left: 20% !important; top: 80% !important; }
+  .assignment:nth-child(11) { left: 50% !important; top: 78% !important; }
+  .assignment:nth-child(12) { left: 80% !important; top: 82% !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
