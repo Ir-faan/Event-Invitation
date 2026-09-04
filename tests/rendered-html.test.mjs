@@ -42,10 +42,13 @@ test("renders the complete Rose Afterglow invitation", async () => {
   const html = renderToStaticMarkup(React.createElement(Invitation));
   assert.match(html, /Sofia/);
   assert.match(html, /Samuel/);
-  assert.match(html, /Pull to open/);
-  assert.match(html, /Scroll to reveal/);
+  assert.match(html, /Tap to open/);
+  assert.match(html, /rose-wedding-curtains\.webp/);
+  assert.doesNotMatch(html, /Pull to open/);
+  assert.doesNotMatch(html, /Scroll to reveal/);
   assert.match(html, /Stories worth/);
   assert.match(html, /Scratch/);
+  assert.match(html, /Reveal/);
   assert.match(html, /Will you celebrate/);
   assert.match(html, /rose-afterglow\.webp/);
 });

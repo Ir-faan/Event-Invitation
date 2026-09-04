@@ -4,18 +4,14 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import {
-  ArrowDown,
   ArrowLeft,
   CalendarDays,
-  Flower2,
+  Hand,
   Heart,
   MapPin,
-  MousePointer2,
   Sparkles,
 } from "lucide-react";
 import styles from "@/app/templates/rose-afterglow/rose-afterglow.module.css";
-
-type RibbonPhase = "sealed" | "opening" | "gone";
 
 const memories = [
   {
@@ -45,119 +41,28 @@ const details = [
 ];
 
 export function RoseAfterglowInvitation() {
-  const [ribbonPhase, setRibbonPhase] = useState<RibbonPhase>("sealed");
-  const [ribbonProgress, setRibbonProgress] = useState(0);
-  const ribbonStartX = useRef<number | null>(null);
-  const curtainRef = useRef<HTMLElement | null>(null);
-  const petalLayerRef = useRef<HTMLDivElement | null>(null);
+  const [curtainOpen, setCurtainOpen] = useState(false);
+  const [curtainFinished, setCurtainFinished] = useState(false);
 
-  const openInvitation = useCallback(() => {
-    if (ribbonPhase !== "sealed") return;
-    setRibbonProgress(1);
-    setRibbonPhase("opening");
-    window.setTimeout(() => setRibbonPhase("gone"), 900);
-  }, [ribbonPhase]);
+  const openCurtains = useCallback(() => {
+    setCurtainOpen(true);
+  }, []);
 
   useEffect(() => {
     const previous = document.body.style.overflow;
-    if (ribbonPhase !== "gone") document.body.style.overflow = "hidden";
+    if (!curtainFinished) document.body.style.overflow = "hidden";
     else document.body.style.overflow = previous;
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [ribbonPhase]);
-
-  const updateRibbon = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (ribbonPhase !== "sealed" || ribbonStartX.current === null) return;
-    const distance = Math.max(0, event.clientX - ribbonStartX.current);
-    const travel = Math.min(window.innerWidth * 0.46, 520);
-    setRibbonProgress(Math.min(distance / travel, 1));
-  };
-
-  const releaseRibbon = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (ribbonStartX.current === null) return;
-    event.currentTarget.releasePointerCapture?.(event.pointerId);
-    ribbonStartX.current = null;
-    if (ribbonProgress > 0.62) openInvitation();
-    else setRibbonProgress(0);
-  };
+  }, [curtainFinished]);
 
   useEffect(() => {
-    const section = curtainRef.current;
-    if (!section) return;
-
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const rect = section.getBoundingClientRect();
-      const scrollable = Math.max(section.offsetHeight - window.innerHeight, 1);
-      const progressed = Math.min(Math.max(-rect.top / scrollable, 0), 1);
-      section.style.setProperty("--curtain-progress", progressed.toFixed(3));
-    };
-
-    const onScroll = () => {
-      if (raf) return;
-      raf = window.requestAnimationFrame(update);
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    update();
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) window.cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  useEffect(() => {
-    const layer = petalLayerRef.current;
-    if (!layer) return;
-
-    let last = 0;
-
-    const spawn = (x: number, y: number, burst = 1) => {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-      for (let index = 0; index < burst; index += 1) {
-        const petal = document.createElement("span");
-        petal.className = styles.cursorPetal;
-        const size = 8 + Math.random() * 10;
-        petal.style.left = `${x + (Math.random() - 0.5) * 18}px`;
-        petal.style.top = `${y + (Math.random() - 0.5) * 18}px`;
-        petal.style.width = `${size}px`;
-        petal.style.height = `${size * 0.72}px`;
-        petal.style.setProperty("--petal-drift", `${(Math.random() - 0.5) * 70}px`);
-        petal.style.setProperty("--petal-rotate", `${80 + Math.random() * 220}deg`);
-        petal.style.animationDuration = `${1.2 + Math.random() * 0.9}s`;
-        layer.appendChild(petal);
-        window.setTimeout(() => petal.remove(), 2300);
-      }
-    };
-
-    const move = (event: PointerEvent) => {
-      if (event.pointerType !== "mouse") return;
-      const now = performance.now();
-      if (now - last < 75) return;
-      last = now;
-      spawn(event.clientX, event.clientY);
-    };
-
-    const tap = (event: PointerEvent) => {
-      if (event.pointerType === "mouse") return;
-      spawn(event.clientX, event.clientY, 4);
-    };
-
-    window.addEventListener("pointermove", move, { passive: true });
-    window.addEventListener("pointerdown", tap, { passive: true });
-
-    return () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerdown", tap);
-      layer.replaceChildren();
-    };
-  }, []);
+    if (!curtainOpen) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => setCurtainFinished(true), reducedMotion ? 0 : 1550);
+    return () => window.clearTimeout(timer);
+  }, [curtainOpen]);
 
   useEffect(() => {
     const reveals = document.querySelectorAll<HTMLElement>("[data-afterglow-reveal]");
@@ -171,70 +76,35 @@ export function RoseAfterglowInvitation() {
 
   return (
     <main className={styles.invitation} id="afterglow-top">
-      <div ref={petalLayerRef} className={styles.cursorPetalLayer} aria-hidden="true" />
-
-      <div
-        className={`${styles.ribbonIntro} ${ribbonPhase === "opening" ? styles.ribbonOpening : ribbonPhase === "gone" ? styles.ribbonGone : ""}`}
-        style={{ "--ribbon-progress": ribbonProgress } as CSSProperties}
-        aria-hidden={ribbonPhase === "gone"}
-      >
-        <div className={styles.introFlowers} aria-hidden="true">
-          <img src="/images/coastal-floral-corner.svg" alt="" />
-        </div>
-        <div className={styles.invitationBox}>
-          <div className={styles.invitationSleeve}>
-            <span>S &amp; S</span>
-            <Flower2 aria-hidden="true" />
-          </div>
-          <div className={styles.invitationCard}>
-            <p>You&apos;re invited to the wedding of</p>
-            <h1>Sofia <i>&amp;</i> Samuel</h1>
-            <span>12 · 10 · 2027</span>
-            <small>Moka, Mauritius</small>
-          </div>
-        </div>
-        <div className={styles.ribbonBand} aria-hidden="true">
-          <span />
-          <i />
-        </div>
-        <button
-          className={styles.ribbonHandle}
-          type="button"
-          aria-label="Pull the ribbon to open Sofia and Samuel's invitation"
-          onClick={openInvitation}
-          onPointerDown={(event) => {
-            if (ribbonPhase !== "sealed") return;
-            ribbonStartX.current = event.clientX;
-            event.currentTarget.setPointerCapture?.(event.pointerId);
-          }}
-          onPointerMove={updateRibbon}
-          onPointerUp={releaseRibbon}
-          onPointerCancel={releaseRibbon}
-        >
-          <span>Pull to open</span>
-          <ArrowDown aria-hidden="true" />
-        </button>
-        <p className={styles.ribbonHint}>Drag the silk ribbon or tap to begin</p>
-      </div>
-
       <a className={styles.backButton} href="/#collection"><ArrowLeft aria-hidden="true" /> Collection</a>
 
-      <section ref={curtainRef} className={styles.curtainHero} aria-labelledby="afterglow-names">
+      <section
+        className={`${styles.curtainHero} ${curtainOpen ? styles.curtainOpened : ""} ${curtainFinished ? styles.curtainFinished : ""}`}
+        aria-labelledby="afterglow-names"
+      >
         <div className={styles.curtainStage}>
           <div className={styles.heroPhoto} aria-hidden="true">
             <img src="/images/rose-afterglow.webp" alt="" />
           </div>
           <div className={styles.heroWash} aria-hidden="true" />
-          <div className={`${styles.curtain} ${styles.curtainLeft}`} aria-hidden="true">
-            <span />
+          <div className={styles.curtainBackdrop} aria-hidden="true" />
+          <div className={`${styles.curtainPanel} ${styles.curtainLeft}`} aria-hidden="true">
+            <img src="/images/rose-wedding-curtains.webp" alt="" />
           </div>
-          <div className={`${styles.curtain} ${styles.curtainRight}`} aria-hidden="true">
-            <span />
+          <div className={`${styles.curtainPanel} ${styles.curtainRight}`} aria-hidden="true">
+            <img src="/images/rose-wedding-curtains.webp" alt="" />
           </div>
-          <div className={styles.heroFlorals} aria-hidden="true">
-            <img src="/images/coastal-floral-corner.svg" alt="" />
-            <img src="/images/coastal-floral-corner.svg" alt="" />
-          </div>
+
+          <button
+            className={styles.curtainTrigger}
+            type="button"
+            onClick={openCurtains}
+            aria-label="Open Sofia and Samuel's wedding invitation"
+          >
+            <span className={styles.curtainSeal}><Heart aria-hidden="true" /></span>
+            <strong>Tap to open</strong>
+            <span>Sofia &amp; Samuel&apos;s invitation</span>
+          </button>
 
           <nav className={styles.heroNav} aria-label="Invitation navigation">
             <a href="#our-story">Our story</a>
@@ -249,11 +119,6 @@ export function RoseAfterglowInvitation() {
             <div className={styles.heroRule}><span /><Heart aria-hidden="true" /><span /></div>
             <p className={styles.heroDate}>Saturday · 12 October · 2027</p>
             <p className={styles.heroPlace}>Moka, Mauritius</p>
-          </div>
-
-          <div className={styles.scrollNote}>
-            <span>Scroll to reveal</span>
-            <ArrowDown aria-hidden="true" />
           </div>
         </div>
       </section>
@@ -303,7 +168,7 @@ export function RoseAfterglowInvitation() {
         <div className={styles.memoryHeading} data-afterglow-reveal>
           <p className={styles.eyebrow}><Sparkles aria-hidden="true" /> Special moments</p>
           <h2 id="memories-title">Stories worth <em>revealing.</em></h2>
-          <p>Scratch each frame with your mouse or finger to uncover a little piece of our story.</p>
+          <p>Gently scratch a frame with your finger, or tap Reveal, to uncover a little piece of our story.</p>
         </div>
 
         <div className={styles.scratchGrid}>
@@ -314,18 +179,6 @@ export function RoseAfterglowInvitation() {
       </section>
 
       <section className={styles.quoteSection} aria-label="A romantic note">
-        <div className={styles.quotePetals} aria-hidden="true">
-          {Array.from({ length: 14 }, (_, index) => (
-            <span
-              key={index}
-              style={{
-                "--petal-x": `${(index * 39) % 100}%`,
-                "--petal-delay": `${-(index % 7) * 1.7}s`,
-                "--petal-duration": `${10 + (index % 5) * 1.8}s`,
-              } as CSSProperties}
-            />
-          ))}
-        </div>
         <p>All of my tomorrows</p>
         <h2>with you.</h2>
         <Heart aria-hidden="true" />
@@ -434,7 +287,7 @@ function ScratchRevealCard({
 
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    const radius = Math.max(24, Math.min(rect.width, rect.height) * 0.085);
+    const radius = Math.max(34, Math.min(rect.width, rect.height) * 0.12);
 
     context.save();
     context.globalCompositeOperation = "destination-out";
@@ -460,7 +313,7 @@ function ScratchRevealCard({
       }
     }
 
-    if (touched.current.size / (columns * rows) > 0.5) setRevealed(true);
+    if (touched.current.size / (columns * rows) > 0.28) setRevealed(true);
   };
 
   return (
@@ -501,7 +354,12 @@ function ScratchRevealCard({
           drawing.current = false;
         }}
       />
-      {!revealed && <div className={styles.scratchHint}><MousePointer2 aria-hidden="true" /><span>Scratch</span></div>}
+      {!revealed && (
+        <button className={styles.scratchHint} type="button" onClick={() => setRevealed(true)}>
+          <Hand aria-hidden="true" />
+          <span>Reveal</span>
+        </button>
+      )}
     </article>
   );
 }
