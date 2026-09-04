@@ -27,7 +27,7 @@ const weddingTime = new Date("2027-09-17T16:30:00+04:00").getTime();
 
 const envelopeTiming = {
   sealed: 1_000,
-  opening: 1_450,
+  opening: 2_000,
   flash: 720,
 } as const;
 

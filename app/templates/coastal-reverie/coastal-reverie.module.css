@@ -52,9 +52,9 @@
 .opening::before, .flash::before { opacity: 0; }
 .opening .envelopeSeam, .opening .envelopeTrigger { opacity: 0; pointer-events: none; }
 .opening .envelopeTrigger { transform: translate(-50%,-50%) scale(.74); }
-.opening .openingFlash { animation: openingFlashFill 1.45s cubic-bezier(.22,.7,.16,1) forwards; }
-.opening .envelopePanelLeft { animation: envelopeLeftOpen 1.45s cubic-bezier(.72,.02,.18,1) forwards; }
-.opening .envelopePanelRight { animation: envelopeRightOpen 1.45s cubic-bezier(.72,.02,.18,1) forwards; }
+.opening .openingFlash { animation: openingFlashFill 2s linear forwards; }
+.opening .envelopePanelLeft { animation: envelopeLeftOpen 2s linear forwards; }
+.opening .envelopePanelRight { animation: envelopeRightOpen 2s linear forwards; }
 .flash { background: transparent; pointer-events: none; }
 .flash .envelopePanelLeft, .gone .envelopePanelLeft { transform: translate3d(-18%,0,0) rotateY(-82deg); opacity: 0; visibility: hidden; }
 .flash .envelopePanelRight, .gone .envelopePanelRight { transform: translate3d(18%,0,0) rotateY(82deg); opacity: 0; visibility: hidden; }
@@ -227,9 +227,9 @@
 .sectionTitle[data-visible="true"], .lightTitle[data-visible="true"], .programmeTitle[data-visible="true"], .storyChapter[data-visible="true"], .eventCard[data-visible="true"], .memoryCard[data-visible="true"], .programmeItem[data-visible="true"] { transform: none; }
 
 @keyframes envelopeSettle { from { opacity: 0; transform: scale(1.018); filter: brightness(.72); } to { opacity: 1; transform: none; filter: brightness(1); } }
-@keyframes envelopeLeftOpen { 0%, 12% { transform: translate3d(0,0,0) rotateY(0); filter: brightness(1); } 38% { transform: translate3d(-1.5%,0,0) rotateY(-18deg); filter: brightness(1.05); } 74% { transform: translate3d(-8%,0,0) rotateY(-62deg); filter: brightness(1.12); } 100% { transform: translate3d(-18%,0,0) rotateY(-82deg); filter: brightness(1.18); } }
-@keyframes envelopeRightOpen { 0%, 12% { transform: translate3d(0,0,0) rotateY(0); filter: brightness(1); } 38% { transform: translate3d(1.5%,0,0) rotateY(18deg); filter: brightness(1.05); } 74% { transform: translate3d(8%,0,0) rotateY(62deg); filter: brightness(1.12); } 100% { transform: translate3d(18%,0,0) rotateY(82deg); filter: brightness(1.18); } }
-@keyframes openingFlashFill { 0% { opacity: 0; transform: scale(1.015); } 18% { opacity: .28; } 42% { opacity: .86; transform: scale(1.006); } 62%, 100% { opacity: 1; transform: scale(1); } }
+@keyframes envelopeLeftOpen { from { transform: translate3d(0,0,0) rotateY(0); filter: brightness(1); } to { transform: translate3d(-18%,0,0) rotateY(-82deg); filter: brightness(1.18); } }
+@keyframes envelopeRightOpen { from { transform: translate3d(0,0,0) rotateY(0); filter: brightness(1); } to { transform: translate3d(18%,0,0) rotateY(82deg); filter: brightness(1.18); } }
+@keyframes openingFlashFill { 0%, 68% { opacity: 0; transform: scale(1.015); } 100% { opacity: 1; transform: scale(1); } }
 @keyframes invitationFlash { 0%, 14% { opacity: 1; transform: scale(1); } 46% { opacity: .8; } 100% { opacity: 0; transform: scale(.99); } }
 @keyframes sealPulse { 50% { transform: translate(-50%,-50%) scale(1.045); filter: drop-shadow(0 0 1.1rem rgba(220,171,82,.3)); } }
 @keyframes heroCinema { from { transform: scale(1.06) translate3d(-1%,0,0); } to { transform: scale(1.16) translate3d(1.5%,-1%,0); } }
