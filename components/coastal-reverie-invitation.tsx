@@ -190,7 +190,7 @@ export function CoastalReverieInvitation() {
         </div>
         <div className={styles.envelopeSeam} aria-hidden="true" />
         <button className={styles.envelopeTrigger} type="button" onClick={() => setPhase("opening")} aria-label="Open Salma and Sam's wedding invitation">
-          <img className={styles.sealArtwork} src="/images/wax-seal-salma-sam.webp" alt="" aria-hidden="true" />
+          <span className={styles.sealInitials} aria-hidden="true">S &amp; S</span>
         </button>
       </div>
 
