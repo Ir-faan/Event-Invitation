@@ -118,9 +118,13 @@ export function CoastalReverieInvitation() {
   const countdown = getCountdown(now);
 
   useEffect(() => {
-    setNow(Date.now());
-    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
-    return () => window.clearInterval(timer);
+    const tick = () => setNow(Date.now());
+    const initial = window.setTimeout(tick, 0);
+    const timer = window.setInterval(tick, 1_000);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
