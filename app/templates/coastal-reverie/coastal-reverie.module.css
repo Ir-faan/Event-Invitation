@@ -29,11 +29,10 @@
 .invitation h1, .invitation h2, .invitation h3, .invitation p { margin-top: 0; }
 .invitation section { scroll-margin-top: 0; }
 
-.envelopeIntro { position: fixed; z-index: 1000; inset: 0; overflow: hidden; isolation: isolate; perspective: 1800px; background: #26371d; transition: opacity .7s ease, visibility .7s, background 1.15s ease; }
+.envelopeIntro { position: fixed; z-index: 1000; inset: 0; overflow: hidden; isolation: isolate; perspective: 1800px; background: #26371d; transition: opacity .48s ease, visibility .48s, background .9s ease; }
 .envelopeIntro::before { content: ""; position: absolute; z-index: 0; inset: 0; background: radial-gradient(circle at 50% 48%, rgba(110,126,78,.16), transparent 42%), linear-gradient(90deg, rgba(8,17,7,.28), transparent 14%, transparent 86%, rgba(8,17,7,.28)); pointer-events: none; transition: opacity 1.2s ease; }
 .envelopeIntro.gone { opacity: 0; visibility: hidden; pointer-events: none; background: transparent; }
-.openingFlash { position: absolute; z-index: 20; inset: -32%; pointer-events: none; opacity: 0; transform: scale(.12); border-radius: 50%; background: radial-gradient(circle, #fff 0 22%, #fffdf8 38%, rgba(255,238,205,.92) 58%, rgba(235,205,155,.28) 72%, transparent 78%); filter: blur(2px); }
-.envelopeLight { position: absolute; z-index: 2; left: 50%; top: 0; bottom: 0; width: .2rem; opacity: 0; transform: translateX(-50%) scaleY(.08); background: linear-gradient(180deg, transparent, rgba(255,244,217,.9) 18%, #fff 50%, rgba(255,244,217,.9) 82%, transparent); box-shadow: 0 0 1.5rem .5rem rgba(255,239,200,.72), 0 0 5rem 1.2rem rgba(255,246,224,.35); pointer-events: none; will-change: transform, opacity, width; }
+.openingFlash { position: absolute; z-index: 20; inset: -18vmax; pointer-events: none; opacity: 0; transform: scale(.94); background: radial-gradient(ellipse at center, rgba(255,255,255,.99) 0 16%, rgba(255,250,236,.94) 30%, rgba(246,220,174,.58) 48%, rgba(235,205,155,.16) 65%, transparent 76%); filter: blur(10px); will-change: opacity, transform; }
 .envelopePanel { position: absolute; z-index: 3; top: 0; bottom: 0; width: 50.05%; overflow: hidden; backface-visibility: hidden; transform-style: preserve-3d; box-shadow: 0 0 2.5rem rgba(4,12,4,.26); will-change: transform, opacity, filter; }
 .envelopePanel picture { display: contents; }
 .envelopePanel img { position: absolute; top: 0; width: 200%; max-width: none; height: 100%; object-fit: cover; filter: saturate(.92) contrast(1.025) brightness(.98); }
@@ -42,26 +41,26 @@
 .envelopePanelRight { right: 0; transform-origin: right center; }
 .envelopePanelRight img { right: 0; }
 .envelopeSeam { position: absolute; z-index: 5; left: 50%; top: 0; bottom: 0; width: 1px; transform: translateX(-50%); background: linear-gradient(180deg, transparent 3%, rgba(8,18,6,.28) 24%, rgba(8,18,6,.62) 50%, rgba(8,18,6,.28) 76%, transparent 97%); box-shadow: 0 0 .65rem rgba(2,8,2,.35); transition: opacity .45s ease; }
-.envelopeTrigger { position: absolute; z-index: 7; left: 50%; top: 50%; width: clamp(6.5rem, 15svh, 9rem); aspect-ratio: 1; transform: translate(-50%,-50%); border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.envelopeTrigger { position: absolute; z-index: 7; left: 50%; top: 50%; width: clamp(6.5rem, 15svh, 9rem); aspect-ratio: 1; display: grid; place-items: center; padding: 0; transform: translate(-50%,-50%); border: 0; border-radius: 50%; color: #563719; background: transparent; cursor: pointer; transition: opacity .3s ease, transform .42s cubic-bezier(.2,.75,.2,1); }
 .envelopeTrigger::after { content: ""; position: absolute; inset: 8%; border: 1px solid rgba(255,244,222,.35); border-radius: 50%; opacity: 0; transform: scale(.8); transition: opacity .3s, transform .3s; }
 .envelopeTrigger:hover::after, .envelopeTrigger:focus-visible::after { opacity: 1; transform: scale(1.08); }
 .envelopeTrigger:focus-visible { outline: 2px solid rgba(247,216,154,.88); outline-offset: .4rem; }
-.envelopeTrigger span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.sealInitials { position: relative; z-index: 1; display: block; padding-right: .08em; font: 400 clamp(1.8rem, 4.5svh, 2.55rem)/1 var(--script); letter-spacing: .015em; text-shadow: 0 1px rgba(255,222,153,.52), 0 -1px rgba(79,43,13,.28), 0 .12rem .22rem rgba(72,39,11,.24); transform: translateY(-.02em); }
 .sealed .envelopePanel { animation: envelopeSettle 1.15s cubic-bezier(.2,.8,.2,1) both; }
 .sealed .envelopeTrigger { animation: sealPulse 1.8s ease-in-out infinite; }
 .opening { background: rgba(38,55,29,0); }
 .opening::before, .flash::before { opacity: 0; }
 .opening .envelopeSeam, .opening .envelopeTrigger { opacity: 0; pointer-events: none; }
 .opening .envelopeTrigger { transform: translate(-50%,-50%) scale(.74); }
-.opening .envelopeLight { animation: envelopeLightOpen 2.05s cubic-bezier(.22,.7,.16,1) forwards; }
-.opening .envelopePanelLeft { animation: envelopeLeftOpen 2.05s cubic-bezier(.72,.02,.18,1) forwards; }
-.opening .envelopePanelRight { animation: envelopeRightOpen 2.05s cubic-bezier(.72,.02,.18,1) forwards; }
+.opening .openingFlash { animation: openingLightBloom 1.55s cubic-bezier(.22,.7,.16,1) forwards; }
+.opening .envelopePanelLeft { animation: envelopeLeftOpen 1.55s cubic-bezier(.72,.02,.18,1) forwards; }
+.opening .envelopePanelRight { animation: envelopeRightOpen 1.55s cubic-bezier(.72,.02,.18,1) forwards; }
 .flash { background: transparent; pointer-events: none; }
 .flash .envelopePanelLeft, .gone .envelopePanelLeft { transform: translate3d(-18%,0,0) rotateY(-82deg); opacity: 0; visibility: hidden; }
 .flash .envelopePanelRight, .gone .envelopePanelRight { transform: translate3d(18%,0,0) rotateY(82deg); opacity: 0; visibility: hidden; }
-.flash .envelopeLight, .flash .envelopeSeam, .flash .envelopeTrigger, .gone .envelopeLight, .gone .envelopeSeam, .gone .envelopeTrigger { opacity: 0; pointer-events: none; }
-.flash .openingFlash { animation: invitationFlash 1.05s cubic-bezier(.2,.72,.2,1) both; }
-.gone .openingFlash { opacity: 0; transform: scale(2.2); }
+.flash .envelopeSeam, .flash .envelopeTrigger, .gone .envelopeSeam, .gone .envelopeTrigger { opacity: 0; pointer-events: none; }
+.flash .openingFlash { animation: invitationFlash .65s cubic-bezier(.2,.72,.2,1) both; }
+.gone .openingFlash { opacity: 0; transform: scale(1.08); }
 
 .backButton, .replayButton { position: fixed; z-index: 50; top: 1rem; display: inline-flex; align-items: center; gap: .55rem; min-height: 2.8rem; padding: 0 1rem; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; color: white; background: rgba(63,45,34,.46); backdrop-filter: blur(14px); font: 600 .72rem var(--sans); letter-spacing: .04em; transition: transform .25s, background .25s; }
 .backButton { left: 1rem; text-decoration: none; }
@@ -75,6 +74,7 @@
 
 .hero { position: relative; min-height: 100svh; display: grid; place-items: center; overflow: hidden; color: white; text-align: center; }
 .heroImage { position: absolute; inset: -4%; overflow: hidden; opacity: .64; transform: scale(1.035); filter: blur(10px); transition: opacity 1.35s ease, transform 1.55s cubic-bezier(.2,.72,.2,1), filter 1.25s ease; }
+.heroPreparing .heroImage { opacity: .86; transform: scale(1.012); filter: blur(4px); }
 .invitationReady .heroImage { opacity: 1; transform: none; filter: blur(0); }
 .heroImage img { width: 100%; height: 100%; object-fit: cover; filter: sepia(.16) saturate(.84); animation: heroCinema 18s ease-in-out infinite alternate; }
 .heroVeil { position: absolute; inset: 0; opacity: .76; background: linear-gradient(180deg, rgba(58,41,29,.32), rgba(92,66,46,.08) 40%, rgba(48,34,25,.72)), radial-gradient(circle at 50% 45%, transparent 10%, rgba(63,44,31,.38) 90%); transition: opacity 1.4s ease; }
@@ -230,8 +230,8 @@
 @keyframes envelopeSettle { from { opacity: 0; transform: scale(1.018); filter: brightness(.72); } to { opacity: 1; transform: none; filter: brightness(1); } }
 @keyframes envelopeLeftOpen { 0%, 12% { transform: translate3d(0,0,0) rotateY(0); filter: brightness(1); } 38% { transform: translate3d(-1.5%,0,0) rotateY(-18deg); filter: brightness(1.05); } 74% { transform: translate3d(-8%,0,0) rotateY(-62deg); filter: brightness(1.12); } 100% { transform: translate3d(-18%,0,0) rotateY(-82deg); filter: brightness(1.18); } }
 @keyframes envelopeRightOpen { 0%, 12% { transform: translate3d(0,0,0) rotateY(0); filter: brightness(1); } 38% { transform: translate3d(1.5%,0,0) rotateY(18deg); filter: brightness(1.05); } 74% { transform: translate3d(8%,0,0) rotateY(62deg); filter: brightness(1.12); } 100% { transform: translate3d(18%,0,0) rotateY(82deg); filter: brightness(1.18); } }
-@keyframes envelopeLightOpen { 0%, 14% { width: .15rem; opacity: 0; transform: translateX(-50%) scaleY(.08); } 34% { width: .35rem; opacity: .9; transform: translateX(-50%) scaleY(.48); } 68% { width: 8vw; opacity: .75; transform: translateX(-50%) scaleY(1); } 100% { width: 42vw; opacity: .28; transform: translateX(-50%) scaleY(1); } }
-@keyframes invitationFlash { 0% { opacity: 0; transform: scale(.12); } 34% { opacity: .96; transform: scale(.9); } 58% { opacity: .88; transform: scale(1.45); } 100% { opacity: 0; transform: scale(2.2); } }
+@keyframes openingLightBloom { 0%, 58% { opacity: 0; transform: scale(.94); } 82% { opacity: .16; transform: scale(.985); } 100% { opacity: .38; transform: scale(1); } }
+@keyframes invitationFlash { 0% { opacity: .38; transform: scale(1); } 32% { opacity: .98; transform: scale(1.025); } 56% { opacity: .9; transform: scale(1.045); } 100% { opacity: 0; transform: scale(1.08); } }
 @keyframes sealPulse { 50% { transform: translate(-50%,-50%) scale(1.045); filter: drop-shadow(0 0 1.1rem rgba(220,171,82,.3)); } }
 @keyframes heroCinema { from { transform: scale(1.06) translate3d(-1%,0,0); } to { transform: scale(1.16) translate3d(1.5%,-1%,0); } }
 @keyframes heroCopyIn { from { opacity: 0; transform: translateY(2.5rem); } to { opacity: 1; transform: none; } }
