@@ -129,15 +129,15 @@ export function CoastalReverieInvitation() {
 
   useEffect(() => {
     if (phase === "sealed") {
-      const timer = window.setTimeout(() => setPhase("opening"), 1_450);
+      const timer = window.setTimeout(() => setPhase("opening"), 1_350);
       return () => window.clearTimeout(timer);
     }
     if (phase === "opening") {
-      const timer = window.setTimeout(() => setPhase("flash"), 1_700);
+      const timer = window.setTimeout(() => setPhase("flash"), 2_050);
       return () => window.clearTimeout(timer);
     }
     if (phase === "flash") {
-      const timer = window.setTimeout(() => setPhase("gone"), 720);
+      const timer = window.setTimeout(() => setPhase("gone"), 1_050);
       return () => window.clearTimeout(timer);
     }
   }, [phase, replay]);
@@ -167,15 +167,21 @@ export function CoastalReverieInvitation() {
   };
 
   return (
-    <main className={`${styles.invitation} ${phase === "gone" ? styles.invitationReady : ""}`} id="invitation-top">
+    <main className={`${styles.invitation} ${phase === "flash" || phase === "gone" ? styles.invitationReady : ""}`} id="invitation-top">
       <div className={`${styles.envelopeIntro} ${phase === "sealed" ? styles.sealed : phase === "opening" ? styles.opening : phase === "flash" ? styles.flash : styles.gone}`} aria-hidden={phase === "gone"}>
         <div className={styles.openingFlash} aria-hidden="true" />
-        <div className={styles.envelopeGlow} aria-hidden="true" />
+        <div className={styles.envelopeLight} aria-hidden="true" />
         <div className={`${styles.envelopePanel} ${styles.envelopePanelLeft}`} aria-hidden="true">
-          <img src="/images/ornate-envelope.webp" alt="" />
+          <picture>
+            <source media="(max-width: 760px)" srcSet="/images/forest-envelope-mobile.webp" />
+            <img src="/images/forest-envelope-desktop.webp" alt="" />
+          </picture>
         </div>
         <div className={`${styles.envelopePanel} ${styles.envelopePanelRight}`} aria-hidden="true">
-          <img src="/images/ornate-envelope.webp" alt="" />
+          <picture>
+            <source media="(max-width: 760px)" srcSet="/images/forest-envelope-mobile.webp" />
+            <img src="/images/forest-envelope-desktop.webp" alt="" />
+          </picture>
         </div>
         <div className={styles.envelopeSeam} aria-hidden="true" />
         <button className={styles.envelopeTrigger} type="button" onClick={() => setPhase("opening")} aria-label="Open Salma and Sam's wedding invitation">
