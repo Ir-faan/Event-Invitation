@@ -45,7 +45,7 @@
 .envelopeTrigger::after { content: ""; position: absolute; inset: 8%; border: 1px solid rgba(255,244,222,.35); border-radius: 50%; opacity: 0; transform: scale(.8); transition: opacity .3s, transform .3s; }
 .envelopeTrigger:hover::after, .envelopeTrigger:focus-visible::after { opacity: 1; transform: scale(1.08); }
 .envelopeTrigger:focus-visible { outline: 2px solid rgba(247,216,154,.88); outline-offset: .4rem; }
-.sealInitials { position: relative; z-index: 1; display: block; padding-right: .04em; color: rgba(104,57,15,.58); font: 400 clamp(1.55rem, 4svh, 2.25rem)/.9 var(--script); letter-spacing: -.025em; text-shadow: -1px -1px 0 rgba(255,226,161,.7), 1px 1px 1px rgba(72,34,5,.58), 0 .08rem .14rem rgba(72,39,11,.22); filter: drop-shadow(0 1px rgba(255,220,145,.2)); mix-blend-mode: multiply; transform: translateY(-.02em); }
+.sealArtwork { position: relative; z-index: 1; display: block; width: clamp(7.6rem, 16svh, 9.4rem); max-width: none; height: auto; pointer-events: none; filter: drop-shadow(0 .45rem .75rem rgba(82,47,18,.26)); transform: translateY(-.01rem); }
 .sealed .envelopePanel { animation: envelopeSettle 1.15s cubic-bezier(.2,.8,.2,1) both; }
 .sealed .envelopeTrigger { animation: sealPulse 1.8s ease-in-out infinite; }
 .opening { background: #f7eee2; }
@@ -254,6 +254,7 @@
   .backButton span, .replayButton span { display: none; }
   .backButton, .replayButton { width: 2.8rem; justify-content: center; padding: 0; }
   .heroVeil::after { inset: .6rem; }
+  .sealArtwork { width: clamp(5.25rem, 12.8svh, 6.5rem); }
   .hero h1 { flex-direction: column; gap: .15rem; font-size: clamp(4.7rem, 25vw, 7rem); line-height: .72; }
   .hero h1 i { margin: .3rem 0; }
   .heroCopy { padding-top: 6rem; }
