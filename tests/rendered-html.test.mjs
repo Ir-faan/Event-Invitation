@@ -14,6 +14,7 @@ test("renders the complete Event Invitations landing page", async () => {
   const html = renderToStaticMarkup(React.createElement(Home));
   assert.match(html, /The most elegant/);
   assert.match(html, /Coastal Reverie/);
+  assert.match(html, /Rose Afterglow/);
   assert.match(html, /The magic begins/);
   assert.match(html, /Paper or digital/);
   assert.match(html, /Simple, considered pricing/);
@@ -34,4 +35,17 @@ test("renders the complete Coastal Reverie invitation", async () => {
   assert.match(html, /Seating Arrangement/);
   assert.match(html, /The Rahman Family/);
   assert.match(html, /Day Programme/);
+});
+
+test("renders the complete Rose Afterglow invitation", async () => {
+  const { default: Invitation } = await vite.ssrLoadModule("/app/templates/rose-afterglow/page.tsx");
+  const html = renderToStaticMarkup(React.createElement(Invitation));
+  assert.match(html, /Sofia/);
+  assert.match(html, /Samuel/);
+  assert.match(html, /Pull to open/);
+  assert.match(html, /Scroll to reveal/);
+  assert.match(html, /Stories worth/);
+  assert.match(html, /Scratch/);
+  assert.match(html, /Will you celebrate/);
+  assert.match(html, /rose-afterglow\.webp/);
 });
