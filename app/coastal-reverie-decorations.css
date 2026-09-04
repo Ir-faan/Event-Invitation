@@ -1,6 +1,5 @@
-/* Photographic botanical decoration layer for Coastal Reverie.
-   Uses a single transparent sprite built from the supplied floral references.
-   Each section displays a different crop so the decoration language stays varied. */
+/* Generated photographic florals for Coastal Reverie.
+   Kept separate from the template layout and scoped to #invitation-top. */
 
 #invitation-top #counting,
 #invitation-top section[aria-labelledby="story-title"],
@@ -39,214 +38,256 @@
   content: "";
   position: absolute;
   z-index: 1;
-  aspect-ratio: 1;
   pointer-events: none;
-  background-image: url("/images/decor-photo-florals.webp");
   background-repeat: no-repeat;
-  background-size: 300% 200%;
-  filter: drop-shadow(0 1rem 2.5rem rgba(73, 56, 44, .08));
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 1rem 2.4rem rgba(73, 56, 44, .09));
   will-change: transform;
 }
 
-/* Countdown — pink rose corner with loose petals. */
+/* Countdown — soft pink floral corner. */
 #invitation-top #counting::after {
-  width: clamp(19rem, 33vw, 33rem);
-  right: clamp(-10rem, -6vw, -4rem);
-  top: clamp(-9rem, -5vw, -3rem);
-  background-position: 0% 0%;
-  opacity: .78;
+  width: clamp(18rem, 29vw, 29rem);
+  aspect-ratio: 4 / 3;
+  right: clamp(-7rem, -4vw, -2rem);
+  top: clamp(-5rem, -3vw, -2rem);
+  background-image: url("/images/coastal-decor-countdown.webp");
+  opacity: .84;
   transform: scaleX(-1) rotate(-4deg);
-  animation: photoRoseSway 11s ease-in-out infinite;
+  animation: coastalPhotoFloat 11s ease-in-out infinite;
 }
 
-/* Story — a taller, narrower rose cascade rather than a corner bouquet. */
+/* Story — vertical rose cascade, deliberately different from the corners. */
 #invitation-top section[aria-labelledby="story-title"]::before,
 #invitation-top section[aria-labelledby="story-title"]::after {
-  width: clamp(13rem, 21vw, 20rem);
-  top: 12%;
-  background-position: 50% 0%;
-  opacity: .52;
+  width: clamp(9rem, 14vw, 14rem);
+  aspect-ratio: 294 / 440;
+  background-image: url("/images/coastal-decor-story.webp");
 }
 
 #invitation-top section[aria-labelledby="story-title"]::before {
-  left: clamp(-7rem, -4vw, -2rem);
-  transform: rotate(-7deg);
-  animation: photoVineFloat 13s ease-in-out infinite;
+  left: clamp(-4.5rem, -2.5vw, -1.5rem);
+  top: 12%;
+  opacity: .62;
+  transform: rotate(-5deg);
+  animation: coastalPhotoSway 13s ease-in-out infinite;
 }
 
 #invitation-top section[aria-labelledby="story-title"]::after {
-  right: clamp(-8rem, -5vw, -3rem);
-  bottom: 8%;
-  top: auto;
-  transform: scaleX(-1) rotate(8deg);
+  right: clamp(-5rem, -3vw, -2rem);
+  bottom: 7%;
   opacity: .34;
-  animation: photoVineFloat 14s ease-in-out -7s infinite reverse;
+  transform: scaleX(-1) rotate(7deg);
+  animation: coastalPhotoSway 14s ease-in-out -6s infinite reverse;
 }
 
-/* Event details — fuller rose bouquet, different crop from countdown/story. */
+/* Event details — fuller rose bouquet around the large open edges. */
 #invitation-top section[aria-labelledby="events-title"]::before,
 #invitation-top section[aria-labelledby="events-title"]::after {
-  width: clamp(19rem, 31vw, 31rem);
-  background-position: 100% 0%;
-  opacity: .68;
+  width: clamp(17rem, 27vw, 27rem);
+  aspect-ratio: 4 / 3;
+  background-image: url("/images/coastal-decor-events.webp");
 }
 
 #invitation-top section[aria-labelledby="events-title"]::before {
-  left: clamp(-9rem, -6vw, -4rem);
-  bottom: clamp(-9rem, -6vw, -4rem);
+  left: clamp(-8rem, -5vw, -3rem);
+  bottom: clamp(-6rem, -4vw, -2rem);
+  opacity: .72;
   transform: rotate(7deg);
-  animation: photoBouquetFloat 12s ease-in-out infinite;
+  animation: coastalPhotoFloat 12s ease-in-out infinite;
 }
 
 #invitation-top section[aria-labelledby="events-title"]::after {
-  right: clamp(-10rem, -7vw, -5rem);
-  top: clamp(-10rem, -6vw, -4rem);
-  transform: scaleX(-1) rotate(8deg);
-  opacity: .46;
-  animation: photoBouquetFloat 13s ease-in-out -6s infinite reverse;
+  right: clamp(-8rem, -5vw, -3rem);
+  top: clamp(-6rem, -4vw, -2rem);
+  opacity: .42;
+  transform: scaleX(-1) rotate(7deg);
+  animation: coastalPhotoFloat 13s ease-in-out -5s infinite reverse;
 }
 
-#invitation-top section[aria-labelledby="events-title"] article {
-  overflow: hidden;
-}
-
-#invitation-top section[aria-labelledby="events-title"] article::after {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  width: 7.5rem;
-  aspect-ratio: 1;
-  right: -2rem;
-  top: -.8rem;
-  pointer-events: none;
-  background: url("/images/decor-photo-florals.webp") 100% 0% / 300% 200% no-repeat;
-  opacity: .13;
-  transform: scaleX(-1) rotate(-8deg);
-  transition: opacity .35s ease, transform .4s ease;
-}
-
-#invitation-top section[aria-labelledby="events-title"] article > * {
-  position: relative;
-  z-index: 1;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  #invitation-top section[aria-labelledby="events-title"] article:hover::after {
-    opacity: .23;
-    transform: scaleX(-1) rotate(-3deg) scale(1.06);
-  }
-}
-
-/* Seating — realistic dried wreath/grasses, kept lighter so the table labels remain dominant. */
+/* Seating — dried florals kept deliberately faint so table names remain dominant. */
 #invitation-top section[aria-labelledby="seating-title"]::before,
 #invitation-top section[aria-labelledby="seating-title"]::after {
-  width: clamp(16rem, 27vw, 27rem);
-  background-position: 0% 100%;
-  opacity: .43;
+  width: clamp(14rem, 22vw, 22rem);
+  aspect-ratio: 4 / 3;
+  background-image: url("/images/coastal-decor-seating.webp");
 }
 
 #invitation-top section[aria-labelledby="seating-title"]::before {
-  left: clamp(-9rem, -6vw, -4rem);
-  bottom: clamp(-8rem, -5vw, -3rem);
+  left: clamp(-7rem, -4vw, -3rem);
+  bottom: clamp(-5rem, -3vw, -2rem);
+  opacity: .34;
   transform: rotate(-5deg);
-  animation: photoGrassSway 12s ease-in-out infinite;
+  animation: coastalPhotoSway 12s ease-in-out infinite;
 }
 
 #invitation-top section[aria-labelledby="seating-title"]::after {
-  right: clamp(-10rem, -7vw, -5rem);
-  top: clamp(-8rem, -5vw, -3rem);
-  transform: scaleX(-1) rotate(6deg);
-  opacity: .28;
-  animation: photoGrassSway 13s ease-in-out -6s infinite reverse;
+  right: clamp(-8rem, -5vw, -4rem);
+  top: clamp(-5rem, -3vw, -2rem);
+  opacity: .22;
+  transform: scaleX(-1) rotate(5deg);
+  animation: coastalPhotoSway 13s ease-in-out -6s infinite reverse;
 }
 
-/* Programme — sweeping dried branch, visually distinct from the seating wreath. */
+/* Programme — wide dried garland sweeping through the bottom edge. */
 #invitation-top section[aria-labelledby="programme-title"]::before,
 #invitation-top section[aria-labelledby="programme-title"]::after {
-  width: clamp(23rem, 40vw, 40rem);
-  background-position: 50% 100%;
+  width: clamp(22rem, 39vw, 39rem);
+  aspect-ratio: 440 / 248;
+  background-image: url("/images/coastal-decor-programme.webp");
 }
 
 #invitation-top section[aria-labelledby="programme-title"]::before {
-  left: clamp(-12rem, -8vw, -5rem);
-  bottom: clamp(-11rem, -7vw, -5rem);
-  opacity: .56;
+  left: clamp(-10rem, -6vw, -4rem);
+  bottom: clamp(-7rem, -4vw, -3rem);
+  opacity: .58;
   transform: rotate(3deg);
-  animation: photoBranchFloat 13s ease-in-out infinite;
+  animation: coastalPhotoFloat 13s ease-in-out infinite;
 }
 
 #invitation-top section[aria-labelledby="programme-title"]::after {
-  right: clamp(-15rem, -10vw, -7rem);
-  top: clamp(-13rem, -8vw, -6rem);
-  opacity: .20;
-  transform: scaleX(-1) rotate(-9deg);
-  animation: photoBranchFloat 15s ease-in-out -7s infinite reverse;
+  right: clamp(-12rem, -8vw, -6rem);
+  top: clamp(-8rem, -5vw, -4rem);
+  opacity: .19;
+  transform: scaleX(-1) rotate(-7deg);
+  animation: coastalPhotoFloat 15s ease-in-out -7s infinite reverse;
 }
 
-/* Footer — mixed rose + dried bouquet for a fuller closing flourish. */
+/* Footer — repeat the fuller rose bouquet as a closing flourish. */
 #invitation-top > footer::before,
 #invitation-top > footer::after {
-  width: clamp(23rem, 39vw, 40rem);
-  bottom: clamp(-12rem, -8vw, -6rem);
-  background-position: 100% 100%;
-  opacity: .74;
+  width: clamp(18rem, 30vw, 30rem);
+  aspect-ratio: 4 / 3;
+  bottom: clamp(-8rem, -5vw, -3rem);
+  background-image: url("/images/coastal-decor-events.webp");
 }
 
 #invitation-top > footer::before {
-  left: clamp(-11rem, -7vw, -5rem);
+  left: clamp(-8rem, -5vw, -3rem);
+  opacity: .66;
   transform: rotate(4deg);
-  animation: photoBouquetFloat 13s ease-in-out infinite;
+  animation: coastalPhotoFloat 13s ease-in-out infinite;
 }
 
 #invitation-top > footer::after {
-  right: clamp(-11rem, -7vw, -5rem);
+  right: clamp(-8rem, -5vw, -3rem);
+  opacity: .46;
   transform: scaleX(-1) rotate(4deg);
-  opacity: .55;
-  animation: photoBouquetFloat 13s ease-in-out -6s infinite reverse;
+  animation: coastalPhotoFloat 13s ease-in-out -6s infinite reverse;
 }
 
-@keyframes photoRoseSway {
-  0%, 100% { transform: scaleX(-1) rotate(-4deg) translateY(0); }
-  50% { transform: scaleX(-1) rotate(-1deg) translateY(-.55rem); }
-}
-
-@keyframes photoVineFloat {
+@keyframes coastalPhotoFloat {
   0%, 100% { translate: 0 0; }
-  50% { translate: .3rem -.45rem; }
+  50% { translate: 0 -.5rem; }
 }
 
-@keyframes photoBouquetFloat {
+@keyframes coastalPhotoSway {
   0%, 100% { translate: 0 0; }
-  50% { translate: 0 -.55rem; }
+  50% { translate: .3rem -.35rem; }
 }
 
-@keyframes photoGrassSway {
-  0%, 100% { translate: 0 0; }
-  50% { translate: .4rem -.25rem; }
-}
-
-@keyframes photoBranchFloat {
-  0%, 100% { translate: 0 0; }
-  50% { translate: .45rem -.35rem; }
-}
-
-@media (max-width: 760px) {
-  #invitation-top #counting::after { width: 15rem; right: -7rem; top: -5rem; opacity: .62; }
+/* Tablet */
+@media (max-width: 980px) {
+  #invitation-top #counting::after { width: 20rem; right: -7rem; }
 
   #invitation-top section[aria-labelledby="story-title"]::before,
-  #invitation-top section[aria-labelledby="story-title"]::after { width: 9rem; opacity: .27; }
+  #invitation-top section[aria-labelledby="story-title"]::after { width: 10rem; }
 
   #invitation-top section[aria-labelledby="events-title"]::before,
-  #invitation-top section[aria-labelledby="events-title"]::after { width: 15rem; opacity: .42; }
-
-  #invitation-top section[aria-labelledby="seating-title"]::before,
-  #invitation-top section[aria-labelledby="seating-title"]::after { width: 11rem; opacity: .24; }
+  #invitation-top section[aria-labelledby="events-title"]::after { width: 19rem; }
 
   #invitation-top section[aria-labelledby="programme-title"]::before,
-  #invitation-top section[aria-labelledby="programme-title"]::after { width: 19rem; opacity: .28; }
+  #invitation-top section[aria-labelledby="programme-title"]::after { width: 27rem; }
+}
+
+/* Mobile — smaller, pushed farther into the edges, and never over the main text. */
+@media (max-width: 760px) {
+  #invitation-top #counting::after {
+    width: 13rem;
+    right: -5.5rem;
+    top: -2.5rem;
+    opacity: .60;
+  }
+
+  #invitation-top section[aria-labelledby="story-title"]::before {
+    width: 7rem;
+    left: -3.6rem;
+    top: 18%;
+    opacity: .32;
+  }
+
+  #invitation-top section[aria-labelledby="story-title"]::after {
+    width: 6.5rem;
+    right: -3.5rem;
+    bottom: 5%;
+    opacity: .20;
+  }
+
+  #invitation-top section[aria-labelledby="events-title"]::before {
+    width: 11rem;
+    left: -5.5rem;
+    bottom: -2.5rem;
+    opacity: .36;
+  }
+
+  #invitation-top section[aria-labelledby="events-title"]::after {
+    width: 10rem;
+    right: -5rem;
+    top: -2rem;
+    opacity: .24;
+  }
+
+  #invitation-top section[aria-labelledby="seating-title"]::before {
+    width: 8.5rem;
+    left: -4.5rem;
+    bottom: -2rem;
+    opacity: .20;
+  }
+
+  #invitation-top section[aria-labelledby="seating-title"]::after {
+    width: 8rem;
+    right: -4.5rem;
+    top: -1.5rem;
+    opacity: .13;
+  }
+
+  #invitation-top section[aria-labelledby="programme-title"]::before {
+    width: 15rem;
+    left: -7.5rem;
+    bottom: -2.5rem;
+    opacity: .32;
+  }
+
+  #invitation-top section[aria-labelledby="programme-title"]::after {
+    width: 13rem;
+    right: -7rem;
+    top: -2rem;
+    opacity: .12;
+  }
 
   #invitation-top > footer::before,
-  #invitation-top > footer::after { width: 17rem; opacity: .48; }
+  #invitation-top > footer::after {
+    width: 12rem;
+    bottom: -4rem;
+  }
+
+  #invitation-top > footer::before { left: -5rem; opacity: .42; }
+  #invitation-top > footer::after { right: -5rem; opacity: .30; }
+}
+
+@media (max-width: 480px) {
+  #invitation-top #counting::after { width: 11rem; right: -5rem; opacity: .52; }
+
+  #invitation-top section[aria-labelledby="events-title"]::before,
+  #invitation-top section[aria-labelledby="events-title"]::after,
+  #invitation-top section[aria-labelledby="seating-title"]::after,
+  #invitation-top section[aria-labelledby="programme-title"]::after {
+    display: none;
+  }
+
+  #invitation-top section[aria-labelledby="story-title"]::before { width: 6rem; left: -3.5rem; }
+  #invitation-top section[aria-labelledby="programme-title"]::before { width: 12rem; left: -6.5rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
