@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./coastal-reverie-decorations.css";
+import { TemplateCardRouter } from "@/components/template-card-router";
 
 export const metadata: Metadata = {
   title: "Event Invitations — The most elegant save the date",
@@ -19,7 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <TemplateCardRouter />
+        {children}
+      </body>
     </html>
   );
 }
