@@ -25,6 +25,8 @@ test("renders the complete Coastal Reverie invitation", async () => {
   const { default: Invitation } = await vite.ssrLoadModule("/app/templates/coastal-reverie/page.tsx");
   const html = renderToStaticMarkup(React.createElement(Invitation));
   assert.match(html, /S &amp; S/);
+  assert.match(html, /ivory-envelope-mobile\.webp/);
+  assert.match(html, /ivory-envelope-desktop\.webp/);
   assert.match(html, /Salma/);
   assert.match(html, /Counting the days/);
   assert.match(html, /Our Journey/);

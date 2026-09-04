@@ -27,8 +27,8 @@ const weddingTime = new Date("2027-09-17T16:30:00+04:00").getTime();
 
 const envelopeTiming = {
   sealed: 1_000,
-  opening: 1_550,
-  flash: 650,
+  opening: 1_450,
+  flash: 720,
 } as const;
 
 const story = [
@@ -173,19 +173,19 @@ export function CoastalReverieInvitation() {
   };
 
   return (
-    <main className={`${styles.invitation} ${phase !== "sealed" ? styles.heroPreparing : ""} ${phase === "flash" || phase === "gone" ? styles.invitationReady : ""}`} id="invitation-top">
+    <main className={`${styles.invitation} ${phase === "flash" || phase === "gone" ? styles.invitationReady : ""}`} id="invitation-top">
       <div className={`${styles.envelopeIntro} ${phase === "sealed" ? styles.sealed : phase === "opening" ? styles.opening : phase === "flash" ? styles.flash : styles.gone}`} aria-hidden={phase === "gone"}>
         <div className={styles.openingFlash} aria-hidden="true" />
         <div className={`${styles.envelopePanel} ${styles.envelopePanelLeft}`} aria-hidden="true">
           <picture>
-            <source media="(max-width: 760px)" srcSet="/images/forest-envelope-mobile.webp" />
-            <img src="/images/forest-envelope-desktop.webp" alt="" />
+            <source media="(max-width: 760px)" srcSet="/images/ivory-envelope-mobile.webp" />
+            <img src="/images/ivory-envelope-desktop.webp" alt="" />
           </picture>
         </div>
         <div className={`${styles.envelopePanel} ${styles.envelopePanelRight}`} aria-hidden="true">
           <picture>
-            <source media="(max-width: 760px)" srcSet="/images/forest-envelope-mobile.webp" />
-            <img src="/images/forest-envelope-desktop.webp" alt="" />
+            <source media="(max-width: 760px)" srcSet="/images/ivory-envelope-mobile.webp" />
+            <img src="/images/ivory-envelope-desktop.webp" alt="" />
           </picture>
         </div>
         <div className={styles.envelopeSeam} aria-hidden="true" />
