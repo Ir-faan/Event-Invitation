@@ -25,6 +25,12 @@ import { SeatingArrangement, type SeatingAssignment } from "@/components/seating
 
 const weddingTime = new Date("2027-09-17T16:30:00+04:00").getTime();
 
+const envelopeTiming = {
+  sealed: 1_000,
+  opening: 1_550,
+  flash: 650,
+} as const;
+
 const story = [
   {
     date: "October 2025",
@@ -129,15 +135,15 @@ export function CoastalReverieInvitation() {
 
   useEffect(() => {
     if (phase === "sealed") {
-      const timer = window.setTimeout(() => setPhase("opening"), 1_350);
+      const timer = window.setTimeout(() => setPhase("opening"), envelopeTiming.sealed);
       return () => window.clearTimeout(timer);
     }
     if (phase === "opening") {
-      const timer = window.setTimeout(() => setPhase("flash"), 2_050);
+      const timer = window.setTimeout(() => setPhase("flash"), envelopeTiming.opening);
       return () => window.clearTimeout(timer);
     }
     if (phase === "flash") {
-      const timer = window.setTimeout(() => setPhase("gone"), 1_050);
+      const timer = window.setTimeout(() => setPhase("gone"), envelopeTiming.flash);
       return () => window.clearTimeout(timer);
     }
   }, [phase, replay]);
@@ -167,10 +173,9 @@ export function CoastalReverieInvitation() {
   };
 
   return (
-    <main className={`${styles.invitation} ${phase === "flash" || phase === "gone" ? styles.invitationReady : ""}`} id="invitation-top">
+    <main className={`${styles.invitation} ${phase !== "sealed" ? styles.heroPreparing : ""} ${phase === "flash" || phase === "gone" ? styles.invitationReady : ""}`} id="invitation-top">
       <div className={`${styles.envelopeIntro} ${phase === "sealed" ? styles.sealed : phase === "opening" ? styles.opening : phase === "flash" ? styles.flash : styles.gone}`} aria-hidden={phase === "gone"}>
         <div className={styles.openingFlash} aria-hidden="true" />
-        <div className={styles.envelopeLight} aria-hidden="true" />
         <div className={`${styles.envelopePanel} ${styles.envelopePanelLeft}`} aria-hidden="true">
           <picture>
             <source media="(max-width: 760px)" srcSet="/images/forest-envelope-mobile.webp" />
@@ -185,7 +190,7 @@ export function CoastalReverieInvitation() {
         </div>
         <div className={styles.envelopeSeam} aria-hidden="true" />
         <button className={styles.envelopeTrigger} type="button" onClick={() => setPhase("opening")} aria-label="Open Salma and Sam's wedding invitation">
-          <span>Open invitation</span>
+          <span className={styles.sealInitials} aria-hidden="true">S &amp; S</span>
         </button>
       </div>
 
