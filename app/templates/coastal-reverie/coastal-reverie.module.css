@@ -264,12 +264,12 @@
   .portalLeft { left: -5rem; top: -3rem; }
   .portalRight { right: -4rem; bottom: -3rem; }
   .storySection { padding: 5.2rem 1.1rem 4.8rem; }
-  .storySection::before { background: linear-gradient(90deg, transparent 1.15rem, rgba(150,116,82,.16) 1.2rem, transparent 1.25rem); }
+  .storySection::before { background: none; }
   .storyBloomLeft { left: -5.5rem; }
   .storyBloomRight { right: -5.5rem; }
-  .storyTimeline { width: 100%; margin-top: 3rem; padding-left: 2.8rem; padding-right: .2rem; }
+  .storyTimeline { width: 100%; margin-top: 3rem; padding-left: 0; padding-right: .2rem; }
   .storyTimeline::before { left: 1.2rem; }
-  .storyChapter { min-height: auto; display: block; margin-bottom: 3.4rem; }
+  .storyChapter { min-height: auto; display: block; margin-bottom: 3.4rem; padding-left: 3rem; }
   .storyChapter:nth-child(odd) .storyText, .storyChapter:nth-child(even) .storyText { padding: 0; text-align: left; }
   .storyChapter[data-wedding-reveal], .storyChapter:nth-child(odd)[data-wedding-reveal], .storyChapter:nth-child(even)[data-wedding-reveal] { transform: translateY(1.4rem); }
   .storyChapter[data-visible="true"] { transform: none; }
@@ -304,14 +304,14 @@
   .programmeTitle > p { letter-spacing: .22em; font-size: .6rem; }
   .programmeTitle > span { font-size: .9rem; }
   .programmeGrid { grid-template-columns: 1fr; width: min(24rem, 100%); gap: 0; margin-top: 3.6rem; }
-  .programmeItem { position: relative; display: grid; grid-template-columns: 4.1rem minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: 1rem; min-height: 9.3rem; padding-bottom: 1.3rem; text-align: left; }
+  .programmeItem { position: relative; display: grid; grid-template-columns: 3.8rem minmax(0, max-content) max-content; grid-template-rows: auto auto; align-items: center; column-gap: .62rem; min-height: 8rem; padding-bottom: 1.25rem; text-align: left; }
   .programmeItem[data-wedding-reveal], .programmeItem:nth-child(odd)[data-wedding-reveal], .programmeItem:nth-child(even)[data-wedding-reveal] { transform: translateY(1.4rem); }
   .programmeItem[data-visible="true"] { transform: none; }
-  .programmeItem::before { content: ""; position: absolute; left: 1.85rem; top: 3.75rem; bottom: .2rem; width: 1px; background: rgba(101,75,57,.2); }
-  .programmeItem time { grid-column: 2; grid-row: 1; justify-self: start; margin: .15rem 0 .8rem; padding: .48rem .85rem; font-size: .68rem; }
-  .programmeItem > div { grid-column: 1; grid-row: 1 / span 3; width: 3.7rem; height: 3.7rem; margin: 0; }
-  .programmeItem h3 { grid-column: 2; grid-row: 2; margin: 0 0 .3rem; font-size: 1rem; line-height: 1.25; }
-  .programmeItem p { grid-column: 2; grid-row: 3; margin: 0; font-size: .76rem; line-height: 1.45; }
+  .programmeItem::before { content: ""; position: absolute; left: 1.85rem; top: 3.72rem; bottom: .2rem; width: 1px; background: rgba(101,75,57,.2); }
+  .programmeItem time { grid-column: 3; grid-row: 1; display: inline-flex; align-items: center; justify-content: center; justify-self: start; min-width: 4.1rem; min-height: 2rem; margin: 0; padding: 0 .72rem; font-size: .66rem; line-height: 1; white-space: nowrap; }
+  .programmeItem > div { grid-column: 1; grid-row: 1 / span 2; align-self: start; width: 3.7rem; height: 3.7rem; margin: 0; }
+  .programmeItem h3 { grid-column: 2; grid-row: 1; align-self: center; margin: 0; font-size: .98rem; line-height: 1.15; white-space: nowrap; }
+  .programmeItem p { grid-column: 2 / 4; grid-row: 2; margin: .5rem 0 0; font-size: .76rem; line-height: 1.45; }
 }
 
 @media (prefers-reduced-motion: reduce) {
