@@ -20,7 +20,7 @@ import {
 
 const collection = [
   { name: "Coastal Reverie", mood: "Sun-washed & timeless", image: "/images/coastal-reverie.webp", tone: "light" },
-  { name: "Rose Afterglow", mood: "Romantic & painterly", image: "/images/rose-afterglow.webp", tone: "dark" },
+  { name: "Rose Afterglow", mood: "Olive & ivory", image: "/images/rose-scratch-hero-olive.webp", tone: "dark" },
   { name: "Moonlit Bloom", mood: "Cinematic & refined", image: "/images/moonlit-bloom.webp", tone: "dark" },
 ];
 

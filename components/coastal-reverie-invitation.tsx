@@ -114,6 +114,12 @@ const programme = [
   { time: "11:30 PM", title: "Farewell", note: "With all our love", icon: PartyPopper },
 ];
 
+const glimpsePhotos = [
+  { src: "/images/rose-afterglow.webp", alt: "An enchanted rose garden glowing at sunset" },
+  { src: "/images/rose-scratch-hero-olive.webp", alt: "Bride and groom reaching for one another inside an ornate frame" },
+  { src: "/images/rose-wedding-curtains-olive.webp", alt: "Olive wedding curtains framed by flowers and greenery" },
+];
+
 function getCountdown(now: number, weddingTime: number) {
   const difference = Math.max(weddingTime - now, 0);
   return {
@@ -228,8 +234,8 @@ export function CoastalReverieInvitation({ variant = "coastal" }: { variant?: "c
 
       {isRose && (
         <div className={`${styles.roseCurtainIntro} ${rosePhase !== "curtains" ? styles.roseCurtainsOpening : ""} ${rosePhase !== "curtains" && rosePhase !== "opening" ? styles.roseCurtainsGone : ""}`} aria-hidden={rosePhase !== "curtains" && rosePhase !== "opening"}>
-          <div className={`${styles.roseCurtainPanel} ${styles.roseCurtainLeft}`} aria-hidden="true"><img src="/images/rose-wedding-curtains.webp" alt="" /></div>
-          <div className={`${styles.roseCurtainPanel} ${styles.roseCurtainRight}`} aria-hidden="true"><img src="/images/rose-wedding-curtains.webp" alt="" /></div>
+          <div className={`${styles.roseCurtainPanel} ${styles.roseCurtainLeft}`} aria-hidden="true"><img src="/images/rose-wedding-curtains-olive.webp" alt="" /></div>
+          <div className={`${styles.roseCurtainPanel} ${styles.roseCurtainRight}`} aria-hidden="true"><img src="/images/rose-wedding-curtains-olive.webp" alt="" /></div>
           <button className={styles.roseCurtainTrigger} type="button" onClick={() => setRosePhase("opening")} aria-label="Open Sofia and Samuel's wedding invitation">
             <span className={styles.roseSeal}><Heart aria-hidden="true" /></span>
             <strong>Tap to open</strong>
@@ -283,6 +289,24 @@ export function CoastalReverieInvitation({ variant = "coastal" }: { variant?: "c
           <div className={styles.heartRule}><span /><Heart aria-hidden="true" /><span /></div>
         </div>
       </section>
+
+      {isRose && <section className={styles.glimpseSection} aria-labelledby="glimpse-title">
+        <div className={styles.glimpseHeading} data-wedding-reveal>
+          <p>A few favourite memories</p>
+          <h2 id="glimpse-title">A Glimpse of Us</h2>
+          <span>A collection of moments that brought us here—quiet smiles, shared adventures and the little things we will always treasure.</span>
+        </div>
+        <div className={styles.glimpseGallery} aria-label="Sofia and Samuel's photo gallery">
+          {glimpsePhotos.map((photo, index) => (
+            <figure className={styles.glimpsePhoto} key={photo.src} data-wedding-reveal style={{ "--chapter-delay": `${index * 110}ms` } as CSSProperties}>
+              <div className={styles.glimpsePhotoFrame}>
+                <img src={photo.src} alt={photo.alt} loading="lazy" />
+              </div>
+              <figcaption>Our story <span>{String(index + 1).padStart(2, "0")}</span></figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>}
 
       <section className={styles.storySection} aria-labelledby="story-title" data-wedding-reveal={isRose ? undefined : ""}>
         <div className={`${styles.storyBloom} ${styles.storyBloomLeft}`} data-wedding-reveal aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
@@ -487,8 +511,8 @@ function ScratchInvitationHero({
       </div>
       <div className={styles.scratchHeroArtwork}>
         <picture className={styles.scratchHeroPicture}>
-          <source media="(min-width: 761px)" srcSet="/images/rose-scratch-hero-wide.webp" />
-          <img src="/images/rose-scratch-hero.webp" alt="Bride and groom reaching for one another within an ornate ivory frame" />
+          <source media="(min-width: 761px)" srcSet="/images/rose-scratch-hero-wide-olive.webp" />
+          <img src="/images/rose-scratch-hero-olive.webp" alt="Bride and groom reaching for one another within an ornate ivory frame" />
         </picture>
         <div className={styles.scratchTarget}>
           <canvas
