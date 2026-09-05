@@ -45,8 +45,10 @@ test("renders the complete Rose Afterglow invitation", async () => {
   assert.match(html, /Tap to open/);
   assert.match(html, /rose-wedding-curtains\.webp/);
   assert.match(html, /rose-scratch-hero\.webp/);
+  assert.match(html, /rose-scratch-hero-wide\.webp/);
   assert.doesNotMatch(html, /Pull to open/);
   assert.doesNotMatch(html, /Scroll to reveal/);
+  assert.doesNotMatch(html, /Tap to reveal/);
   assert.match(html, /Scratch the translucent oval/);
   assert.match(html, /Wedding details/);
   assert.match(html, /Counting the days/);

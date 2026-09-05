@@ -563,33 +563,6 @@
 .scratchHeroCanvas:focus-visible { outline: 3px solid rgba(126,86,70,.68); outline-offset: -6px; }
 .scratchHeroRevealed .scratchHeroCanvas { opacity: 0; visibility: hidden; pointer-events: none; }
 
-.tapRevealButton {
-  position: absolute;
-  z-index: 7;
-  left: 50%;
-  bottom: 3.4%;
-  min-height: 3rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: .5rem;
-  padding: 0 1.15rem;
-  border: 1px solid rgba(120,87,67,.2);
-  border-radius: 999px;
-  color: #715449;
-  background: rgba(255,251,245,.94);
-  box-shadow: 0 0 0 .3rem rgba(255,250,243,.35), 0 0 1.6rem rgba(180,132,96,.3);
-  transform: translateX(-50%);
-  cursor: pointer;
-  touch-action: manipulation;
-  text-transform: uppercase;
-  letter-spacing: .13em;
-  font: 700 .66rem var(--sans);
-  animation: roseButtonGlow 2.3s ease-in-out infinite;
-}
-
-.tapRevealButton svg { width: .9rem; }
-
 .rosePetals {
   position: absolute;
   z-index: 4;
@@ -784,72 +757,71 @@
   height: 100svh;
   min-height: 38rem;
   padding: 0;
-  background:
-    radial-gradient(circle at 50% 42%, #fffdf9 0 20rem, transparent 44rem),
-    linear-gradient(135deg, #f6ece2, #fffaf4 54%, #edddd4);
+  background: #f5ede3;
 }
+
+.roseVariant .scratchHero::before,
+.roseVariant .scratchHero::after { display: none; }
 
 .scratchHeroArtwork {
   position: relative;
   z-index: 3;
+  width: 100%;
   height: 100svh;
   min-height: 38rem;
-  aspect-ratio: 2 / 3;
+  aspect-ratio: auto;
   flex: none;
 }
 
-.scratchHeroArtwork > img {
+.scratchHeroPicture {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.scratchHeroPicture > img {
   width: 100%;
   height: 100%;
   max-width: none;
-  object-fit: cover;
+  object-fit: fill;
   filter: saturate(.84) contrast(.97) brightness(1.025);
 }
 
 .scratchTarget {
   position: absolute;
   z-index: 5;
-  top: 20.2%;
-  left: 25%;
-  width: 50%;
-  height: 50.5%;
+  top: 15.3%;
+  left: 35.15%;
+  width: 29.9%;
+  height: 67.2%;
   overflow: hidden;
   border-radius: 50%;
-  box-shadow: inset 0 0 1.7rem rgba(255,255,255,.3);
+  box-shadow: inset 0 0 1.2rem rgba(255,255,255,.18);
 }
 
 .scratchPrompt {
   position: absolute;
   z-index: 6;
+  top: 50%;
   left: 50%;
-  bottom: 10%;
-  display: inline-flex;
-  align-items: center;
-  gap: .42rem;
-  min-width: max-content;
-  padding: .62rem .82rem;
-  border: 1px solid rgba(117,83,66,.12);
-  border-radius: 999px;
-  color: rgba(91,65,54,.82);
-  background: rgba(255,250,243,.68);
-  box-shadow: 0 .6rem 1.4rem rgba(77,52,40,.08);
-  transform: translateX(-50%);
+  color: rgba(107,75,63,.72);
+  text-shadow: 0 .1rem .75rem rgba(255,250,243,.92);
+  transform: translate(-50%,-50%) rotate(-4deg);
   pointer-events: none;
-  text-transform: uppercase;
-  letter-spacing: .12em;
-  font: 700 clamp(.48rem,1vw,.58rem) var(--sans);
-  backdrop-filter: blur(5px);
+  white-space: nowrap;
+  font: 400 clamp(2.8rem,5vw,4.8rem)/1 var(--script);
   transition: opacity .45s ease;
 }
 
-.scratchPrompt svg { width: .8rem; }
 .scratchHeroRevealed .scratchPrompt { opacity: 0; }
 .roseVariant .scratchHeroCanvas { border-radius: 50%; }
 
 .roseVariant .scratchHeroCopy {
-  right: 8%;
-  bottom: 5.9%;
-  left: 8%;
+  top: 40%;
+  right: 3.5%;
+  bottom: auto;
+  left: auto;
+  width: 28%;
   transform: translateY(2.25rem) scale(.97);
   transition: opacity 1s ease .08s, transform 1.15s cubic-bezier(.16,.78,.18,1) .08s;
 }
@@ -859,17 +831,23 @@
   transform: translateY(-.65rem) scale(1);
 }
 
-.roseVariant .scratchHeroCopy h1 { font-size: clamp(3.2rem, 8.5svh, 5.4rem); }
-.roseVariant .tapRevealButton { bottom: 13%; }
+.roseVariant .scratchHeroCopy h1 { font-size: clamp(3rem, 5.3vw, 5.4rem); }
 .roseVariant .revealSparkles { top: 45%; }
 .roseVariant .continueHint { color: rgba(100,76,66,.75); }
 
-.roseVariant .countdownSection { min-height: 25rem; }
-.roseVariant .countdownContent { padding-block: 3.6rem; }
+.roseVariant .gardenPortal,
+.roseVariant .storyBloom { display: none; }
+
+.roseVariant .countdownSection {
+  min-height: 0;
+  display: block;
+}
+
+.roseVariant .countdownContent { padding-block: 3rem 3.25rem; }
 .roseVariant .countdownContent h2 { font-size: clamp(2.8rem, 4vw, 3.75rem); }
 
 .roseVariant .storySection {
-  padding: clamp(4.5rem, 7vw, 6.5rem) 4vw;
+  padding: clamp(3.6rem, 5vw, 4.8rem) 4vw clamp(4rem, 5.5vw, 5.2rem);
 }
 
 .roseVariant .storyTimeline {
@@ -877,7 +855,8 @@
   display: grid;
   grid-template-columns: repeat(3,minmax(0,1fr));
   gap: clamp(1rem,2vw,2rem);
-  margin-top: 3.2rem;
+  align-items: stretch;
+  margin-top: 2.7rem;
   padding-top: 2.1rem;
 }
 
@@ -892,8 +871,10 @@
 }
 
 .roseVariant .storyChapter {
+  min-width: 0;
   min-height: 15rem;
   display: block;
+  height: 100%;
   padding: 2.4rem clamp(1.2rem,2vw,2rem) 1.8rem;
   border: 1px solid rgba(143,99,84,.12);
   border-radius: 45% 45% 1rem 1rem / 12% 12% 1rem 1rem;
@@ -901,6 +882,15 @@
   box-shadow: 0 1rem 2.8rem rgba(88,57,47,.055);
   text-align: center;
 }
+
+.roseVariant .storyChapter[data-wedding-reveal],
+.roseVariant .storyChapter:nth-child(odd)[data-wedding-reveal],
+.roseVariant .storyChapter:nth-child(even)[data-wedding-reveal] {
+  transform: translateY(1rem);
+}
+
+.roseVariant .storyChapter[data-visible="true"] { transform: none; }
+.roseVariant .storyText p { overflow-wrap: anywhere; }
 
 .roseVariant .storyChapter:nth-child(odd) .storyText,
 .roseVariant .storyChapter:nth-child(even) .storyText {
@@ -922,7 +912,7 @@
 
 .roseVariant .memorySection {
   min-height: auto;
-  padding: clamp(4.8rem,7vw,6.5rem) 1.5rem;
+  padding: clamp(3.8rem,5vw,5rem) 1.5rem;
   isolation: isolate;
 }
 
@@ -970,7 +960,7 @@
 
 .roseVariant .eventsSection {
   position: relative;
-  padding: clamp(4.8rem,7vw,6.5rem) 4vw;
+  padding: clamp(3.8rem,5vw,5rem) 4vw;
 }
 
 .roseVariant .lightTitle { margin-bottom: 2.8rem; }
@@ -1039,18 +1029,19 @@
 }
 
 .roseVariant section[aria-labelledby="seating-title"] {
-  padding-block: clamp(4.5rem,6vw,5.8rem);
+  padding-block: clamp(3.8rem,5vw,4.8rem);
   background: linear-gradient(180deg,#ead7ce,#f8eee8 52%,#eeddd5);
 }
 
 .roseVariant .programmeSection {
-  padding: clamp(4.8rem,7vw,6.5rem) 3vw;
+  padding: clamp(3.8rem,5vw,5rem) 3vw;
 }
 
 .roseVariant .programmeGrid {
   width: min(72rem,100%);
   grid-template-columns: repeat(4,minmax(0,1fr));
   gap: 1rem;
+  align-items: stretch;
   margin-top: 3rem;
 }
 
@@ -1058,11 +1049,20 @@
 
 .roseVariant .programmeItem {
   min-height: 12rem;
+  height: 100%;
   padding: 1.4rem 1rem;
   border: 1px solid rgba(255,255,255,.25);
   border-radius: .8rem;
   background: rgba(255,248,243,.16);
 }
+
+.roseVariant .programmeItem[data-wedding-reveal],
+.roseVariant .programmeItem:nth-child(odd)[data-wedding-reveal],
+.roseVariant .programmeItem:nth-child(even)[data-wedding-reveal] {
+  transform: translateY(1rem);
+}
+
+.roseVariant .programmeItem[data-visible="true"] { transform: none; }
 
 .roseVariant .footer { padding-block: 3.2rem 4.2rem; }
 
@@ -1073,17 +1073,29 @@
     max-width: none;
   }
 
+  .scratchHeroPicture > img { object-fit: cover; }
+
+  .scratchTarget {
+    top: 14.7%;
+    left: 18.8%;
+    width: 62.4%;
+    height: 71%;
+  }
+
+  .scratchPrompt { font-size: clamp(2.65rem,13vw,4rem); }
+
   .roseVariant .scratchHeroCopy {
+    top: auto;
     right: 10%;
+    bottom: 5.9%;
     left: 10%;
+    width: auto;
   }
 
   .roseVariant .scratchHeroCopy h1 { font-size: clamp(3rem,15vw,4.35rem); }
-  .roseVariant .tapRevealButton { bottom: 12.5%; }
-  .roseVariant .countdownSection { min-height: 26rem; }
-  .roseVariant .countdownContent { padding-block: 3.6rem; }
+  .roseVariant .countdownContent { padding-block: 2.9rem 3.1rem; }
 
-  .roseVariant .storySection { padding: 4.6rem 1rem; }
+  .roseVariant .storySection { padding: 3.7rem 1rem 4rem; }
 
   .roseVariant .storyTimeline {
     display: block;
@@ -1119,10 +1131,10 @@
   }
 
   .roseVariant .storyText h3 { font-size: 2.2rem; }
-  .roseVariant .memorySection { padding: 4.4rem .8rem; }
+  .roseVariant .memorySection { padding: 3.8rem .8rem; }
   .roseVariant .memoryCard { padding: 1rem .9rem; }
   .roseVariant .memoryCard h2 { font-size: clamp(3.5rem,17vw,5rem); }
-  .roseVariant .eventsSection { padding: 4.5rem .9rem; }
+  .roseVariant .eventsSection { padding: 3.8rem .9rem; }
 
   .roseVariant .eventCard {
     display: flex;
@@ -1138,8 +1150,8 @@
   .roseVariant .mapFrame { width: 100%; aspect-ratio: 1.75; margin-top: 0; }
   .roseVariant .eventCard > a { justify-content: center; margin-top: .85rem; }
 
-  .roseVariant section[aria-labelledby="seating-title"] { padding-block: 4.4rem; }
-  .roseVariant .programmeSection { padding-block: 4.5rem; }
+  .roseVariant section[aria-labelledby="seating-title"] { padding-block: 3.8rem; }
+  .roseVariant .programmeSection { padding-block: 3.8rem; }
 
   .roseVariant .programmeGrid {
     grid-template-columns: 1fr;
