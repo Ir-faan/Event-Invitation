@@ -410,27 +410,20 @@ function ScratchInvitationHero({
       context.globalCompositeOperation = "source-over";
 
       const gradient = context.createLinearGradient(0, 0, rect.width, rect.height);
-      gradient.addColorStop(0, "#fbf7ef");
-      gradient.addColorStop(0.5, "#eadfce");
-      gradient.addColorStop(1, "#f8f1e6");
+      gradient.addColorStop(0, "rgba(255, 250, 241, .58)");
+      gradient.addColorStop(0.5, "rgba(218, 196, 175, .48)");
+      gradient.addColorStop(1, "rgba(255, 248, 239, .54)");
       context.fillStyle = gradient;
       context.fillRect(0, 0, rect.width, rect.height);
 
-      context.strokeStyle = "rgba(170, 132, 86, .18)";
+      context.strokeStyle = "rgba(255, 255, 255, .24)";
       context.lineWidth = 1;
-      for (let inset = 18; inset < Math.min(rect.width, rect.height) * 0.28; inset += 13) {
+      for (let y = 7; y < rect.height; y += 11) {
         context.beginPath();
-        context.ellipse(rect.width / 2, rect.height * 0.43, rect.width / 2 - inset, rect.height * 0.31 - inset * 0.45, 0, 0, Math.PI * 2);
+        context.moveTo(0, y);
+        context.lineTo(rect.width, y + Math.sin(y) * 1.2);
         context.stroke();
       }
-
-      context.fillStyle = "#79624f";
-      context.textAlign = "center";
-      context.font = `600 ${Math.max(10, rect.width * 0.027)}px Montserrat, Arial, sans-serif`;
-      context.fillText("GENTLY SCRATCH TO REVEAL", rect.width / 2, rect.height * 0.78);
-      context.font = `400 ${Math.max(32, rect.width * 0.1)}px Birthstone, Georgia, serif`;
-      context.fillStyle = "#a27b56";
-      context.fillText("our invitation", rect.width / 2, rect.height * 0.47);
     };
 
     drawCover();
@@ -462,8 +455,8 @@ function ScratchInvitationHero({
     context.fill();
     context.restore();
 
-    const columns = 20;
-    const rows = 28;
+    const columns = 18;
+    const rows = 24;
     const cellX = Math.floor((x / rect.width) * columns);
     const cellY = Math.floor((y / rect.height) * rows);
     const cellRadius = Math.max(1, Math.ceil((radius / rect.width) * columns));
@@ -480,38 +473,41 @@ function ScratchInvitationHero({
       <div className={styles.rosePetals} aria-hidden="true">
         {Array.from({ length: 11 }, (_, index) => <span key={index} style={{ "--x": `${(index * 37) % 96}%`, "--delay": `${-(index % 6) * 2.4}s`, "--duration": `${16 + (index % 4) * 2.5}s` } as CSSProperties}>❀</span>)}
       </div>
-      <div className={styles.scratchCardHero}>
+      <div className={styles.scratchHeroArtwork}>
         <img src="/images/rose-scratch-hero.webp" alt="Bride and groom reaching for one another within an ornate ivory frame" />
+        <div className={styles.scratchTarget}>
+          <canvas
+            ref={canvasRef}
+            className={styles.scratchHeroCanvas}
+            aria-label="Scratch the translucent oval to reveal Sofia and Samuel's wedding invitation"
+            role="img"
+            tabIndex={phase === "scratch" ? 0 : -1}
+            onKeyDown={(event) => {
+              if ((event.key === "Enter" || event.key === " ") && phase === "scratch") {
+                event.preventDefault();
+                onReveal();
+              }
+            }}
+            onPointerDown={(event) => {
+              drawing.current = true;
+              event.currentTarget.setPointerCapture?.(event.pointerId);
+              scratchAt(event);
+            }}
+            onPointerMove={scratchAt}
+            onPointerUp={(event) => {
+              drawing.current = false;
+              event.currentTarget.releasePointerCapture?.(event.pointerId);
+            }}
+            onPointerCancel={() => { drawing.current = false; }}
+            onPointerLeave={() => { drawing.current = false; }}
+          />
+          {!revealed && phase === "scratch" && <span className={styles.scratchPrompt}><Hand aria-hidden="true" /> Gently scratch here</span>}
+        </div>
         <div className={styles.scratchHeroCopy}>
           <p>Together with their families</p>
           <h1 id="rose-couple-names">Sofia <i>&amp;</i> Samuel</h1>
           <span>12 October 2027 · Moka, Mauritius</span>
         </div>
-        <canvas
-          ref={canvasRef}
-          className={styles.scratchHeroCanvas}
-          aria-label="Scratch to reveal Sofia and Samuel's wedding invitation"
-          role="img"
-          tabIndex={phase === "scratch" ? 0 : -1}
-          onKeyDown={(event) => {
-            if ((event.key === "Enter" || event.key === " ") && phase === "scratch") {
-              event.preventDefault();
-              onReveal();
-            }
-          }}
-          onPointerDown={(event) => {
-            drawing.current = true;
-            event.currentTarget.setPointerCapture?.(event.pointerId);
-            scratchAt(event);
-          }}
-          onPointerMove={scratchAt}
-          onPointerUp={(event) => {
-            drawing.current = false;
-            event.currentTarget.releasePointerCapture?.(event.pointerId);
-          }}
-          onPointerCancel={() => { drawing.current = false; }}
-          onPointerLeave={() => { drawing.current = false; }}
-        />
         {!revealed && phase === "scratch" && <button className={styles.tapRevealButton} type="button" onClick={onReveal}><Hand aria-hidden="true" /> Tap to reveal</button>}
       </div>
       {phase === "celebrating" && <div className={styles.revealSparkles} aria-hidden="true">{Array.from({ length: 24 }, (_, index) => <span key={index} style={{ "--angle": `${index * 15}deg`, "--distance": `${8 + (index % 5) * 2.4}rem`, "--spark-delay": `${(index % 4) * 45}ms` } as CSSProperties}>{index % 3 === 0 ? "✦" : "·"}</span>)}</div>}

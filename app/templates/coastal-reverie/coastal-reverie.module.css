@@ -778,3 +778,379 @@
   .gardenPortal,
   .storyBloom { will-change: auto; }
 }
+
+/* Rose Afterglow v2: full-bleed hero and layouts distinct from Coastal Reverie. */
+.roseVariant .scratchHero {
+  height: 100svh;
+  min-height: 38rem;
+  padding: 0;
+  background:
+    radial-gradient(circle at 50% 42%, #fffdf9 0 20rem, transparent 44rem),
+    linear-gradient(135deg, #f6ece2, #fffaf4 54%, #edddd4);
+}
+
+.scratchHeroArtwork {
+  position: relative;
+  z-index: 3;
+  height: 100svh;
+  min-height: 38rem;
+  aspect-ratio: 2 / 3;
+  flex: none;
+}
+
+.scratchHeroArtwork > img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  filter: saturate(.84) contrast(.97) brightness(1.025);
+}
+
+.scratchTarget {
+  position: absolute;
+  z-index: 5;
+  top: 20.2%;
+  left: 25%;
+  width: 50%;
+  height: 50.5%;
+  overflow: hidden;
+  border-radius: 50%;
+  box-shadow: inset 0 0 1.7rem rgba(255,255,255,.3);
+}
+
+.scratchPrompt {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: 10%;
+  display: inline-flex;
+  align-items: center;
+  gap: .42rem;
+  min-width: max-content;
+  padding: .62rem .82rem;
+  border: 1px solid rgba(117,83,66,.12);
+  border-radius: 999px;
+  color: rgba(91,65,54,.82);
+  background: rgba(255,250,243,.68);
+  box-shadow: 0 .6rem 1.4rem rgba(77,52,40,.08);
+  transform: translateX(-50%);
+  pointer-events: none;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font: 700 clamp(.48rem,1vw,.58rem) var(--sans);
+  backdrop-filter: blur(5px);
+  transition: opacity .45s ease;
+}
+
+.scratchPrompt svg { width: .8rem; }
+.scratchHeroRevealed .scratchPrompt { opacity: 0; }
+.roseVariant .scratchHeroCanvas { border-radius: 50%; }
+
+.roseVariant .scratchHeroCopy {
+  right: 8%;
+  bottom: 5.9%;
+  left: 8%;
+  transform: translateY(2.25rem) scale(.97);
+  transition: opacity 1s ease .08s, transform 1.15s cubic-bezier(.16,.78,.18,1) .08s;
+}
+
+.roseVariant .scratchHeroRevealed .scratchHeroCopy {
+  opacity: 1;
+  transform: translateY(-.65rem) scale(1);
+}
+
+.roseVariant .scratchHeroCopy h1 { font-size: clamp(3.2rem, 8.5svh, 5.4rem); }
+.roseVariant .tapRevealButton { bottom: 13%; }
+.roseVariant .revealSparkles { top: 45%; }
+.roseVariant .continueHint { color: rgba(100,76,66,.75); }
+
+.roseVariant .countdownSection { min-height: 25rem; }
+.roseVariant .countdownContent { padding-block: 3.6rem; }
+.roseVariant .countdownContent h2 { font-size: clamp(2.8rem, 4vw, 3.75rem); }
+
+.roseVariant .storySection {
+  padding: clamp(4.5rem, 7vw, 6.5rem) 4vw;
+}
+
+.roseVariant .storyTimeline {
+  width: min(78rem,100%);
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: clamp(1rem,2vw,2rem);
+  margin-top: 3.2rem;
+  padding-top: 2.1rem;
+}
+
+.roseVariant .storyTimeline::before {
+  top: .8rem;
+  right: 8%;
+  bottom: auto;
+  left: 8%;
+  width: auto;
+  height: 1px;
+  background: linear-gradient(90deg,transparent,rgba(153,105,91,.35) 12% 88%,transparent);
+}
+
+.roseVariant .storyChapter {
+  min-height: 15rem;
+  display: block;
+  padding: 2.4rem clamp(1.2rem,2vw,2rem) 1.8rem;
+  border: 1px solid rgba(143,99,84,.12);
+  border-radius: 45% 45% 1rem 1rem / 12% 12% 1rem 1rem;
+  background: linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,250,246,.28));
+  box-shadow: 0 1rem 2.8rem rgba(88,57,47,.055);
+  text-align: center;
+}
+
+.roseVariant .storyChapter:nth-child(odd) .storyText,
+.roseVariant .storyChapter:nth-child(even) .storyText {
+  padding: 0;
+  text-align: center;
+}
+
+.roseVariant .storyDot {
+  top: -2.1rem;
+  left: 50%;
+  background: #a77b6c;
+  box-shadow: 0 0 0 .48rem #fffaf4, 0 .6rem 1.2rem rgba(116,76,64,.12);
+}
+
+.roseVariant .storyText h3 {
+  margin-top: .75rem;
+  color: #8c6458;
+}
+
+.roseVariant .memorySection {
+  min-height: auto;
+  padding: clamp(4.8rem,7vw,6.5rem) 1.5rem;
+  isolation: isolate;
+}
+
+.roseVariant .memoryBackdrop { opacity: .13; }
+
+.roseVariant .memoryBackdrop img {
+  filter: saturate(.48) sepia(.18) brightness(1.25);
+}
+
+.roseVariant .memorySection::after {
+  z-index: 0;
+  background:
+    linear-gradient(90deg,#fbf4ef 0%,rgba(251,244,239,.7) 20%,rgba(255,251,247,.76) 50%,rgba(251,244,239,.7) 80%,#fbf4ef 100%),
+    radial-gradient(circle at center,rgba(255,255,255,.42),transparent 68%);
+}
+
+.roseVariant .memoryCard {
+  width: min(64rem,100%);
+  padding: 1.5rem clamp(1rem,5vw,4rem);
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: translateY(1.5rem);
+}
+
+.roseVariant .memoryCard[data-visible="true"] { transform: none; }
+.roseVariant .paperCorners { display: none; }
+
+.roseVariant .memoryCard h2 {
+  font-size: clamp(4rem,8vw,7.2rem);
+  color: #8f6659;
+}
+
+.roseVariant .memoryCard > p:not(.eyebrow) {
+  max-width: 46rem;
+  color: #62534d;
+}
+
+.roseVariant .memoryDedication {
+  max-width: 40rem;
+  margin-block: 1.7rem;
+  background: rgba(255,251,246,.3);
+}
+
+.roseVariant .eventsSection {
+  position: relative;
+  padding: clamp(4.8rem,7vw,6.5rem) 4vw;
+}
+
+.roseVariant .lightTitle { margin-bottom: 2.8rem; }
+
+.roseVariant .eventsGrid {
+  width: min(78rem,100%);
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.roseVariant .eventCard {
+  display: grid;
+  grid-template-columns: 4.2rem minmax(10rem,.7fr) minmax(13rem,1fr) minmax(17rem,1.25fr);
+  grid-template-rows: auto auto auto;
+  column-gap: clamp(1rem,2.5vw,2.2rem);
+  align-items: center;
+  min-height: 13rem;
+  padding: 1rem;
+  border: 1px solid rgba(128,87,73,.1);
+  border-radius: .8rem;
+  background: rgba(255,251,247,.72);
+  box-shadow: 0 1rem 2.8rem rgba(76,48,39,.08);
+  text-align: left;
+}
+
+.roseVariant .eventIcon {
+  grid-column: 1;
+  grid-row: 1 / 4;
+  margin: 0;
+}
+
+.roseVariant .eventCard > p {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0 0 .35rem;
+}
+
+.roseVariant .eventCard h3 {
+  grid-column: 2;
+  grid-row: 2;
+  margin: 0;
+}
+
+.roseVariant .eventFacts {
+  grid-column: 3;
+  grid-row: 1 / 4;
+  gap: .6rem;
+  margin: 0;
+}
+
+.roseVariant .eventFacts > span { justify-content: flex-start; }
+
+.roseVariant .mapFrame {
+  grid-column: 4;
+  grid-row: 1 / 4;
+  width: 100%;
+  aspect-ratio: 1.9;
+  margin: 0;
+}
+
+.roseVariant .eventCard > a {
+  grid-column: 2;
+  grid-row: 3;
+  justify-content: flex-start;
+  margin-top: .8rem;
+}
+
+.roseVariant section[aria-labelledby="seating-title"] {
+  padding-block: clamp(4.5rem,6vw,5.8rem);
+  background: linear-gradient(180deg,#ead7ce,#f8eee8 52%,#eeddd5);
+}
+
+.roseVariant .programmeSection {
+  padding: clamp(4.8rem,7vw,6.5rem) 3vw;
+}
+
+.roseVariant .programmeGrid {
+  width: min(72rem,100%);
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.roseVariant .programmeLine { display: none; }
+
+.roseVariant .programmeItem {
+  min-height: 12rem;
+  padding: 1.4rem 1rem;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: .8rem;
+  background: rgba(255,248,243,.16);
+}
+
+.roseVariant .footer { padding-block: 3.2rem 4.2rem; }
+
+@media (max-width: 760px) {
+  .scratchHeroArtwork {
+    height: 100svh;
+    min-height: 38rem;
+    max-width: none;
+  }
+
+  .roseVariant .scratchHeroCopy {
+    right: 10%;
+    left: 10%;
+  }
+
+  .roseVariant .scratchHeroCopy h1 { font-size: clamp(3rem,15vw,4.35rem); }
+  .roseVariant .tapRevealButton { bottom: 12.5%; }
+  .roseVariant .countdownSection { min-height: 26rem; }
+  .roseVariant .countdownContent { padding-block: 3.6rem; }
+
+  .roseVariant .storySection { padding: 4.6rem 1rem; }
+
+  .roseVariant .storyTimeline {
+    display: block;
+    margin-top: 2.7rem;
+    padding: 0 0 0 2rem;
+  }
+
+  .roseVariant .storyTimeline::before {
+    top: 0;
+    right: auto;
+    bottom: 0;
+    left: .7rem;
+    width: 1px;
+    height: auto;
+  }
+
+  .roseVariant .storyChapter {
+    min-height: auto;
+    margin-bottom: 1.2rem;
+    padding: 1.5rem 1.1rem;
+    border-radius: .8rem;
+    text-align: left;
+  }
+
+  .roseVariant .storyChapter:nth-child(odd) .storyText,
+  .roseVariant .storyChapter:nth-child(even) .storyText {
+    text-align: left;
+  }
+
+  .roseVariant .storyDot {
+    top: 1.6rem;
+    left: -1.3rem;
+  }
+
+  .roseVariant .storyText h3 { font-size: 2.2rem; }
+  .roseVariant .memorySection { padding: 4.4rem .8rem; }
+  .roseVariant .memoryCard { padding: 1rem .9rem; }
+  .roseVariant .memoryCard h2 { font-size: clamp(3.5rem,17vw,5rem); }
+  .roseVariant .eventsSection { padding: 4.5rem .9rem; }
+
+  .roseVariant .eventCard {
+    display: flex;
+    min-height: 0;
+    padding: 1.1rem .9rem;
+    text-align: center;
+  }
+
+  .roseVariant .eventIcon { margin: 0 auto .75rem; }
+  .roseVariant .eventCard h3 { margin-bottom: .85rem; }
+  .roseVariant .eventFacts { margin-bottom: .9rem; }
+  .roseVariant .eventFacts > span { justify-content: center; }
+  .roseVariant .mapFrame { width: 100%; aspect-ratio: 1.75; margin-top: 0; }
+  .roseVariant .eventCard > a { justify-content: center; margin-top: .85rem; }
+
+  .roseVariant section[aria-labelledby="seating-title"] { padding-block: 4.4rem; }
+  .roseVariant .programmeSection { padding-block: 4.5rem; }
+
+  .roseVariant .programmeGrid {
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-top: 2.8rem;
+  }
+
+  .roseVariant .programmeItem {
+    min-height: 6rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+}

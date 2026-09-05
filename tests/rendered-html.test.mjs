@@ -47,7 +47,7 @@ test("renders the complete Rose Afterglow invitation", async () => {
   assert.match(html, /rose-scratch-hero\.webp/);
   assert.doesNotMatch(html, /Pull to open/);
   assert.doesNotMatch(html, /Scroll to reveal/);
-  assert.match(html, /Scratch to reveal/);
+  assert.match(html, /Scratch the translucent oval/);
   assert.match(html, /Wedding details/);
   assert.match(html, /Counting the days/);
   assert.match(html, /Our Journey/);
