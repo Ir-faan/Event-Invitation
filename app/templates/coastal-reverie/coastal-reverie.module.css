@@ -328,3 +328,453 @@
   .pageSparkles { display: none; }
   [data-wedding-reveal], [data-wedding-reveal][data-visible="true"] { opacity: 1; transform: none; }
 }
+
+/* Rose Afterglow uses the same complete invitation structure with a simpler,
+   touch-first opening experience and its own ivory/blush art direction. */
+.roseVariant {
+  --olive: #a77b6c;
+  --olive-dark: #76564b;
+  --olive-deep: #49352f;
+  --olive-soft: #d4b9ae;
+  --cream: #f8f1e9;
+  --paper: #fffaf4;
+  --peach: #ecd8cc;
+  --gold: #b78a59;
+  --ink: #4d3b35;
+  --muted: #7b6a63;
+  background: #f8f1e9;
+}
+
+.roseCurtainIntro {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: #f5eadf;
+  transition: opacity .45s ease, visibility 0s linear 1.6s;
+}
+
+.roseCurtainPanel {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  width: 50.1%;
+  overflow: hidden;
+  filter: drop-shadow(0 .6rem 1.5rem rgba(78,55,42,.14));
+  will-change: transform;
+  transition: transform 1.6s cubic-bezier(.62,0,.3,1), filter 1.2s ease;
+}
+
+.roseCurtainPanel img {
+  position: absolute;
+  top: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  user-select: none;
+}
+
+.roseCurtainLeft { left: 0; }
+.roseCurtainLeft img { left: 0; }
+.roseCurtainRight { right: 0; }
+.roseCurtainRight img { right: 0; }
+.roseCurtainsOpening .roseCurtainLeft { transform: translate3d(-102%,0,0); }
+.roseCurtainsOpening .roseCurtainRight { transform: translate3d(102%,0,0); }
+.roseCurtainsOpening .roseCurtainPanel { filter: drop-shadow(0 .7rem 1.2rem rgba(78,55,42,.04)); }
+.roseCurtainsGone { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.roseCurtainTrigger {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .65rem;
+  padding: 2rem;
+  border: 0;
+  color: #735448;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: opacity .4s ease, transform .45s ease;
+}
+
+.roseCurtainTrigger strong {
+  margin-top: .35rem;
+  text-transform: uppercase;
+  letter-spacing: .25em;
+  font: 600 .78rem var(--sans);
+  text-shadow: 0 1px 1rem rgba(255,255,255,.95);
+}
+
+.roseCurtainTrigger > span:last-child {
+  color: #8f7468;
+  font: italic 1.08rem/1.4 var(--serif);
+  text-shadow: 0 1px 1rem rgba(255,255,255,.95);
+}
+
+.roseCurtainsOpening .roseCurtainTrigger {
+  opacity: 0;
+  transform: scale(.94);
+  pointer-events: none;
+}
+
+.roseSeal {
+  width: 5.1rem;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,236,208,.65);
+  border-radius: 50%;
+  color: #f8eadb;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255,255,255,.25), transparent 18%),
+    radial-gradient(circle, #a66f63 0 54%, #8b594e 56% 66%, #9e6a5e 68%);
+  box-shadow:
+    0 0 0 .34rem rgba(255,249,241,.84),
+    0 0 0 .42rem rgba(155,106,82,.2),
+    0 0 2rem rgba(154,101,84,.2),
+    0 1rem 2.4rem rgba(76,46,36,.2);
+  animation: roseSealPulse 2.3s ease-in-out infinite;
+}
+
+.roseSeal svg { width: 1.4rem; stroke-width: 1.3; }
+
+.scratchHero {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255,255,255,.96), transparent 32rem),
+    linear-gradient(150deg, #f5e9dd, #fffaf3 50%, #ead9cf);
+}
+
+.scratchHero::before,
+.scratchHero::after {
+  content: "";
+  position: absolute;
+  width: clamp(13rem, 24vw, 22rem);
+  aspect-ratio: 1;
+  opacity: .14;
+  background: url("/images/coastal-floral-corner.svg") center/contain no-repeat;
+  pointer-events: none;
+}
+
+.scratchHero::before { left: -5rem; top: -5rem; }
+.scratchHero::after { right: -5rem; bottom: -5rem; transform: rotate(180deg); }
+
+.scratchCardHero {
+  position: relative;
+  z-index: 3;
+  width: min(30rem, calc((100svh - 2rem) * .667), calc(100vw - 2rem));
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border: 1px solid rgba(149,111,79,.2);
+  border-radius: .45rem;
+  background: #f3e7d7;
+  box-shadow:
+    0 0 0 .45rem rgba(255,252,247,.7),
+    0 2rem 5rem rgba(78,52,40,.16);
+}
+
+.scratchCardHero::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: .7rem;
+  border: 1px solid rgba(181,141,91,.26);
+  pointer-events: none;
+}
+
+.scratchCardHero > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(.82) contrast(.97) brightness(1.02);
+  transform: scale(1.015);
+  transition: transform 1.2s cubic-bezier(.2,.72,.2,1);
+}
+
+.scratchHeroRevealed .scratchCardHero > img { transform: scale(1); }
+
+.scratchHeroCopy {
+  position: absolute;
+  z-index: 3;
+  right: 1rem;
+  bottom: 5.5%;
+  left: 1rem;
+  text-align: center;
+  text-shadow: 0 1px .8rem rgba(255,251,243,.95);
+  opacity: 0;
+  transform: translateY(.8rem);
+  transition: opacity .9s ease .15s, transform .9s cubic-bezier(.2,.72,.2,1) .15s;
+}
+
+.scratchHeroRevealed .scratchHeroCopy { opacity: 1; transform: none; }
+
+.scratchHeroCopy p {
+  margin: 0 0 .15rem;
+  color: #76594f;
+  text-transform: uppercase;
+  letter-spacing: .22em;
+  font: 600 clamp(.52rem, 1.6vw, .66rem) var(--sans);
+}
+
+.scratchHeroCopy h1 {
+  margin: 0;
+  color: #765348;
+  font: 400 clamp(2.8rem, 9vw, 4.25rem)/.9 var(--script);
+}
+
+.scratchHeroCopy h1 i { color: #ad7f6a; font-size: .72em; }
+
+.scratchHeroCopy > span {
+  display: block;
+  margin-top: .4rem;
+  color: #79675f;
+  text-transform: uppercase;
+  letter-spacing: .15em;
+  font: 600 clamp(.5rem, 1.5vw, .62rem)/1.5 var(--sans);
+}
+
+.scratchHeroCanvas {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+  transition: opacity .75s ease, visibility 0s linear .75s;
+}
+
+.scratchHeroCanvas:active { cursor: grabbing; }
+.scratchHeroCanvas:focus-visible { outline: 3px solid rgba(126,86,70,.68); outline-offset: -6px; }
+.scratchHeroRevealed .scratchHeroCanvas { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.tapRevealButton {
+  position: absolute;
+  z-index: 7;
+  left: 50%;
+  bottom: 3.4%;
+  min-height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: 0 1.15rem;
+  border: 1px solid rgba(120,87,67,.2);
+  border-radius: 999px;
+  color: #715449;
+  background: rgba(255,251,245,.94);
+  box-shadow: 0 0 0 .3rem rgba(255,250,243,.35), 0 0 1.6rem rgba(180,132,96,.3);
+  transform: translateX(-50%);
+  cursor: pointer;
+  touch-action: manipulation;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  font: 700 .66rem var(--sans);
+  animation: roseButtonGlow 2.3s ease-in-out infinite;
+}
+
+.tapRevealButton svg { width: .9rem; }
+
+.rosePetals {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.rosePetals span {
+  position: absolute;
+  left: var(--x);
+  top: -2rem;
+  color: rgba(202,155,141,.48);
+  font-size: clamp(.5rem, 1.5vw, .8rem);
+  filter: blur(.2px);
+  animation: rosePetalFall var(--duration) linear var(--delay) infinite;
+}
+
+.revealSparkles {
+  position: absolute;
+  z-index: 10;
+  left: 50%;
+  top: 45%;
+  pointer-events: none;
+}
+
+.revealSparkles span {
+  position: absolute;
+  color: #c89a5e;
+  font-size: 1.1rem;
+  text-shadow: 0 0 .9rem rgba(255,238,175,.9);
+  animation: roseSparkleBurst .95s cubic-bezier(.15,.7,.25,1) var(--spark-delay) both;
+}
+
+.continueHint {
+  position: absolute;
+  z-index: 8;
+  bottom: max(.7rem, env(safe-area-inset-bottom));
+  margin: 0;
+  color: #81685e;
+  text-transform: uppercase;
+  letter-spacing: .2em;
+  font: 600 .58rem var(--sans);
+  animation: invitationHint 1s ease .25s both;
+}
+
+.weddingDetailsButton {
+  position: fixed;
+  z-index: 60;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  min-height: 3.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  padding: 0 1.2rem;
+  border: 1px solid rgba(255,255,255,.42);
+  border-radius: 999px;
+  color: #fffaf5;
+  background: rgba(106,75,66,.92);
+  box-shadow: 0 0 0 .28rem rgba(255,250,244,.2), 0 0 1.9rem rgba(158,105,89,.32);
+  backdrop-filter: blur(12px);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: .11em;
+  font: 700 .64rem var(--sans);
+  animation: detailsButtonIn .55s cubic-bezier(.2,.75,.2,1) both, roseButtonGlow 2.7s ease-in-out .7s infinite;
+}
+
+.weddingDetailsButton svg { width: .95rem; }
+
+.roseVariant:not(.roseUnlocked) .weddingDetailsButton {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.roseVariant:not(.roseUnlocked) .countdownSection,
+.roseVariant:not(.roseUnlocked) .storySection,
+.roseVariant:not(.roseUnlocked) .memorySection,
+.roseVariant:not(.roseUnlocked) .eventsSection,
+.roseVariant:not(.roseUnlocked) .programmeSection,
+.roseVariant:not(.roseUnlocked) footer {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.roseVariant.roseUnlocked .countdownSection {
+  animation: invitationContentIn .85s ease both;
+}
+
+.roseVariant .countdownSection { background: linear-gradient(180deg,#f5e9df,#fffaf5 55%,#f7eee8); }
+.roseVariant .storySection { background: linear-gradient(180deg,#f7eee8,#fffaf6 52%,#f4e6e2); }
+.roseVariant .memorySection { background: linear-gradient(180deg,#f4e6e2,#fcf7f1 56%,#fffaf5); }
+.roseVariant .eventsSection { background: linear-gradient(180deg,#fffaf5,#f7ebe5 58%,#ead7ce); }
+.roseVariant .programmeSection { background: linear-gradient(180deg,#ead7ce,#dcbdb4 48%,#f6e9e3); }
+
+.roseVariant .gardenPortal,
+.roseVariant .storyBloom {
+  opacity: 0;
+  transform: scale(.72) rotate(-5deg);
+  transition: opacity 1.15s ease, transform 1.35s cubic-bezier(.18,.72,.18,1);
+}
+
+.roseVariant .gardenPortal[data-visible="true"] { opacity: .14; transform: scale(1) rotate(0); }
+.roseVariant .storyBloom[data-visible="true"] { opacity: .11; transform: scale(1) rotate(0); }
+
+.roseVariant .eventsSection::before,
+.roseVariant .programmeSection::after {
+  content: "";
+  position: absolute;
+  width: clamp(12rem,22vw,20rem);
+  aspect-ratio: 1;
+  opacity: 0;
+  background: url("/images/coastal-floral-corner.svg") center/contain no-repeat;
+  pointer-events: none;
+  transform: scale(.7) rotate(-8deg);
+  transition: opacity 1.1s ease, transform 1.35s cubic-bezier(.18,.72,.18,1);
+}
+
+.roseVariant .eventsSection::before { left: -4rem; top: -3rem; }
+.roseVariant .programmeSection::after { right: -4rem; bottom: -3rem; transform: scale(.7) rotate(172deg); }
+.roseVariant .eventsSection[data-visible="true"]::before { opacity: .12; transform: scale(1) rotate(0); }
+.roseVariant .programmeSection[data-visible="true"]::after { opacity: .13; transform: scale(1) rotate(180deg); }
+
+@keyframes roseSealPulse {
+  50% { transform: scale(1.035); filter: drop-shadow(0 0 .7rem rgba(177,126,101,.32)); }
+}
+
+@keyframes roseButtonGlow {
+  50% { box-shadow: 0 0 0 .34rem rgba(255,250,243,.42), 0 0 2rem rgba(177,126,101,.38); }
+}
+
+@keyframes rosePetalFall {
+  0% { opacity: 0; transform: translate3d(0,-4vh,0) rotate(0) scale(.7); }
+  12% { opacity: .58; }
+  52% { transform: translate3d(1.6rem,52vh,0) rotate(145deg) scale(1); }
+  100% { opacity: 0; transform: translate3d(-1rem,106vh,0) rotate(290deg) scale(.78); }
+}
+
+@keyframes roseSparkleBurst {
+  0% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--angle)) translateX(0) scale(.25); }
+  22% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--angle)) translateX(var(--distance)) scale(1.15); }
+}
+
+@keyframes invitationHint {
+  from { opacity: 0; transform: translateY(.6rem); }
+  to { opacity: .8; transform: none; }
+}
+
+@keyframes detailsButtonIn {
+  from { opacity: 0; filter: blur(3px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+@keyframes invitationContentIn {
+  from { opacity: 0; transform: translateY(1.5rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 760px) {
+  .roseCurtainTrigger { padding-top: 9svh; }
+  .roseSeal { width: 4.7rem; }
+  .scratchHero { padding-inline: .65rem; }
+  .scratchCardHero { width: min(calc(100vw - 1.3rem), calc((100svh - 1.3rem) * .667)); }
+  .scratchCardHero::after { inset: .45rem; }
+  .scratchHero::before { left: -7rem; top: -6rem; }
+  .scratchHero::after { right: -7rem; bottom: -6rem; }
+  .weddingDetailsButton {
+    right: 50%;
+    bottom: max(.8rem, env(safe-area-inset-bottom));
+    min-height: 3.15rem;
+    transform: translateX(50%);
+    white-space: nowrap;
+  }
+  .weddingDetailsButton:hover { transform: translateX(50%); }
+  .continueHint { bottom: max(.35rem, env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rosePetals,
+  .revealSparkles { display: none; }
+  .roseCurtainPanel,
+  .gardenPortal,
+  .storyBloom { will-change: auto; }
+}

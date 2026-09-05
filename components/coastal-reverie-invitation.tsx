@@ -2,7 +2,13 @@
 
 /* eslint-disable @next/next/no-img-element, @next/next/no-html-link-for-pages */
 
-import { useEffect, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import {
   ArrowDown,
   ArrowLeft,
@@ -10,6 +16,7 @@ import {
   Clock3,
   Coffee,
   Heart,
+  Hand,
   Leaf,
   MapPin,
   Music2,
@@ -23,7 +30,8 @@ import {
 import styles from "@/app/templates/coastal-reverie/coastal-reverie.module.css";
 import { SeatingArrangement, type SeatingAssignment } from "@/components/seating-arrangement";
 
-const weddingTime = new Date("2027-09-17T16:30:00+04:00").getTime();
+const coastalWeddingTime = new Date("2027-09-17T16:30:00+04:00").getTime();
+const roseWeddingTime = new Date("2027-10-12T16:30:00+04:00").getTime();
 
 const envelopeTiming = {
   sealed: 1_000,
@@ -107,7 +115,7 @@ const programme = [
   { time: "11:30 PM", title: "Farewell", note: "With all our love", icon: PartyPopper },
 ];
 
-function getCountdown(now: number) {
+function getCountdown(now: number, weddingTime: number) {
   const difference = Math.max(weddingTime - now, 0);
   return {
     days: Math.floor(difference / 86_400_000),
@@ -117,11 +125,15 @@ function getCountdown(now: number) {
   };
 }
 
-export function CoastalReverieInvitation() {
+export function CoastalReverieInvitation({ variant = "coastal" }: { variant?: "coastal" | "rose" }) {
+  const isRose = variant === "rose";
   const [phase, setPhase] = useState<"sealed" | "opening" | "flash" | "gone">("sealed");
+  const [rosePhase, setRosePhase] = useState<"curtains" | "opening" | "scratch" | "celebrating" | "revealed">("curtains");
   const [replay, setReplay] = useState(0);
+  const weddingTime = isRose ? roseWeddingTime : coastalWeddingTime;
   const [now, setNow] = useState(weddingTime);
-  const countdown = getCountdown(now);
+  const countdown = getCountdown(now, weddingTime);
+  const invitationUnlocked = isRose ? rosePhase === "revealed" : phase === "gone";
 
   useEffect(() => {
     const tick = () => setNow(Date.now());
@@ -134,6 +146,7 @@ export function CoastalReverieInvitation() {
   }, []);
 
   useEffect(() => {
+    if (isRose) return;
     if (phase === "sealed") {
       const timer = window.setTimeout(() => setPhase("opening"), envelopeTiming.sealed);
       return () => window.clearTimeout(timer);
@@ -146,15 +159,29 @@ export function CoastalReverieInvitation() {
       const timer = window.setTimeout(() => setPhase("gone"), envelopeTiming.flash);
       return () => window.clearTimeout(timer);
     }
-  }, [phase, replay]);
+  }, [isRose, phase, replay]);
+
+  useEffect(() => {
+    if (!isRose || rosePhase !== "opening") return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => setRosePhase("scratch"), reducedMotion ? 0 : 1600);
+    return () => window.clearTimeout(timer);
+  }, [isRose, rosePhase]);
+
+  useEffect(() => {
+    if (!isRose || rosePhase !== "celebrating") return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => setRosePhase("revealed"), reducedMotion ? 0 : 1150);
+    return () => window.clearTimeout(timer);
+  }, [isRose, rosePhase]);
 
   useEffect(() => {
     const previous = document.body.style.overflow;
-    document.body.style.overflow = phase === "gone" ? previous : "hidden";
+    document.body.style.overflow = invitationUnlocked ? previous : "hidden";
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [phase]);
+  }, [invitationUnlocked]);
 
   useEffect(() => {
     const elements = document.querySelectorAll<HTMLElement>("[data-wedding-reveal]");
@@ -167,14 +194,20 @@ export function CoastalReverieInvitation() {
   }, []);
 
   const replayOpening = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    setPhase("sealed");
+    window.scrollTo({ top: 0, behavior: isRose ? "auto" : "smooth" });
+    if (isRose) setRosePhase("curtains");
+    else setPhase("sealed");
     setReplay((value) => value + 1);
   };
 
+  const names = isRose ? { bride: "Sofia", groom: "Samuel", date: "12 October 2027" } : { bride: "Salma", groom: "Sam", date: "17 September 2027" };
+  const invitationStory = isRose
+    ? story.map((chapter) => ({ ...chapter, copy: chapter.copy.replaceAll("Salma", "Sofia").replaceAll("Sam", "Samuel") }))
+    : story;
+
   return (
-    <main className={`${styles.invitation} ${phase === "flash" || phase === "gone" ? styles.invitationReady : ""}`} id="invitation-top">
-      <div className={`${styles.envelopeIntro} ${phase === "sealed" ? styles.sealed : phase === "opening" ? styles.opening : phase === "flash" ? styles.flash : styles.gone}`} aria-hidden={phase === "gone"}>
+    <main className={`${styles.invitation} ${isRose ? styles.roseVariant : ""} ${isRose && invitationUnlocked ? styles.roseUnlocked : ""} ${(!isRose && (phase === "flash" || phase === "gone")) || (isRose && rosePhase !== "curtains") ? styles.invitationReady : ""}`} id="invitation-top">
+      {!isRose && <div className={`${styles.envelopeIntro} ${phase === "sealed" ? styles.sealed : phase === "opening" ? styles.opening : phase === "flash" ? styles.flash : styles.gone}`} aria-hidden={phase === "gone"}>
         <div className={styles.openingFlash} aria-hidden="true" />
         <div className={`${styles.envelopePanel} ${styles.envelopePanelLeft}`} aria-hidden="true">
           <picture>
@@ -192,17 +225,31 @@ export function CoastalReverieInvitation() {
         <button className={styles.envelopeTrigger} type="button" onClick={() => setPhase("opening")} aria-label="Open Salma and Sam's wedding invitation">
           <span className={styles.sealInitials} aria-hidden="true">S &amp; S</span>
         </button>
-      </div>
+      </div>}
+
+      {isRose && (
+        <div className={`${styles.roseCurtainIntro} ${rosePhase !== "curtains" ? styles.roseCurtainsOpening : ""} ${rosePhase !== "curtains" && rosePhase !== "opening" ? styles.roseCurtainsGone : ""}`} aria-hidden={rosePhase !== "curtains" && rosePhase !== "opening"}>
+          <div className={`${styles.roseCurtainPanel} ${styles.roseCurtainLeft}`} aria-hidden="true"><img src="/images/rose-wedding-curtains.webp" alt="" /></div>
+          <div className={`${styles.roseCurtainPanel} ${styles.roseCurtainRight}`} aria-hidden="true"><img src="/images/rose-wedding-curtains.webp" alt="" /></div>
+          <button className={styles.roseCurtainTrigger} type="button" onClick={() => setRosePhase("opening")} aria-label="Open Sofia and Samuel's wedding invitation">
+            <span className={styles.roseSeal}><Heart aria-hidden="true" /></span>
+            <strong>Tap to open</strong>
+            <span>Sofia &amp; Samuel&apos;s invitation</span>
+          </button>
+        </div>
+      )}
 
       <a className={styles.backButton} href="/#collection"><ArrowLeft aria-hidden="true" /> <span>Collection</span></a>
       <button className={styles.replayButton} type="button" onClick={replayOpening}><Sparkles aria-hidden="true" /> <span>Replay opening</span></button>
-      <div className={styles.pageSparkles} aria-hidden="true">
+      {!isRose && <div className={styles.pageSparkles} aria-hidden="true">
         {Array.from({ length: 22 }, (_, index) => (
           <span key={index} style={{ "--x": `${(index * 43) % 100}%`, "--delay": `${-(index % 9) * 2.1}s`, "--duration": `${15 + (index % 6) * 2.1}s` } as CSSProperties}>{index % 5 === 0 ? "♥" : index % 3 === 0 ? "❀" : index % 2 === 0 ? "✦" : "·"}</span>
         ))}
-      </div>
+      </div>}
 
-      <section className={styles.hero} aria-labelledby="couple-names">
+      {isRose ? (
+        <ScratchInvitationHero phase={rosePhase} onReveal={() => setRosePhase("celebrating")} />
+      ) : <section className={styles.hero} aria-labelledby="couple-names">
         <div className={styles.heroImage}><img src="/images/coastal-reverie.webp" alt="Sunlit coastal garden overlooking the sea" /></div>
         <div className={styles.heroVeil} />
         <div className={styles.petals} aria-hidden="true">
@@ -218,11 +265,13 @@ export function CoastalReverieInvitation() {
           <p className={styles.heroDate}>Friday · 17 September · 2027</p>
         </div>
         <a className={styles.scrollInvitation} href="#counting">Scroll into our story <ArrowDown aria-hidden="true" /></a>
-      </section>
+      </section>}
 
-      <section className={styles.countdownSection} id="counting" aria-labelledby="countdown-title">
-        <div className={`${styles.gardenPortal} ${styles.portalLeft}`} aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
-        <div className={`${styles.gardenPortal} ${styles.portalRight}`} aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
+      {isRose && <a className={styles.weddingDetailsButton} href="#event-details" aria-hidden={!invitationUnlocked} tabIndex={invitationUnlocked ? 0 : -1}><CalendarDays aria-hidden="true" /> Wedding details</a>}
+
+      <section className={styles.countdownSection} id="counting" aria-labelledby="countdown-title" data-wedding-reveal>
+        <div className={`${styles.gardenPortal} ${styles.portalLeft}`} data-wedding-reveal aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
+        <div className={`${styles.gardenPortal} ${styles.portalRight}`} data-wedding-reveal aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
         <div className={styles.countdownContent} data-wedding-reveal>
           <p className={styles.eyebrow}>You are invited to our big day</p>
           <h2 id="countdown-title">Counting the days</h2>
@@ -236,16 +285,16 @@ export function CoastalReverieInvitation() {
         </div>
       </section>
 
-      <section className={styles.storySection} aria-labelledby="story-title">
-        <div className={`${styles.storyBloom} ${styles.storyBloomLeft}`} aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
-        <div className={`${styles.storyBloom} ${styles.storyBloomRight}`} aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
+      <section className={styles.storySection} aria-labelledby="story-title" data-wedding-reveal>
+        <div className={`${styles.storyBloom} ${styles.storyBloomLeft}`} data-wedding-reveal aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
+        <div className={`${styles.storyBloom} ${styles.storyBloomRight}`} data-wedding-reveal aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
         <div className={styles.sectionTitle} data-wedding-reveal>
           <p>From a beautiful beginning</p>
           <h2 id="story-title">Our Journey</h2>
           <div className={styles.heartRule}><span /><Heart aria-hidden="true" /><span /></div>
         </div>
         <div className={styles.storyTimeline}>
-          {story.map((chapter, index) => (
+          {invitationStory.map((chapter, index) => (
             <article key={chapter.title} className={styles.storyChapter} data-wedding-reveal style={{ "--chapter-delay": `${index * 120}ms` } as CSSProperties}>
               <div className={styles.storyDot}><Heart aria-hidden="true" /></div>
               <div className={styles.storyText}>
@@ -258,7 +307,7 @@ export function CoastalReverieInvitation() {
         </div>
       </section>
 
-      <section className={styles.memorySection} aria-labelledby="memory-title">
+      <section className={styles.memorySection} aria-labelledby="memory-title" data-wedding-reveal>
         <div className={styles.memoryBackdrop} aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></div>
         <article className={styles.memoryCard} data-wedding-reveal>
           <div className={styles.paperCorners} aria-hidden="true"><Leaf /><Leaf /><Leaf /><Leaf /></div>
@@ -276,7 +325,7 @@ export function CoastalReverieInvitation() {
         </article>
       </section>
 
-      <section className={styles.eventsSection} aria-labelledby="events-title">
+      <section className={styles.eventsSection} id="event-details" aria-labelledby="events-title" data-wedding-reveal>
         <div className={styles.lightTitle} data-wedding-reveal>
           <p>Join us</p>
           <h2 id="events-title">Event Details</h2>
@@ -304,7 +353,7 @@ export function CoastalReverieInvitation() {
 
       <SeatingArrangement assignments={seatingAssignments} />
 
-      <section className={styles.programmeSection} aria-labelledby="programme-title">
+      <section className={styles.programmeSection} aria-labelledby="programme-title" data-wedding-reveal>
         <div className={styles.programmeTitle} data-wedding-reveal>
           <p>Celebrating every moment</p>
           <h2 id="programme-title">Day Programme</h2>
@@ -325,10 +374,148 @@ export function CoastalReverieInvitation() {
 
       <footer className={styles.footer}>
         <div className={styles.footerMonogram}>S <Heart aria-hidden="true" /> S</div>
-        <h2>Salma & Sam</h2>
-        <p>17 September 2027</p>
+        <h2>{names.bride} &amp; {names.groom}</h2>
+        <p>{names.date}</p>
         <span>Made with <Heart aria-hidden="true" /> by <a href="/">Event Invitations</a></span>
       </footer>
     </main>
+  );
+}
+
+function ScratchInvitationHero({
+  phase,
+  onReveal,
+}: {
+  phase: "curtains" | "opening" | "scratch" | "celebrating" | "revealed";
+  onReveal: () => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const drawing = useRef(false);
+  const touched = useRef(new Set<string>());
+  const revealed = phase === "celebrating" || phase === "revealed";
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || revealed) return;
+
+    const drawCover = () => {
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      context.globalCompositeOperation = "source-over";
+
+      const gradient = context.createLinearGradient(0, 0, rect.width, rect.height);
+      gradient.addColorStop(0, "#fbf7ef");
+      gradient.addColorStop(0.5, "#eadfce");
+      gradient.addColorStop(1, "#f8f1e6");
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, rect.width, rect.height);
+
+      context.strokeStyle = "rgba(170, 132, 86, .18)";
+      context.lineWidth = 1;
+      for (let inset = 18; inset < Math.min(rect.width, rect.height) * 0.28; inset += 13) {
+        context.beginPath();
+        context.ellipse(rect.width / 2, rect.height * 0.43, rect.width / 2 - inset, rect.height * 0.31 - inset * 0.45, 0, 0, Math.PI * 2);
+        context.stroke();
+      }
+
+      context.fillStyle = "#79624f";
+      context.textAlign = "center";
+      context.font = `600 ${Math.max(10, rect.width * 0.027)}px Montserrat, Arial, sans-serif`;
+      context.fillText("GENTLY SCRATCH TO REVEAL", rect.width / 2, rect.height * 0.78);
+      context.font = `400 ${Math.max(32, rect.width * 0.1)}px Birthstone, Georgia, serif`;
+      context.fillStyle = "#a27b56";
+      context.fillText("our invitation", rect.width / 2, rect.height * 0.47);
+    };
+
+    drawCover();
+    const resize = new ResizeObserver(drawCover);
+    resize.observe(canvas);
+    return () => resize.disconnect();
+  }, [revealed]);
+
+  const scratchAt = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (!drawing.current || revealed || phase !== "scratch") return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const radius = Math.max(34, Math.min(rect.width, rect.height) * 0.115);
+
+    context.save();
+    context.globalCompositeOperation = "destination-out";
+    const brush = context.createRadialGradient(x, y, 0, x, y, radius);
+    brush.addColorStop(0, "rgba(0,0,0,1)");
+    brush.addColorStop(0.7, "rgba(0,0,0,.98)");
+    brush.addColorStop(1, "rgba(0,0,0,0)");
+    context.fillStyle = brush;
+    context.beginPath();
+    context.arc(x, y, radius, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+
+    const columns = 20;
+    const rows = 28;
+    const cellX = Math.floor((x / rect.width) * columns);
+    const cellY = Math.floor((y / rect.height) * rows);
+    const cellRadius = Math.max(1, Math.ceil((radius / rect.width) * columns));
+    for (let gx = cellX - cellRadius; gx <= cellX + cellRadius; gx += 1) {
+      for (let gy = cellY - cellRadius; gy <= cellY + cellRadius; gy += 1) {
+        if (gx >= 0 && gx < columns && gy >= 0 && gy < rows) touched.current.add(`${gx}:${gy}`);
+      }
+    }
+    if (touched.current.size / (columns * rows) > 0.32) onReveal();
+  };
+
+  return (
+    <section className={`${styles.scratchHero} ${revealed ? styles.scratchHeroRevealed : ""}`} aria-labelledby="rose-couple-names">
+      <div className={styles.rosePetals} aria-hidden="true">
+        {Array.from({ length: 11 }, (_, index) => <span key={index} style={{ "--x": `${(index * 37) % 96}%`, "--delay": `${-(index % 6) * 2.4}s`, "--duration": `${16 + (index % 4) * 2.5}s` } as CSSProperties}>❀</span>)}
+      </div>
+      <div className={styles.scratchCardHero}>
+        <img src="/images/rose-scratch-hero.webp" alt="Bride and groom reaching for one another within an ornate ivory frame" />
+        <div className={styles.scratchHeroCopy}>
+          <p>Together with their families</p>
+          <h1 id="rose-couple-names">Sofia <i>&amp;</i> Samuel</h1>
+          <span>12 October 2027 · Moka, Mauritius</span>
+        </div>
+        <canvas
+          ref={canvasRef}
+          className={styles.scratchHeroCanvas}
+          aria-label="Scratch to reveal Sofia and Samuel's wedding invitation"
+          role="img"
+          tabIndex={phase === "scratch" ? 0 : -1}
+          onKeyDown={(event) => {
+            if ((event.key === "Enter" || event.key === " ") && phase === "scratch") {
+              event.preventDefault();
+              onReveal();
+            }
+          }}
+          onPointerDown={(event) => {
+            drawing.current = true;
+            event.currentTarget.setPointerCapture?.(event.pointerId);
+            scratchAt(event);
+          }}
+          onPointerMove={scratchAt}
+          onPointerUp={(event) => {
+            drawing.current = false;
+            event.currentTarget.releasePointerCapture?.(event.pointerId);
+          }}
+          onPointerCancel={() => { drawing.current = false; }}
+          onPointerLeave={() => { drawing.current = false; }}
+        />
+        {!revealed && phase === "scratch" && <button className={styles.tapRevealButton} type="button" onClick={onReveal}><Hand aria-hidden="true" /> Tap to reveal</button>}
+      </div>
+      {phase === "celebrating" && <div className={styles.revealSparkles} aria-hidden="true">{Array.from({ length: 24 }, (_, index) => <span key={index} style={{ "--angle": `${index * 15}deg`, "--distance": `${8 + (index % 5) * 2.4}rem`, "--spark-delay": `${(index % 4) * 45}ms` } as CSSProperties}>{index % 3 === 0 ? "✦" : "·"}</span>)}</div>}
+      {revealed && <p className={styles.continueHint}>Your invitation is revealed</p>}
+    </section>
   );
 }
