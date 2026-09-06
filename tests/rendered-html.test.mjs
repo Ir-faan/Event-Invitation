@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test, { after } from "node:test";
 import { fileURLToPath } from "node:url";
 import React from "react";
@@ -35,6 +36,9 @@ test("renders the complete Coastal Reverie invitation", async () => {
   assert.match(html, /Seating Arrangement/);
   assert.match(html, /The Rahman Family/);
   assert.match(html, /Day Programme/);
+  assert.doesNotMatch(html, /rose-scratch-hero/);
+  assert.doesNotMatch(html, /rose-wedding-curtains/);
+  assert.doesNotMatch(html, /A Glimpse of Us/);
 });
 
 test("renders the complete Rose Afterglow invitation", async () => {
@@ -61,4 +65,17 @@ test("renders the complete Rose Afterglow invitation", async () => {
   assert.match(html, /The Rahman Family/);
   assert.match(html, /Day Programme/);
   assert.match(html, /rose-afterglow\.webp/);
+});
+
+test("keeps both invitation templates structurally independent", async () => {
+  const [coastalComponent, coastalStyles, roseComponent] = await Promise.all([
+    readFile(new URL("../components/coastal-reverie-invitation.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/templates/coastal-reverie/coastal-reverie.module.css", import.meta.url), "utf8"),
+    readFile(new URL("../components/rose-afterglow-invitation.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.doesNotMatch(coastalComponent, /RoseAfterglow|rosePhase|rose-scratch|rose-wedding/);
+  assert.doesNotMatch(coastalStyles, /roseVariant|roseCurtain|scratchHero|glimpseSection/);
+  assert.doesNotMatch(roseComponent, /CoastalReverieInvitation|coastal-reverie\.module\.css|variant=["']rose["']/);
+  assert.match(roseComponent, /rose-afterglow\.module\.css/);
 });
