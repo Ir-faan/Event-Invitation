@@ -1,0 +1,133 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Heart, IdCard, X } from "lucide-react";
+import styles from "./coastal-traditional-card.module.css";
+
+export type TraditionalCardDetails = {
+  brideName: string;
+  groomName: string;
+  date: string;
+  time: string;
+  venue: string;
+  location: string;
+  giftPreference: string;
+};
+
+const defaultDetails: TraditionalCardDetails = {
+  brideName: "Salma",
+  groomName: "Sam",
+  date: "Friday, 17 September 2027",
+  time: "4:30 PM",
+  venue: "The Ravenala Attitude",
+  location: "Balaclava, Mauritius",
+  giftPreference: "No gift box please",
+};
+
+export function CoastalTraditionalCard({
+  details = defaultDetails,
+}: {
+  details?: TraditionalCardDetails;
+}) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
+  return (
+    <>
+      <button
+        className={styles.cardLauncher}
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="View traditional wedding card"
+        aria-haspopup="dialog"
+      >
+        <IdCard aria-hidden="true" />
+        <span>View card</span>
+      </button>
+
+      {open && (
+        <div
+          className={styles.modalBackdrop}
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setOpen(false);
+          }}
+        >
+          <div
+            className={styles.dialogShell}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="traditional-card-title"
+          >
+            <button
+              className={styles.closeButton}
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Close traditional wedding card"
+              autoFocus
+            >
+              <X aria-hidden="true" />
+            </button>
+
+            <article className={styles.card}>
+              <div className={styles.outerFrame} aria-hidden="true" />
+              <div className={styles.innerFrame} aria-hidden="true" />
+              <div className={styles.cornerDecor} aria-hidden="true" />
+              <div className={styles.cornerDecor} aria-hidden="true" />
+              <div className={styles.cornerDecor} aria-hidden="true" />
+              <div className={styles.cornerDecor} aria-hidden="true" />
+
+              <div className={styles.archPanel}>
+                <span
+                  className={styles.bismillahArtwork}
+                  role="img"
+                  aria-label="Bismillah ir-Rahman ir-Rahim"
+                />
+
+                <p className={styles.familyLine}>Together with their families</p>
+                <p className={styles.invitationLine}>request the honour of your presence at the wedding celebration of</p>
+
+                <h2 className={styles.names} id="traditional-card-title">
+                  <span>{details.brideName}</span>
+                  <Heart aria-hidden="true" />
+                  <span>{details.groomName}</span>
+                </h2>
+
+                <div className={styles.divider} aria-hidden="true"><span /><Heart /><span /></div>
+
+                <p className={styles.date}>{details.date}</p>
+                <p className={styles.time}>at {details.time}</p>
+
+                <div className={styles.venueBlock}>
+                  <strong>{details.venue}</strong>
+                  <span>{details.location}</span>
+                </div>
+
+                <div className={styles.giftNote}>
+                  <small>Humble request</small>
+                  <strong>{details.giftPreference}</strong>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
