@@ -81,6 +81,7 @@ export function CoastalTraditionalCard({
         >
           <div
             className={styles.dialogShell}
+            data-traditional-shell
             role="dialog"
             aria-modal="true"
             aria-labelledby="traditional-card-title"
@@ -95,15 +96,16 @@ export function CoastalTraditionalCard({
               <X aria-hidden="true" />
             </button>
 
-            <article className={styles.card}>
+            <article className={styles.card} data-traditional-card>
               <img
                 className={styles.borderArtwork}
+                data-traditional-border
                 src="/images/traditional-card-border.svg"
                 alt=""
                 aria-hidden="true"
               />
 
-              <div className={styles.cardContent}>
+              <div className={styles.cardContent} data-traditional-content>
                 <span
                   className={styles.bismillahArtwork}
                   role="img"
