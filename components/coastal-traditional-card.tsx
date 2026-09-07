@@ -98,7 +98,7 @@ export function CoastalTraditionalCard({
             <article className={styles.card}>
               <img
                 className={styles.borderArtwork}
-                src="/images/traditional-card-border.webp"
+                src="/images/traditional-card-border.svg"
                 alt=""
                 aria-hidden="true"
               />
