@@ -1,0 +1,16 @@
+/* Envelope-opening interaction polish.
+   Keep the wax seal clickable without drawing an extra circular ring before opening. */
+button[aria-label="Open Salma and Sam's wedding invitation"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button[aria-label="Open Salma and Sam's wedding invitation"]::after {
+  content: none !important;
+  display: none !important;
+}
+
+button[aria-label="Open Salma and Sam's wedding invitation"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  filter: brightness(1.04);
+}
