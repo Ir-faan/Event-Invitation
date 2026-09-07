@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./coastal-reverie-decorations.css";
+import "./envelope-opening-fixes.css";
 import { TemplateCardRouter } from "@/components/template-card-router";
 
 export const metadata: Metadata = {
