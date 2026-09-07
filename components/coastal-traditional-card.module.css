@@ -295,7 +295,6 @@
     width: 84vw;
     height: 60svh;
     max-width: 22rem;
-    max-height: 34rem;
   }
 
   .closeButton {
@@ -389,13 +388,6 @@
   .giftNote strong {
     font-size: clamp(.7rem, 2.55vw, .85rem);
   }
-}
-
-@media (max-height: 650px) and (max-width: 760px) {
-  .dialogShell { height: 64svh; }
-  .cardContent { padding-top: 6.4svh; padding-bottom: 3.7svh; }
-  .bismillahArtwork { height: 4.8svh; }
-  .names { font-size: clamp(2rem, 11vw, 2.8rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
