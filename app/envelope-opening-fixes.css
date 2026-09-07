@@ -19,3 +19,39 @@ button[aria-label="Open Salma and Sam's wedding invitation"]:focus-visible {
 section[aria-labelledby="couple-names"] [class*="monogram"] {
   display: none !important;
 }
+
+/* Hero readability: keep the white typography and bright photography, but add
+   a soft localized contrast pocket behind the copy instead of darkening the
+   whole image. */
+section[aria-labelledby="couple-names"] [class*="heroVeil"] {
+  background:
+    radial-gradient(
+      ellipse at 50% 51%,
+      rgba(47, 34, 25, 0.52) 0%,
+      rgba(50, 36, 27, 0.38) 30%,
+      rgba(54, 39, 29, 0.16) 54%,
+      rgba(54, 39, 29, 0) 74%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(47, 34, 25, 0.18) 0%,
+      rgba(56, 40, 30, 0.08) 36%,
+      rgba(46, 32, 24, 0.48) 100%
+    ) !important;
+}
+
+section[aria-labelledby="couple-names"] [class*="heroCopy"] {
+  text-shadow:
+    0 0.12rem 0.28rem rgba(38, 27, 20, 0.66),
+    0 0.45rem 1.35rem rgba(38, 27, 20, 0.48) !important;
+}
+
+section[aria-labelledby="couple-names"] [class*="heroCopy"] h1 {
+  text-shadow:
+    0 0.16rem 0.36rem rgba(36, 25, 18, 0.72),
+    0 0.55rem 1.6rem rgba(36, 25, 18, 0.54) !important;
+}
+
+section[aria-labelledby="couple-names"] [class*="scrollInvitation"] {
+  text-shadow: 0 0.18rem 0.65rem rgba(34, 24, 18, 0.62);
+}
