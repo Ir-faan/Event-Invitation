@@ -5,22 +5,30 @@ import { Heart, IdCard, X } from "lucide-react";
 import styles from "./coastal-traditional-card.module.css";
 
 export type TraditionalCardDetails = {
+  familyLine: string;
+  invitationMessage: string;
   brideName: string;
   groomName: string;
   date: string;
+  timePrefix: string;
   time: string;
   venue: string;
   location: string;
+  giftHeading: string;
   giftPreference: string;
 };
 
 const defaultDetails: TraditionalCardDetails = {
+  familyLine: "Together with their families",
+  invitationMessage: "Request the honour of your presence at the wedding celebration of",
   brideName: "Salma",
   groomName: "Sam",
   date: "Friday, 17 September 2027",
+  timePrefix: "at",
   time: "4:30 PM",
   venue: "The Ravenala Attitude",
   location: "Balaclava, Mauritius",
+  giftHeading: "Humble request",
   giftPreference: "No gift box please",
 };
 
@@ -100,8 +108,8 @@ export function CoastalTraditionalCard({
                   aria-label="Bismillah ir-Rahman ir-Rahim"
                 />
 
-                <p className={styles.familyLine}>Together with their families</p>
-                <p className={styles.invitationLine}>request the honour of your presence at the wedding celebration of</p>
+                <p className={styles.familyLine}>{details.familyLine}</p>
+                <p className={styles.invitationLine}>{details.invitationMessage}</p>
 
                 <h2 className={styles.names} id="traditional-card-title">
                   <span>{details.brideName}</span>
@@ -112,7 +120,7 @@ export function CoastalTraditionalCard({
                 <div className={styles.divider} aria-hidden="true"><span /><Heart /><span /></div>
 
                 <p className={styles.date}>{details.date}</p>
-                <p className={styles.time}>at {details.time}</p>
+                <p className={styles.time}>{details.timePrefix} {details.time}</p>
 
                 <div className={styles.venueBlock}>
                   <strong>{details.venue}</strong>
@@ -120,7 +128,7 @@ export function CoastalTraditionalCard({
                 </div>
 
                 <div className={styles.giftNote}>
-                  <small>Humble request</small>
+                  <small>{details.giftHeading}</small>
                   <strong>{details.giftPreference}</strong>
                 </div>
               </div>
