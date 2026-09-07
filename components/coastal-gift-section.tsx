@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Heart, Leaf, Sparkles } from "lucide-react";
+import { Leaf, Sparkles } from "lucide-react";
 import styles from "./coastal-gift-section.module.css";
 
 export function CoastalGiftSection() {
@@ -64,18 +64,8 @@ export function CoastalGiftSection() {
           <span />
         </div>
 
-        <p className={styles.eyebrow}>A humble request</p>
-        <h2 id="gift-title">Your Presence Is Our Gift</h2>
-        <p className={styles.intro}>
-          Celebrating this beautiful day with you is already more than we could ask for.
-        </p>
-
-        <p className={styles.request}>Humble request, no gift box please.</p>
-
-        <div className={styles.signature}>
-          <Heart aria-hidden="true" />
-          <span>With love, Salma &amp; Sam</span>
-        </div>
+        <h2 id="gift-title">Humble request</h2>
+        <p className={styles.request}>No gift box please.</p>
       </article>
     </section>,
     mountNode,
