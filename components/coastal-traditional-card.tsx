@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useEffect, useState } from "react";
 import { Heart, IdCard, X } from "lucide-react";
 import styles from "./coastal-traditional-card.module.css";
@@ -94,14 +96,14 @@ export function CoastalTraditionalCard({
             </button>
 
             <article className={styles.card}>
-              <div className={styles.outerFrame} aria-hidden="true" />
-              <div className={styles.innerFrame} aria-hidden="true" />
-              <div className={styles.cornerDecor} aria-hidden="true" />
-              <div className={styles.cornerDecor} aria-hidden="true" />
-              <div className={styles.cornerDecor} aria-hidden="true" />
-              <div className={styles.cornerDecor} aria-hidden="true" />
+              <img
+                className={styles.borderArtwork}
+                src="/images/traditional-card-border.webp"
+                alt=""
+                aria-hidden="true"
+              />
 
-              <div className={styles.archPanel}>
+              <div className={styles.cardContent}>
                 <span
                   className={styles.bismillahArtwork}
                   role="img"
@@ -117,7 +119,11 @@ export function CoastalTraditionalCard({
                   <span>{details.groomName}</span>
                 </h2>
 
-                <div className={styles.divider} aria-hidden="true"><span /><Heart /><span /></div>
+                <div className={styles.divider} aria-hidden="true">
+                  <span />
+                  <Heart />
+                  <span />
+                </div>
 
                 <p className={styles.date}>{details.date}</p>
                 <p className={styles.time}>{details.timePrefix} {details.time}</p>
