@@ -1,32 +1,27 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@500;600&display=swap");
-
 .bismillah {
   position: absolute;
   z-index: 6;
-  top: clamp(1.6rem, 3.5vh, 2.7rem);
+  top: clamp(6.5rem, 14vh, 9rem);
   left: 50%;
-  width: min(92vw, 42rem);
+  width: min(78vw, 36rem);
   transform: translateX(-50%);
-  color: #f4dca9;
-  text-align: center;
-  white-space: nowrap;
-  font-family: "Noto Naskh Arabic", "Amiri", "Scheherazade New", serif;
-  font-size: clamp(2rem, 4.2vw, 3.6rem);
-  font-weight: 600;
-  line-height: 1.25;
-  text-shadow:
-    0 .12rem .35rem rgba(43, 29, 20, .48),
-    0 .35rem 1.2rem rgba(43, 29, 20, .34);
-  filter: drop-shadow(0 .15rem .2rem rgba(84, 55, 26, .18));
   pointer-events: none;
+}
+
+.artwork {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  opacity: .98;
+  filter:
+    drop-shadow(0 .12rem .3rem rgba(35, 24, 18, .34))
+    drop-shadow(0 .35rem .85rem rgba(35, 24, 18, .2));
 }
 
 @media (max-width: 760px) {
   .bismillah {
-    top: 1.35rem;
-    width: calc(100% - 5.8rem);
-    font-size: clamp(1.55rem, 7vw, 2.15rem);
-    white-space: normal;
-    line-height: 1.35;
+    top: clamp(6.4rem, 14vh, 7.8rem);
+    width: min(78vw, 21rem);
   }
 }
