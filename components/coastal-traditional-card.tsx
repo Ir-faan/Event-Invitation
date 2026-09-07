@@ -100,7 +100,7 @@ export function CoastalTraditionalCard({
               <img
                 className={styles.borderArtwork}
                 data-traditional-border
-                src="/images/traditional-card-border.webp"
+                src="/images/traditional-card-border.svg?v=5"
                 alt=""
                 aria-hidden="true"
               />
