@@ -13,12 +13,16 @@ export const metadata: Metadata = {
 };
 
 const traditionalCardDetails: TraditionalCardDetails = {
+  familyLine: "Together with their families",
+  invitationMessage: "Request the honour of your presence at the wedding celebration of",
   brideName: "Salma",
   groomName: "Sam",
   date: "Friday, 17 September 2027",
+  timePrefix: "at",
   time: "4:30 PM",
   venue: "The Ravenala Attitude",
   location: "Balaclava, Mauritius",
+  giftHeading: "Humble request",
   giftPreference: "No gift box please",
 };
 
