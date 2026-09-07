@@ -1,0 +1,181 @@
+.giftSection {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(5.5rem, 9vw, 8rem) 1.25rem;
+  color: var(--ink, #49382c);
+  background:
+    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, .58), transparent 28%),
+    radial-gradient(circle at 86% 76%, rgba(185, 133, 79, .09), transparent 30%),
+    linear-gradient(180deg, #f5e8dc 0%, #fbf4ec 52%, #fffaf5 100%);
+  text-align: center;
+}
+
+.giftSection::before,
+.giftSection::after {
+  content: "";
+  position: absolute;
+  width: clamp(12rem, 25vw, 22rem);
+  aspect-ratio: 1;
+  border: 1px solid rgba(101, 75, 57, .09);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.giftSection::before {
+  top: -8rem;
+  left: -7rem;
+}
+
+.giftSection::after {
+  right: -8rem;
+  bottom: -10rem;
+}
+
+.giftCard {
+  position: relative;
+  z-index: 1;
+  width: min(46rem, 100%);
+  margin: 0 auto;
+  padding: clamp(3.2rem, 6vw, 5rem) clamp(1.4rem, 5vw, 4.5rem);
+  border: 1px solid rgba(101, 75, 57, .16);
+  border-radius: 1.3rem;
+  background: rgba(255, 250, 245, .74);
+  box-shadow: 0 1.8rem 4.5rem rgba(73, 50, 35, .11);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translateY(2.5rem) scale(.98);
+  transition: opacity 1s ease, transform 1.05s cubic-bezier(.2, .75, .2, 1);
+}
+
+.visible .giftCard {
+  opacity: 1;
+  transform: none;
+}
+
+.ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .8rem;
+  margin-bottom: 1.25rem;
+  color: rgba(101, 75, 57, .56);
+}
+
+.ornament span {
+  width: 3.4rem;
+  height: 1px;
+  background: currentColor;
+  opacity: .5;
+}
+
+.ornament svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.eyebrow {
+  margin: 0 0 .8rem;
+  color: var(--olive-dark, #654b39);
+  text-transform: uppercase;
+  letter-spacing: .3em;
+  font: 600 .68rem var(--sans, Montserrat, sans-serif);
+}
+
+.giftCard h2 {
+  margin: 0 0 1.35rem;
+  font: 400 clamp(3.4rem, 6vw, 5.1rem)/.95 var(--script, "Birthstone", cursive);
+}
+
+.intro {
+  width: min(31rem, 100%);
+  margin: 0 auto 1.9rem;
+  color: rgba(73, 56, 44, .7);
+  font: italic 400 clamp(1rem, 1.7vw, 1.18rem)/1.75 var(--serif, Georgia, serif);
+}
+
+.request {
+  position: relative;
+  width: min(34rem, 100%);
+  margin: 0 auto;
+  padding: 1.35rem 1.25rem;
+  border-top: 1px solid rgba(101, 75, 57, .16);
+  border-bottom: 1px solid rgba(101, 75, 57, .16);
+  color: var(--olive-deep, #352820);
+  font: 500 clamp(1.35rem, 2.5vw, 1.8rem)/1.5 var(--serif, Georgia, serif);
+  letter-spacing: .025em;
+}
+
+.signature {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  margin-top: 1.9rem;
+  color: rgba(73, 56, 44, .62);
+  font: 500 .75rem var(--sans, Montserrat, sans-serif);
+  letter-spacing: .08em;
+}
+
+.signature svg {
+  width: .82rem;
+  height: .82rem;
+  fill: currentColor;
+}
+
+.cornerLeaf {
+  position: absolute;
+  width: 2.1rem;
+  height: 2.1rem;
+  color: rgba(101, 75, 57, .2);
+}
+
+.cornerLeaf:first-of-type {
+  top: 1.25rem;
+  left: 1.25rem;
+  transform: rotate(-35deg);
+}
+
+.cornerLeaf:last-of-type {
+  right: 1.25rem;
+  bottom: 1.25rem;
+  transform: rotate(145deg);
+}
+
+@media (max-width: 760px) {
+  .giftSection {
+    padding: 4.8rem .9rem;
+  }
+
+  .giftCard {
+    padding: 3.1rem 1.25rem 2.9rem;
+    border-radius: 1rem;
+  }
+
+  .giftCard h2 {
+    font-size: clamp(3.1rem, 15vw, 4.2rem);
+    line-height: 1;
+  }
+
+  .intro {
+    font-size: .98rem;
+    line-height: 1.7;
+  }
+
+  .request {
+    padding: 1.15rem .65rem;
+    font-size: clamp(1.2rem, 5.5vw, 1.48rem);
+  }
+
+  .cornerLeaf {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giftCard {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}
