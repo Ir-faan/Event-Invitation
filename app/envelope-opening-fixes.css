@@ -14,3 +14,8 @@ button[aria-label="Open Salma and Sam's wedding invitation"]:focus-visible {
   box-shadow: none !important;
   filter: brightness(1.04);
 }
+
+/* Hero cleanup: remove the circular S & S monogram above the couple names. */
+section[aria-labelledby="couple-names"] [class*="monogram"] {
+  display: none !important;
+}
