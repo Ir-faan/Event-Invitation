@@ -1,18 +1,23 @@
 [data-traditional-card] {
-  border: 1px solid rgba(185, 143, 79, .38) !important;
+  border: 1px solid rgba(185, 143, 79, .2) !important;
 }
 
+/* The generated frame is a real transparent image. Keep it fully visible
+   above the ivory card background while all editable text sits above it. */
 [data-traditional-border] {
   position: absolute !important;
   z-index: 3 !important;
-  inset: .32rem !important;
-  width: calc(100% - .64rem) !important;
-  height: calc(100% - .64rem) !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   max-width: none !important;
+  display: block !important;
   object-fit: fill !important;
   opacity: 1 !important;
-  filter: drop-shadow(0 .05rem .08rem rgba(107, 76, 39, .16));
+  visibility: visible !important;
+  filter: saturate(1.04) contrast(1.03) drop-shadow(0 .05rem .08rem rgba(107, 76, 39, .12));
   pointer-events: none !important;
+  user-select: none !important;
 }
 
 [data-traditional-content] {
@@ -23,9 +28,9 @@
 @media (max-width: 760px) {
   [data-traditional-shell] {
     width: 84vw !important;
-    height: 72svh !important;
+    height: 60svh !important;
     max-width: 22rem !important;
-    max-height: 42rem !important;
+    max-height: 60svh !important;
   }
 
   [data-traditional-card] {
@@ -35,20 +40,24 @@
   }
 
   [data-traditional-content] {
-    width: 68% !important;
+    width: 56% !important;
     height: 100% !important;
     min-height: 0 !important;
-    padding: 8.4svh 0 5.4svh !important;
+    justify-content: center !important;
+    padding: 7svh 0 4.2svh !important;
   }
 }
 
+/* Never silently enlarge the card on short phones. The requested mobile
+   size remains 60% of the viewport height. */
 @media (max-height: 650px) and (max-width: 760px) {
   [data-traditional-shell] {
-    height: 76svh !important;
+    height: 60svh !important;
+    max-height: 60svh !important;
   }
 
   [data-traditional-content] {
-    padding-top: 7svh !important;
-    padding-bottom: 4.4svh !important;
+    padding-top: 5.6svh !important;
+    padding-bottom: 3.2svh !important;
   }
 }
