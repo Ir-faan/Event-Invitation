@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { RoseAfterglowInvitation } from "@/components/rose-afterglow-invitation";
-import "./rose-hero-mobile-fill.css";
 
 export const metadata: Metadata = {
   title: "Sofia & Samuel — Rose Afterglow",

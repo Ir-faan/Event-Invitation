@@ -753,12 +753,16 @@
   .storyBloom { will-change: auto; }
 }
 
-/* Rose Afterglow v2: full-bleed hero and layouts distinct from Coastal Reverie. */
+/* Rose Afterglow v2: independent hero layers keep the uploaded photo replaceable. */
 .roseVariant .scratchHero {
   height: 100svh;
-  min-height: 38rem;
-  padding: 0;
-  background: #59654b;
+  min-height: 42rem;
+  padding: clamp(4.75rem, 8svh, 6rem) clamp(1rem, 4vw, 3.5rem) clamp(6.75rem, 11svh, 8rem);
+  background:
+    radial-gradient(circle at 48% 36%, rgba(190,199,159,.22), transparent 36rem),
+    linear-gradient(180deg, rgba(68,78,55,.1), rgba(38,48,31,.35)),
+    url("/images/rose-hero-olive-texture.webp") center / cover no-repeat,
+    #59654b;
 }
 
 .roseVariant .scratchHero::before,
@@ -767,37 +771,72 @@
 .scratchHeroArtwork {
   position: relative;
   z-index: 3;
-  width: min(100vw, calc(100svh * 1.7768));
-  height: auto;
-  min-height: 0;
-  aspect-ratio: 1672 / 941;
-  flex: none;
-}
-
-.scratchHeroPicture {
-  position: absolute;
-  inset: 0;
-  display: block;
-}
-
-.scratchHeroPicture > img {
-  width: 100%;
+  width: min(82rem, 100%);
   height: 100%;
-  max-width: none;
-  object-fit: contain;
-  filter: saturate(.9) contrast(.98) brightness(1.01);
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(18rem, .92fr) minmax(18rem, .72fr);
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2rem, 6vw, 7rem);
 }
 
+.scratchPhotoComposition {
+  --photo-left: 20.1%;
+  --photo-top: 19.4%;
+  --photo-width: 59.7%;
+  --photo-height: 60%;
+  position: relative;
+  justify-self: end;
+  height: min(72svh, 43rem);
+  max-height: 100%;
+  aspect-ratio: 1096 / 1608;
+  filter: drop-shadow(0 1.8rem 2.4rem rgba(24,31,19,.32));
+}
+
+.scratchPhotoViewport,
 .scratchTarget {
   position: absolute;
-  z-index: 5;
-  top: 15.6%;
-  left: 24.6%;
-  width: 26.8%;
-  height: 62.7%;
+  top: var(--photo-top);
+  left: var(--photo-left);
+  width: var(--photo-width);
+  height: var(--photo-height);
   overflow: hidden;
   border-radius: 50%;
+}
+
+.scratchPhotoViewport {
+  z-index: 1;
+  background: #77805c;
+  box-shadow: inset 0 0 1.5rem rgba(26,34,20,.2);
+}
+
+.scratchPhotoViewport > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(.9) contrast(.98) brightness(1.01);
+  transform: scale(1.025);
+  transition: transform 1.2s cubic-bezier(.2,.72,.2,1);
+}
+
+.scratchHeroRevealed .scratchPhotoViewport > img { transform: scale(1); }
+
+.scratchTarget {
+  z-index: 2;
   box-shadow: inset 0 0 1.2rem rgba(255,255,255,.18);
+}
+
+.scratchOrnateFrame {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
 }
 
 .scratchPrompt {
@@ -818,11 +857,14 @@
 .roseVariant .scratchHeroCanvas { border-radius: 50%; }
 
 .roseVariant .scratchHeroCopy {
-  top: 40%;
-  right: 3.5%;
+  position: relative;
+  z-index: 6;
+  top: auto;
+  right: auto;
   bottom: auto;
   left: auto;
-  width: 28%;
+  width: min(31rem, 100%);
+  justify-self: start;
   transform: translateY(2.25rem) scale(.97);
   transition: opacity 1s ease .08s, transform 1.15s cubic-bezier(.16,.78,.18,1) .08s;
 }
@@ -833,7 +875,7 @@
 }
 
 .roseVariant .scratchHeroCopy h1 { font-size: clamp(3rem, 5.3vw, 5.4rem); }
-.roseVariant .revealSparkles { top: 45%; }
+.roseVariant .revealSparkles { top: 50%; }
 .roseVariant .continueHint { color: rgba(247,247,236,.78); }
 
 .roseVariant .scratchHeroCopy { text-shadow: 0 .15rem 1.1rem rgba(28,36,23,.72); }
@@ -1302,37 +1344,44 @@
 }
 
 @media (max-width: 760px) {
+  .roseVariant .scratchHero {
+    min-height: 100svh;
+    padding: max(4.25rem, env(safe-area-inset-top)) .85rem max(6.4rem, env(safe-area-inset-bottom));
+  }
+
   .scratchHeroArtwork {
-    width: min(100vw, calc(100svh * .5628));
-    height: auto;
+    width: 100%;
+    height: 100%;
     min-height: 0;
-    max-width: 100vw;
-    aspect-ratio: 941 / 1672;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(.45rem, 1.7svh, .9rem);
   }
 
-  .scratchHeroPicture > img {
-    object-fit: contain;
-    object-position: center;
-  }
-
-  .scratchTarget {
-    top: 14.4%;
-    left: 19.6%;
-    width: 60.8%;
-    height: 47.2%;
+  .scratchPhotoComposition {
+    width: min(92vw, 42svh, 23rem);
+    height: auto;
+    max-height: none;
+    flex: 0 0 auto;
+    justify-self: auto;
   }
 
   .scratchPrompt { font-size: clamp(2.65rem,13vw,4rem); }
 
   .roseVariant .scratchHeroCopy {
+    position: relative;
     top: auto;
-    right: 10%;
-    bottom: 5.9%;
-    left: 10%;
-    width: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: min(100%, 24rem);
+    flex: 0 0 auto;
+    justify-self: auto;
   }
 
-  .roseVariant .scratchHeroCopy h1 { font-size: clamp(3rem,15vw,4.35rem); }
+  .roseVariant .scratchHeroCopy h1 { font-size: clamp(2.85rem,14vw,4.2rem); }
   .roseVariant .countdownContent { padding-block: 2.9rem 3.1rem; }
 
   .glimpseSection { padding: 3.8rem .9rem 4.2rem; }

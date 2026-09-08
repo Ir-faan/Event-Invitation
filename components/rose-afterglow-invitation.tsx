@@ -111,6 +111,11 @@ const glimpsePhotos = [
   { src: "/images/rose-wedding-curtains-olive.webp", alt: "Olive wedding curtains framed by flowers and greenery" },
 ];
 
+const heroCouplePhoto = {
+  src: "/images/rose-couple-hands-default.webp",
+  alt: "Bride and groom reaching for one another",
+};
+
 function getCountdown(now: number, weddingTime: number) {
   const difference = Math.max(weddingTime - now, 0);
   return {
@@ -444,37 +449,40 @@ function ScratchInvitationHero({
         {Array.from({ length: 11 }, (_, index) => <span key={index} style={{ "--x": `${(index * 37) % 96}%`, "--delay": `${-(index % 6) * 2.4}s`, "--duration": `${16 + (index % 4) * 2.5}s` } as CSSProperties}>❀</span>)}
       </div>
       <div className={styles.scratchHeroArtwork}>
-        <picture className={styles.scratchHeroPicture}>
-          <source media="(min-width: 761px)" srcSet="/images/rose-scratch-hero-wide-olive.webp" />
-          <img src="/images/rose-scratch-hero-olive.webp" alt="Bride and groom reaching for one another within an ornate ivory frame" />
-        </picture>
-        <div className={styles.scratchTarget}>
-          <canvas
-            ref={canvasRef}
-            className={styles.scratchHeroCanvas}
-            aria-label="Scratch the translucent oval to reveal Sofia and Samuel's wedding invitation"
-            role="img"
-            tabIndex={phase === "scratch" ? 0 : -1}
-            onKeyDown={(event) => {
-              if ((event.key === "Enter" || event.key === " ") && phase === "scratch") {
-                event.preventDefault();
-                onReveal();
-              }
-            }}
-            onPointerDown={(event) => {
-              drawing.current = true;
-              event.currentTarget.setPointerCapture?.(event.pointerId);
-              scratchAt(event);
-            }}
-            onPointerMove={scratchAt}
-            onPointerUp={(event) => {
-              drawing.current = false;
-              event.currentTarget.releasePointerCapture?.(event.pointerId);
-            }}
-            onPointerCancel={() => { drawing.current = false; }}
-            onPointerLeave={() => { drawing.current = false; }}
-          />
-          {!revealed && phase === "scratch" && <span className={styles.scratchPrompt}>Scratch Me</span>}
+        <div className={styles.scratchPhotoComposition}>
+          <div className={styles.scratchPhotoViewport}>
+            <img src={heroCouplePhoto.src} alt={heroCouplePhoto.alt} />
+          </div>
+          <div className={styles.scratchTarget}>
+            <canvas
+              ref={canvasRef}
+              className={styles.scratchHeroCanvas}
+              aria-label="Scratch the translucent oval to reveal Sofia and Samuel's wedding invitation"
+              role="img"
+              tabIndex={phase === "scratch" ? 0 : -1}
+              onKeyDown={(event) => {
+                if ((event.key === "Enter" || event.key === " ") && phase === "scratch") {
+                  event.preventDefault();
+                  onReveal();
+                }
+              }}
+              onPointerDown={(event) => {
+                drawing.current = true;
+                event.currentTarget.setPointerCapture?.(event.pointerId);
+                scratchAt(event);
+              }}
+              onPointerMove={scratchAt}
+              onPointerUp={(event) => {
+                drawing.current = false;
+                event.currentTarget.releasePointerCapture?.(event.pointerId);
+              }}
+              onPointerCancel={() => { drawing.current = false; }}
+              onPointerLeave={() => { drawing.current = false; }}
+            />
+            {!revealed && phase === "scratch" && <span className={styles.scratchPrompt}>Scratch Me</span>}
+          </div>
+          <img className={styles.scratchOrnateFrame} src="/images/rose-ornate-frame-ivory.webp" alt="" aria-hidden="true" />
+          {phase === "celebrating" && <div className={styles.revealSparkles} aria-hidden="true">{Array.from({ length: 24 }, (_, index) => <span key={index} style={{ "--angle": `${index * 15}deg`, "--distance": `${8 + (index % 5) * 2.4}rem`, "--spark-delay": `${(index % 4) * 45}ms` } as CSSProperties}>{index % 3 === 0 ? "✦" : "·"}</span>)}</div>}
         </div>
         <div className={styles.scratchHeroCopy}>
           <p>Together with their families</p>
@@ -482,7 +490,6 @@ function ScratchInvitationHero({
           <span>12 October 2027 · Moka, Mauritius</span>
         </div>
       </div>
-      {phase === "celebrating" && <div className={styles.revealSparkles} aria-hidden="true">{Array.from({ length: 24 }, (_, index) => <span key={index} style={{ "--angle": `${index * 15}deg`, "--distance": `${8 + (index % 5) * 2.4}rem`, "--spark-delay": `${(index % 4) * 45}ms` } as CSSProperties}>{index % 3 === 0 ? "✦" : "·"}</span>)}</div>}
     </section>
   );
 }

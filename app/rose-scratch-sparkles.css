@@ -2,8 +2,8 @@
    Keep the reveal to sparkles only: no halo, ring or circular glow. */
 
 main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] {
-  left: 38% !important;
-  top: 47% !important;
+  left: 50% !important;
+  top: 50% !important;
   width: 0;
   height: 0;
   pointer-events: none;
@@ -139,13 +139,13 @@ main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::afte
 /* The longer sparkle field now uses one uninterrupted linear drift. Both
    layers begin together and stay in motion for the full animation, so there
    is no second start after an apparent pause. */
-main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::before,
-main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::after {
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::before,
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::after {
   position: absolute !important;
   z-index: 11 !important;
   display: block !important;
-  left: 38% !important;
-  top: 47% !important;
+  left: 50% !important;
+  top: 50% !important;
   width: 0 !important;
   height: 0 !important;
   border: 0 !important;
@@ -158,7 +158,7 @@ main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::after 
   will-change: transform, opacity;
 }
 
-main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::before {
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::before {
   content: "✦" !important;
   color: rgba(255, 246, 205, .98) !important;
   font-size: clamp(.8rem, 2.5vw, 1.15rem) !important;
@@ -179,7 +179,7 @@ main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::before
   animation: roseScratchContinuousDriftA 3.2s linear both !important;
 }
 
-main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::after {
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::after {
   content: "✧" !important;
   color: rgba(255, 251, 224, .98) !important;
   font-size: clamp(.68rem, 2vw, 1rem) !important;
@@ -240,24 +240,24 @@ main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::after 
 @media (max-width: 760px) {
   main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] {
     left: 50% !important;
-    top: 38.5% !important;
+    top: 50% !important;
   }
 
   main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span {
     font-size: clamp(.9rem, 4.8vw, 1.35rem) !important;
   }
 
-  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::before,
-  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::after {
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::before,
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::after {
     left: 50% !important;
-    top: 38.5% !important;
+    top: 50% !important;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   main#invitation-top[class*="roseVariant"] [class*="revealSparkles"],
-  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::before,
-  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::after {
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::before,
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::after {
     display: none !important;
   }
 }

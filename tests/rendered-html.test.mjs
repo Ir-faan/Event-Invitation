@@ -49,7 +49,8 @@ test("renders the complete Rose Afterglow invitation", async () => {
   assert.match(html, /Tap to open/);
   assert.match(html, /rose-wedding-curtains-olive\.webp/);
   assert.match(html, /rose-scratch-hero-olive\.webp/);
-  assert.match(html, /rose-scratch-hero-wide-olive\.webp/);
+  assert.match(html, /rose-couple-hands-default\.webp/);
+  assert.match(html, /rose-ornate-frame-ivory\.webp/);
   assert.doesNotMatch(html, /Pull to open/);
   assert.doesNotMatch(html, /Scroll to reveal/);
   assert.doesNotMatch(html, /Tap to reveal/);
@@ -77,5 +78,6 @@ test("keeps both invitation templates structurally independent", async () => {
   assert.doesNotMatch(coastalComponent, /RoseAfterglow|rosePhase|rose-scratch|rose-wedding/);
   assert.doesNotMatch(coastalStyles, /roseVariant|roseCurtain|scratchHero|glimpseSection/);
   assert.doesNotMatch(roseComponent, /CoastalReverieInvitation|coastal-reverie\.module\.css|variant=["']rose["']/);
+  assert.doesNotMatch(roseComponent, /Your invitation is revealed/);
   assert.match(roseComponent, /rose-afterglow\.module\.css/);
 });
