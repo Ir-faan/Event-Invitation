@@ -1,0 +1,253 @@
+.custom-part-group {
+  padding: 1.35rem 1.4rem;
+}
+
+.custom-part-group > p {
+  max-width: 54rem;
+}
+
+.custom-part-consultation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(211, 164, 73, .24);
+}
+
+.custom-part-consultation > span {
+  color: var(--muted);
+  font-size: .7rem;
+  line-height: 1.5;
+}
+
+.custom-part-consultation .button {
+  flex: 0 0 auto;
+  min-height: 2.9rem;
+  padding: .75rem 1.1rem;
+}
+
+.pricing-service-notes {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.pricing-service-notes .service-note-card {
+  position: relative;
+  min-height: 9rem;
+  padding: 1.35rem;
+  background: rgba(255, 253, 249, .8);
+  box-shadow: 0 .8rem 2rem rgba(65, 31, 37, .04);
+}
+
+.pricing-service-notes .service-note-card > svg {
+  width: 2.45rem;
+  height: 2.45rem;
+  padding: .66rem;
+}
+
+.pricing-service-notes .service-note-card strong {
+  font-size: .84rem;
+}
+
+.pricing-service-notes .service-note-card p {
+  max-width: 32rem;
+  font-size: .72rem;
+}
+
+.pricing-service-notes .consultation-note {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.15rem;
+  min-height: auto;
+  padding: 1.45rem 1.55rem;
+  border-color: rgba(74, 25, 34, .13);
+  background: linear-gradient(135deg, rgba(255, 253, 249, .96), rgba(246, 232, 227, .72));
+}
+
+.consultation-copy {
+  min-width: 0;
+}
+
+.consultation-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .55rem;
+  margin-bottom: .35rem;
+}
+
+.pricing-service-notes .consultation-title-row strong {
+  margin: 0;
+}
+
+.free-consultation-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0 .55rem;
+  border-radius: 999px;
+  color: var(--wine);
+  background: #f2e0dc;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  font-size: .52rem;
+  font-weight: 800;
+}
+
+.consultation-actions {
+  display: grid;
+  justify-items: end;
+  gap: .8rem;
+  min-width: 15.5rem;
+}
+
+.consultation-actions .whatsapp-button {
+  min-height: 3rem;
+  padding: .75rem 1.15rem;
+  white-space: nowrap;
+}
+
+.consultation-actions .whatsapp-button .whatsapp-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: currentColor;
+}
+
+.consultation-social-row {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+}
+
+.consultation-social-row > span {
+  color: var(--muted);
+  font-size: .64rem;
+}
+
+.consultation-socials {
+  display: flex;
+  align-items: center;
+  gap: .42rem;
+}
+
+.consultation-socials .social-button {
+  display: grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border: 1px solid rgba(74, 25, 34, .13);
+  border-radius: 50%;
+  color: var(--wine);
+  background: #f2e0dc;
+  box-shadow: 0 .25rem .7rem rgba(74, 25, 34, .06);
+  cursor: default;
+  transition: transform .2s ease, color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+.consultation-socials a.social-button {
+  cursor: pointer;
+}
+
+.consultation-socials .social-button:hover {
+  transform: translateY(-2px);
+  color: #fff;
+  background: var(--wine);
+  box-shadow: 0 .45rem 1rem rgba(74, 25, 34, .14);
+}
+
+.consultation-socials .brand-icon {
+  width: .95rem;
+  height: .95rem;
+}
+
+.consultation-socials .brand-facebook,
+.consultation-socials .brand-tiktok {
+  fill: currentColor;
+  stroke: none;
+}
+
+.consultation-socials .brand-instagram {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+}
+
+.consultation-socials .brand-instagram .social-dot {
+  fill: currentColor;
+  stroke: none;
+}
+
+.pricing-service-notes .delivery-note {
+  background: linear-gradient(135deg, rgba(255, 253, 249, .94), rgba(249, 241, 228, .8));
+}
+
+.delivery-time {
+  display: inline-block;
+  margin-top: .5rem;
+  color: var(--wine);
+  font-size: .68rem;
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .pricing-service-notes {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-service-notes .consultation-note {
+    grid-column: auto;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .consultation-actions {
+    grid-column: 2;
+    justify-items: start;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .custom-part-consultation {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .custom-part-consultation .button {
+    width: 100%;
+  }
+
+  .pricing-service-notes .service-note-card,
+  .pricing-service-notes .consultation-note {
+    grid-template-columns: 1fr;
+    gap: .85rem;
+    padding: 1.15rem;
+  }
+
+  .pricing-service-notes .service-note-card > svg {
+    width: 2.3rem;
+    height: 2.3rem;
+  }
+
+  .consultation-actions {
+    grid-column: auto;
+    justify-items: stretch;
+    width: 100%;
+  }
+
+  .consultation-actions .whatsapp-button {
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .consultation-social-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .5rem;
+  }
+}
