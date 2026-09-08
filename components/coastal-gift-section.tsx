@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Leaf, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import styles from "./coastal-gift-section.module.css";
 
 export function CoastalGiftSection() {
@@ -54,10 +54,7 @@ export function CoastalGiftSection() {
 
   return createPortal(
     <section className={`${styles.giftSection} ${visible ? styles.visible : ""}`} aria-labelledby="gift-title">
-      <article className={styles.giftCard}>
-        <Leaf className={styles.cornerLeaf} aria-hidden="true" />
-        <Leaf className={styles.cornerLeaf} aria-hidden="true" />
-
+      <div className={styles.giftContent}>
         <div className={styles.ornament} aria-hidden="true">
           <span />
           <Sparkles />
@@ -66,7 +63,7 @@ export function CoastalGiftSection() {
 
         <h2 id="gift-title">Humble request</h2>
         <p className={styles.request}>No gift box please.</p>
-      </article>
+      </div>
     </section>,
     mountNode,
   );
