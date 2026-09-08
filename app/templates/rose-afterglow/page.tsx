@@ -5,6 +5,7 @@ import "./rose-glimpse-scatter.css";
 import "./rose-glimpse-spacing.css";
 import "./rose-template1-layout.css";
 import "./rose-template1-layout-fixes.css";
+import "./rose-shared-seating-theme.css";
 
 export const metadata: Metadata = {
   title: "Sofia & Samuel — Rose Afterglow",
