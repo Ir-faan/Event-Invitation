@@ -1,0 +1,23 @@
+/* Match the rounded event-container treatment used in Template 1 while
+   preserving Template 2's olive palette and the restored programme layout. */
+
+main#invitation-top[class*="roseVariant"] > section[class*="programmeSection"] article[class*="programmeItem"] {
+  border: 1px solid rgba(250, 250, 239, .3) !important;
+  border-radius: 1.2rem !important;
+  background: rgba(249, 250, 241, .18) !important;
+  overflow: hidden !important;
+  padding: 1.25rem .8rem !important;
+}
+
+@media (max-width: 760px) {
+  main#invitation-top[class*="roseVariant"] > section[class*="programmeSection"] article[class*="programmeItem"] {
+    border-radius: .95rem !important;
+    padding: .9rem .85rem 1rem !important;
+    margin-bottom: .7rem !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] > section[class*="programmeSection"] article[class*="programmeItem"]::before {
+    top: 3.8rem !important;
+    bottom: .75rem !important;
+  }
+}
