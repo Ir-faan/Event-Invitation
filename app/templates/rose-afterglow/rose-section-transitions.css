@@ -1,41 +1,7 @@
-/* Long, continuous section gradients for Rose Afterglow.
-   These use the same visual idea as the Day Programme background: colour
-   changes happen across a meaningful portion of each section rather than in
-   a thin strip at the boundary. Adjacent sections meet on the same colour. */
-
-/* Hero -> Countdown: let the textured hero settle into the same deep olive
-   used at the top of the countdown instead of ending on a hard texture edge. */
-main#invitation-top[class*="roseVariant"] > section[class*="scratchHero"] {
-  background:
-    linear-gradient(
-      180deg,
-      rgba(67, 80, 58, 0) 52%,
-      rgba(67, 80, 58, .18) 68%,
-      rgba(67, 80, 58, .48) 84%,
-      #43503a 100%
-    ),
-    radial-gradient(circle at 48% 36%, rgba(190,199,159,.22), transparent 36rem),
-    linear-gradient(180deg, rgba(68,78,55,.1), rgba(38,48,31,.35)),
-    url("/images/rose-hero-olive-texture.webp") center / cover no-repeat,
-    #59654b !important;
-}
-
-/* Countdown -> Glimpse of Us: dark hero olive eases into the light countdown
-   centre, then slowly returns to the Glimpse section's olive. */
-main#invitation-top[class*="roseVariant"] > section[class*="countdownSection"] {
-  background: linear-gradient(
-    180deg,
-    #43503a 0%,
-    #68765f 12%,
-    #a9b5a0 25%,
-    #dce3d2 38%,
-    #f7f8f0 54%,
-    #e3e8dc 67%,
-    #b8c2ae 79%,
-    #7f8d72 91%,
-    #536046 100%
-  ) !important;
-}
+/* Rose Afterglow section transitions.
+   Keep only the transitions that work visually. The Hero -> Countdown,
+   Countdown -> Glimpse, and Journey -> In Loving Memory hand-offs now use
+   their section backgrounds directly with no extra transition gradient. */
 
 /* Glimpse of Us -> Our Journey: keep the rich olive character through most of
    the gallery and open it gradually into the pale Journey background. */
@@ -54,25 +20,12 @@ main#invitation-top[class*="roseVariant"] > section[class*="glimpseSection"] {
     ) !important;
 }
 
-/* Our Journey -> In Loving Memory: mirror the Programme-style long gradient,
-   moving from the pale Journey section into the dark memorial olive. */
-main#invitation-top[class*="roseVariant"] > section[class*="storySection"] {
-  background: linear-gradient(
-    180deg,
-    #dce4d1 0%,
-    #e9ede3 20%,
-    #f8f9f2 46%,
-    #e2e7db 62%,
-    #b8c2ae 75%,
-    #87947a 86%,
-    #5d6b50 94%,
-    #3e4b36 100%
-  ) !important;
-}
-
-/* In Loving Memory -> Event Details: broaden the lightening phase so the dark
-   memorial background dissolves gradually into the Event Details green. */
+/* In Loving Memory -> Event Details: retain the gradual fade into the lighter
+   Event Details background. */
 main#invitation-top[class*="roseVariant"] > section[class*="memorySection"]::after {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
   background:
     linear-gradient(
       180deg,
@@ -96,9 +49,15 @@ main#invitation-top[class*="roseVariant"] > section[class*="memorySection"]::aft
     radial-gradient(circle at center, rgba(255,255,255,.08), transparent 68%) !important;
 }
 
-/* Event Details starts on exactly the same pale green reached by the memorial
-   section, then keeps the existing gentle light-to-olive treatment. */
+main#invitation-top[class*="roseVariant"] > section[class*="memorySection"] {
+  border-bottom: 0 !important;
+  outline: 0 !important;
+}
+
 main#invitation-top[class*="roseVariant"] > section[class*="eventsSection"] {
+  margin-top: -1px;
+  border-top: 0 !important;
+  outline: 0 !important;
   background: linear-gradient(
     180deg,
     #e5eadb 0%,
