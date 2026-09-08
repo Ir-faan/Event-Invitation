@@ -1,0 +1,30 @@
+/* Keep the countdown, photo wall and journey visually closer together without
+   changing the established section backgrounds or the Glimpse -> Journey fade. */
+
+main#invitation-top[class*="roseVariant"] section[class*="countdownSection"] [class*="countdownContent"] {
+  padding-bottom: 2.15rem !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] {
+  padding-top: clamp(2.7rem, 3.8vw, 3.6rem) !important;
+  padding-bottom: clamp(2.55rem, 3.5vw, 3.35rem) !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="storySection"] {
+  padding-top: clamp(2.35rem, 3.25vw, 3.15rem) !important;
+}
+
+@media (max-width: 760px) {
+  main#invitation-top[class*="roseVariant"] section[class*="countdownSection"] [class*="countdownContent"] {
+    padding-bottom: 1.8rem !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] {
+    padding-top: 2.35rem !important;
+    padding-bottom: 2.3rem !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] section[class*="storySection"] {
+    padding-top: 2.4rem !important;
+  }
+}
