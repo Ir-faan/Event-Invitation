@@ -1,0 +1,137 @@
+/* Coastal Reverie: smooth the gift transition and make the mobile day programme
+   use the full available width without changing the editable programme data. */
+
+main#invitation-top > section[aria-labelledby="gift-title"] {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, .22), transparent 30%),
+    radial-gradient(circle at 86% 74%, rgba(185, 133, 79, .055), transparent 32%),
+    linear-gradient(180deg, #f5e8dc 0%, #efddcd 50%, #f5e8dc 100%) !important;
+}
+
+@media (max-width: 760px) {
+  main#invitation-top > section[aria-labelledby="programme-title"] {
+    padding: 4.8rem 1rem 4.6rem !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:first-child {
+    width: min(23rem, 100%);
+    margin: 0 auto;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:first-child h2 {
+    margin-bottom: .8rem;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:first-child > span {
+    max-width: 18rem;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+
+  /* The horizontal desktop timeline is not useful on a narrow screen. */
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(2) {
+    display: none !important;
+  }
+
+  /* Turn the programme into a compact stack of full-width schedule rows. */
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) {
+    width: min(23.5rem, 100%) !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: .8rem !important;
+    margin: 2.8rem auto 0 !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article {
+    position: relative;
+    display: grid !important;
+    grid-template-columns: 3rem minmax(0, 1fr) auto !important;
+    grid-template-rows: auto auto !important;
+    grid-template-areas:
+      "icon title time"
+      "icon note time" !important;
+    align-items: center !important;
+    column-gap: .8rem !important;
+    row-gap: .18rem !important;
+    min-height: 4.75rem !important;
+    padding: .72rem .72rem .72rem .68rem !important;
+    border: 1px solid rgba(101, 75, 57, .12);
+    border-radius: 1rem;
+    background:
+      linear-gradient(135deg, rgba(255, 250, 242, .5), rgba(255, 250, 242, .24));
+    box-shadow:
+      0 .55rem 1.25rem rgba(73, 50, 35, .045),
+      inset 0 1px rgba(255, 255, 255, .42);
+    text-align: left !important;
+  }
+
+  /* Remove the old mobile timeline line that created a large blank right side. */
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article::before {
+    display: none !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article > div {
+    grid-area: icon !important;
+    align-self: center !important;
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    margin: 0 !important;
+    border-color: rgba(101, 75, 57, .2) !important;
+    background: rgba(255, 250, 242, .68) !important;
+    box-shadow: 0 .2rem .65rem rgba(73, 50, 35, .05);
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article > div svg {
+    width: .9rem !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article > h3 {
+    grid-area: title !important;
+    align-self: end !important;
+    min-width: 0;
+    margin: 0 !important;
+    font-size: 1.02rem !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article > p {
+    grid-area: note !important;
+    align-self: start !important;
+    min-width: 0;
+    margin: 0 !important;
+    color: rgba(73, 56, 44, .62) !important;
+    font-size: .72rem !important;
+    line-height: 1.35 !important;
+    white-space: normal;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article > time {
+    grid-area: time !important;
+    align-self: center !important;
+    justify-self: end !important;
+    min-width: 4.35rem !important;
+    min-height: 1.8rem !important;
+    margin: 0 !important;
+    padding: 0 .62rem !important;
+    border-radius: 999px !important;
+    font-size: .61rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  /* A restrained alternating shift keeps the stack visually lively while
+     preserving a clear reading order for older guests. */
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article:nth-child(even) {
+    margin-left: .35rem;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article:nth-child(odd) {
+    margin-right: .35rem;
+  }
+
+  main#invitation-top > section[aria-labelledby="gift-title"] {
+    padding-top: 4.8rem !important;
+    padding-bottom: 4.8rem !important;
+  }
+}
