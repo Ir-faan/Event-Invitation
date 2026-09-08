@@ -21,7 +21,7 @@ main#invitation-top[class*="roseVariant"] [class*="revealSparkles"]::after {
   box-shadow: none !important;
 }
 
-/* Main particles: brighter, denser and deliberately slower-moving. */
+/* Main particles stay bright and now travel farther from the centre. */
 main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span {
   color: #f1d68f !important;
   font-size: clamp(1rem, 3vw, 1.55rem) !important;
@@ -35,9 +35,7 @@ main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span {
   animation-fill-mode: both !important;
 }
 
-/* Each existing particle gets two additional sparkle clusters. The multiple
-   text-shadows intentionally create several visible sparkle copies without
-   adding another circular effect. */
+/* Each existing particle gets two additional sparkle clusters. */
 main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::before,
 main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::after {
   position: absolute;
@@ -84,15 +82,15 @@ main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::afte
   }
   20% {
     opacity: 1;
-    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(1.1rem) scale(.85);
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(1.15rem) scale(.85);
   }
   72% {
     opacity: .9;
-    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(3.45rem) scale(1);
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(4.7rem) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(4.65rem) scale(1.08);
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(6.4rem) scale(1.08);
   }
 }
 
@@ -104,11 +102,11 @@ main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::afte
   24% { opacity: 1; }
   76% {
     opacity: .88;
-    transform: translate(-50%, -50%) rotate(9deg) translate(.72rem, -.45rem) scale(.96);
+    transform: translate(-50%, -50%) rotate(9deg) translate(.92rem, -.62rem) scale(.96);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(14deg) translate(1rem, -.62rem) scale(1.04);
+    transform: translate(-50%, -50%) rotate(14deg) translate(1.35rem, -.88rem) scale(1.04);
   }
 }
 
@@ -120,11 +118,113 @@ main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::afte
   27% { opacity: 1; }
   76% {
     opacity: .86;
-    transform: translate(-50%, -50%) rotate(-10deg) translate(-.68rem, .55rem) scale(1);
+    transform: translate(-50%, -50%) rotate(-10deg) translate(-.9rem, .72rem) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(-15deg) translate(-.95rem, .78rem) scale(1.08);
+    transform: translate(-50%, -50%) rotate(-15deg) translate(-1.3rem, 1.02rem) scale(1.08);
+  }
+}
+
+/* A second, slower sparkle field begins at the same moment as the reveal.
+   Because it is attached to the revealed hero itself, it can keep drifting
+   after the short React celebration phase has finished. There is no filled
+   shape or border here—only individual sparkle glyphs. */
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::before,
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::after {
+  position: absolute !important;
+  z-index: 11 !important;
+  display: block !important;
+  left: 38% !important;
+  top: 47% !important;
+  width: 0 !important;
+  height: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+  opacity: 0;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::before {
+  content: "✦" !important;
+  color: rgba(255, 246, 205, .98) !important;
+  font-size: clamp(.8rem, 2.5vw, 1.15rem) !important;
+  text-shadow:
+    0 -2.6rem 0 rgba(255,249,220,.95),
+    2.1rem -2.1rem 0 rgba(241,207,121,.9),
+    3.2rem -.7rem 0 rgba(255,238,179,.94),
+    3rem 1.9rem 0 rgba(255,251,226,.88),
+    1.3rem 3.1rem 0 rgba(231,194,109,.88),
+    -1.3rem 3rem 0 rgba(255,243,193,.92),
+    -3.1rem 1.55rem 0 rgba(255,251,226,.9),
+    -3.15rem -.85rem 0 rgba(230,187,93,.88),
+    -1.85rem -2.55rem 0 rgba(255,239,181,.94),
+    .55rem -3.45rem 0 rgba(255,252,231,.9),
+    3.75rem .55rem 0 rgba(243,211,135,.86),
+    -3.8rem .35rem 0 rgba(255,244,198,.88),
+    0 0 .8rem rgba(255,231,145,.92);
+  animation: roseScratchLongDriftA 2.85s cubic-bezier(.16,.52,.22,1) .08s both !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::after {
+  content: "✧" !important;
+  color: rgba(255, 251, 224, .98) !important;
+  font-size: clamp(.68rem, 2vw, 1rem) !important;
+  text-shadow:
+    1.05rem -2.9rem 0 rgba(255,243,193,.92),
+    2.9rem -1.55rem 0 rgba(236,198,105,.9),
+    3.35rem 1rem 0 rgba(255,249,217,.92),
+    2.2rem 3rem 0 rgba(245,218,151,.88),
+    -.15rem 3.65rem 0 rgba(255,251,227,.9),
+    -2.4rem 2.75rem 0 rgba(237,199,108,.86),
+    -3.55rem .8rem 0 rgba(255,241,186,.9),
+    -3.05rem -1.65rem 0 rgba(255,251,226,.9),
+    -.95rem -3.25rem 0 rgba(229,188,97,.88),
+    3.95rem -.25rem 0 rgba(255,246,205,.86),
+    -3.9rem -.35rem 0 rgba(247,218,145,.88),
+    0 0 .7rem rgba(255,231,145,.9);
+  animation: roseScratchLongDriftB 3.05s cubic-bezier(.17,.5,.22,1) .18s both !important;
+}
+
+@keyframes roseScratchLongDriftA {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.36) rotate(-4deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(.58) rotate(-1deg);
+  }
+  70% {
+    opacity: .82;
+    transform: translate(-50%, -50%) scale(1.32) rotate(4deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.72) rotate(7deg);
+  }
+}
+
+@keyframes roseScratchLongDriftB {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.32) rotate(5deg);
+  }
+  22% {
+    opacity: .95;
+    transform: translate(-50%, -50%) scale(.62) rotate(2deg);
+  }
+  72% {
+    opacity: .76;
+    transform: translate(-50%, -50%) scale(1.38) rotate(-5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.82) rotate(-8deg);
   }
 }
 
@@ -139,10 +239,18 @@ main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::afte
   main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span {
     font-size: clamp(.9rem, 4.8vw, 1.35rem) !important;
   }
+
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::before,
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::after {
+    left: 50% !important;
+    top: 38.5% !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] {
+  main#invitation-top[class*="roseVariant"] [class*="revealSparkles"],
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::before,
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"]::after {
     display: none !important;
   }
 }
