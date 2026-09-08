@@ -401,72 +401,69 @@ export function LandingExperience() {
                 <div><span>4</span><strong>Need something that is not listed?</strong></div>
                 <b>+ Rs 500</b>
               </div>
-              <p>We can add one custom part made specially for your invitation. This is for something that is not already available in the choices above. Your custom part will be planned with you during a free video consultation.</p>
-              <a
-                className="button button-wine"
-                href={customPartWhatsAppLink}
-                aria-disabled={!whatsappNumber}
-                onClick={(event) => !whatsappNumber && event.preventDefault()}
-                target={whatsappNumber ? "_blank" : undefined}
-                rel={whatsappNumber ? "noreferrer" : undefined}
-                style={{ marginTop: ".9rem" }}
-              >
-                Discuss your custom idea <Send aria-hidden="true" />
-              </a>
+              <p>We can add one custom part made specially for your invitation. This is for something that is not already available in the choices above.</p>
+              <div className="custom-part-consultation">
+                <span>Your custom part will be planned with you during a free video consultation.</span>
+                <a
+                  className="button button-wine"
+                  href={customPartWhatsAppLink}
+                  aria-disabled={!whatsappNumber}
+                  onClick={(event) => !whatsappNumber && event.preventDefault()}
+                  target={whatsappNumber ? "_blank" : undefined}
+                  rel={whatsappNumber ? "noreferrer" : undefined}
+                >
+                  Discuss your custom idea <Send aria-hidden="true" />
+                </a>
+              </div>
             </div>
           </article>
         </div>
 
         <div className="pricing-service-notes reveal">
-          <article>
+          <article className="service-note-card payment-note">
             <CreditCard aria-hidden="true" />
             <div>
               <strong>Payment is made outside the website</strong>
               <p>After your invitation is approved, the payment details will be sent to you. You can pay by MCB Juice or bank transfer.</p>
             </div>
           </article>
-          <article>
-            <Smartphone aria-hidden="true" />
+
+          <article className="service-note-card delivery-note">
+            <Clock3 aria-hidden="true" />
             <div>
-              <strong>Free video consultation</strong>
-              <p><b>Having trouble designing your invitation?</b> I can guide you through your choices during a free video consultation.</p>
+              <strong>Ready in around 2–5 days</strong>
+              <p>Once payment is confirmed and all invitation details are final, your invitation will normally be delivered within 2–5 days.</p>
+              <span className="delivery-time">Designed carefully, then sent to you as one shareable link.</span>
+            </div>
+          </article>
+
+          <article className="service-note-card consultation-note">
+            <Smartphone aria-hidden="true" />
+            <div className="consultation-copy">
+              <div className="consultation-title-row">
+                <strong>Free video consultation</strong>
+                <span className="free-consultation-badge">Free</span>
+              </div>
+              <p><b>Having trouble designing your invitation?</b> I can guide you through your choices and help you put the invitation together during a free video consultation.</p>
+            </div>
+            <div className="consultation-actions">
               <a
-                className="button button-wine"
+                className="button button-wine whatsapp-button"
                 href={consultationWhatsAppLink}
                 aria-disabled={!whatsappNumber}
                 onClick={(event) => !whatsappNumber && event.preventDefault()}
                 target={whatsappNumber ? "_blank" : undefined}
                 rel={whatsappNumber ? "noreferrer" : undefined}
-                style={{ marginTop: ".9rem" }}
               >
-                Message us on WhatsApp <Send aria-hidden="true" />
+                <WhatsAppLogo /> Message us on WhatsApp
               </a>
-              <p style={{ marginTop: ".9rem", marginBottom: ".45rem" }}>You can also message us on social media.</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: ".55rem" }}>
-                <a
-                  className="text-link"
-                  href={socialLinks.instagram || "#"}
-                  aria-disabled={!socialLinks.instagram}
-                  onClick={(event) => !socialLinks.instagram && event.preventDefault()}
-                  target={socialLinks.instagram ? "_blank" : undefined}
-                  rel={socialLinks.instagram ? "noreferrer" : undefined}
-                >Instagram</a>
-                <a
-                  className="text-link"
-                  href={socialLinks.facebook || "#"}
-                  aria-disabled={!socialLinks.facebook}
-                  onClick={(event) => !socialLinks.facebook && event.preventDefault()}
-                  target={socialLinks.facebook ? "_blank" : undefined}
-                  rel={socialLinks.facebook ? "noreferrer" : undefined}
-                >Facebook</a>
-                <a
-                  className="text-link"
-                  href={socialLinks.tiktok || "#"}
-                  aria-disabled={!socialLinks.tiktok}
-                  onClick={(event) => !socialLinks.tiktok && event.preventDefault()}
-                  target={socialLinks.tiktok ? "_blank" : undefined}
-                  rel={socialLinks.tiktok ? "noreferrer" : undefined}
-                >TikTok</a>
+              <div className="consultation-social-row">
+                <span>Or message us on</span>
+                <div className="consultation-socials" aria-label="Contact Paperless Invites on social media">
+                  <SocialIconLink href={socialLinks.instagram} label="Instagram"><InstagramLogo /></SocialIconLink>
+                  <SocialIconLink href={socialLinks.facebook} label="Facebook"><FacebookLogo /></SocialIconLink>
+                  <SocialIconLink href={socialLinks.tiktok} label="TikTok"><TikTokLogo /></SocialIconLink>
+                </div>
               </div>
             </div>
           </article>
@@ -528,6 +525,14 @@ function SocialIconLink({ href, label, children }: { href: string; label: string
     <a className="social-button" href={href} title={label} aria-label={label} target="_blank" rel="noreferrer">
       {children}
     </a>
+  );
+}
+
+function WhatsAppLogo() {
+  return (
+    <svg className="whatsapp-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12.03 2a9.73 9.73 0 0 0-8.39 14.65L2.3 21.55l5.02-1.32A9.75 9.75 0 1 0 12.03 2Zm0 17.72a8 8 0 0 1-4.08-1.12l-.29-.17-2.98.78.8-2.91-.19-.3a8.01 8.01 0 1 1 6.74 3.72Zm4.38-5.98c-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.93-1.19-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.47-.39-.4-.54-.41h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.69 2.58 4.09 3.62.57.25 1.02.39 1.37.5.58.18 1.1.16 1.51.1.46-.07 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28Z" />
+    </svg>
   );
 }
 
