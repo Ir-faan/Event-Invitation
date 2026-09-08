@@ -36,10 +36,10 @@ const palettes = [
 ];
 
 const process = [
-  { icon: Palette, number: "01", title: "Design your invitation", copy: "Choose your colours, opening style, main photo area and the parts you want to include." },
-  { icon: Eye, number: "02", title: "Review the design", copy: "See the full invitation, check all the details and ask for any final changes." },
-  { icon: CreditCard, number: "03", title: "Payment", copy: "Once you are happy with the design, complete the payment." },
-  { icon: Send, number: "04", title: "Share in a tap", copy: "Get your invitation link and share it easily on WhatsApp, message or social media." },
+  { icon: Palette, number: "01", title: "Design the invitation", copy: "Choose the look, opening, hero and sections that fit your celebration." },
+  { icon: Eye, number: "02", title: "Review the design", copy: "Check the complete invitation and request the final adjustments before approval." },
+  { icon: CreditCard, number: "03", title: "Payment", copy: "Once the design is approved, complete payment for your chosen invitation setup." },
+  { icon: Send, number: "04", title: "Share in a tap", copy: "Receive one elegant link ready to share through WhatsApp, message or social media." },
 ];
 
 const includedParts = [
@@ -245,8 +245,8 @@ export function LandingExperience() {
 
       <section className="process section" id="process" aria-labelledby="process-title">
         <div className="section-heading centered reveal">
-          <p className="eyebrow">How it works</p>
-          <h2 id="process-title">Four simple steps.<br /><em>We guide you through each one.</em></h2>
+          <p className="eyebrow">A beautifully simple process</p>
+          <h2 id="process-title">From your choices to<br /><em>one unforgettable link.</em></h2>
         </div>
         <div className="process-line reveal" aria-hidden="true"><span /></div>
         <div className="process-grid">
@@ -394,12 +394,12 @@ export function LandingExperience() {
       <section className="contact" id="contact" aria-labelledby="contact-title">
         <div className="contact-orb orb-a" aria-hidden="true" /><div className="contact-orb orb-b" aria-hidden="true" />
         <div className="contact-inner reveal">
-          <p className="eyebrow">Made for your special day</p>
-          <h2 id="contact-title">Create an invitation<br /><em>that feels like you.</em></h2>
-          <p>Choose the style and features you want. We will guide you through the rest.</p>
+          <p className="eyebrow">Let&apos;s create something beautiful</p>
+          <h2 id="contact-title">Your date deserves<br /><em>a beautiful beginning.</em></h2>
+          <p>Tell us about the celebration you are imagining and the components you would like to include.</p>
           <div className="contact-actions">
             <span className="coming-soon"><span className="live-dot" /> Bookings opening soon</span>
-            <a className="button button-ivory" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></a>
+            <a className="button button-ivory" href="#pricing">Explore your options <ArrowRight aria-hidden="true" /></a>
           </div>
         </div>
       </section>
