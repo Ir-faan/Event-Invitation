@@ -1,0 +1,53 @@
+/* Selector corrections for the Template 1 layout restoration. The timeline
+   and event-grid nodes are divs, not sections. Keep this file loaded last. */
+
+main#invitation-top[class*="roseVariant"] [class*="storyTimeline"] {
+  position: relative !important;
+  width: min(68rem, 100%) !important;
+  display: block !important;
+  margin: 4rem auto 0 !important;
+  padding: 0 !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="storyTimeline"]::before {
+  top: 0 !important;
+  right: auto !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  width: 1px !important;
+  height: auto !important;
+  background: rgba(83, 99, 68, .28) !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="eventsGrid"] {
+  width: min(88rem, 100%) !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 1.2rem !important;
+  margin: 0 auto !important;
+}
+
+@media (max-width: 1000px) {
+  main#invitation-top[class*="roseVariant"] [class*="eventsGrid"] {
+    grid-template-columns: 1fr !important;
+    width: min(30rem, 100%) !important;
+    gap: 1.2rem !important;
+  }
+}
+
+@media (max-width: 760px) {
+  main#invitation-top[class*="roseVariant"] [class*="storyTimeline"] {
+    width: 100% !important;
+    margin-top: 3rem !important;
+    padding: 0 .2rem 0 0 !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] [class*="storyTimeline"]::before {
+    left: 1.2rem !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] [class*="eventsGrid"] {
+    width: min(23.5rem, 100%) !important;
+    gap: 1rem !important;
+  }
+}
