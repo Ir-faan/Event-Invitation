@@ -67,6 +67,22 @@ const heroCards = [
 
 const ribbonMessage = "LOVE STORIES IN MOTION ✦ WEDDINGS WITH SOUL ✦ ENGAGEMENTS TO REMEMBER ✦ SAVE THE DATES, BEAUTIFULLY MADE ✦ YOUR MOMENT, YOUR STORY ✦ WHERE FOREVER BEGINS ✦";
 
+// Add the WhatsApp number with country code and social links here when they are ready.
+// Example WhatsApp format for Mauritius: 2305XXXXXXX (numbers only, no + or spaces).
+const whatsappNumber = "";
+const socialLinks = {
+  facebook: "",
+  instagram: "",
+  tiktok: "",
+};
+
+const consultationMessage = "Hi, I would like some help designing my invitation and would like to arrange a free video consultation.";
+const customPartMessage = "Hi, I would like to add a custom part to my invitation and discuss it during the free video consultation.";
+
+function getWhatsAppLink(message: string) {
+  return whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}` : "#";
+}
+
 export function LandingExperience() {
   useEffect(() => {
     const reveals = document.querySelectorAll<HTMLElement>(".reveal");
@@ -113,6 +129,9 @@ export function LandingExperience() {
       cleanups.forEach((cleanup) => cleanup());
     };
   }, []);
+
+  const consultationWhatsAppLink = getWhatsAppLink(consultationMessage);
+  const customPartWhatsAppLink = getWhatsAppLink(customPartMessage);
 
   return (
     <main id="top">
@@ -383,6 +402,17 @@ export function LandingExperience() {
                 <b>+ Rs 500</b>
               </div>
               <p>We can add one custom part made specially for your invitation. This is for something that is not already available in the choices above. Your custom part will be planned with you during a free video consultation.</p>
+              <a
+                className="button button-wine"
+                href={customPartWhatsAppLink}
+                aria-disabled={!whatsappNumber}
+                onClick={(event) => !whatsappNumber && event.preventDefault()}
+                target={whatsappNumber ? "_blank" : undefined}
+                rel={whatsappNumber ? "noreferrer" : undefined}
+                style={{ marginTop: ".9rem" }}
+              >
+                Discuss your custom idea <Send aria-hidden="true" />
+              </a>
             </div>
           </article>
         </div>
@@ -398,8 +428,46 @@ export function LandingExperience() {
           <article>
             <Smartphone aria-hidden="true" />
             <div>
-              <strong>Need help designing your invitation?</strong>
-              <p>If you are having difficulty designing your invitation, I can help you through a free video consultation and guide you through the choices.</p>
+              <strong>Free video consultation</strong>
+              <p><b>Having trouble designing your invitation?</b> I can guide you through your choices during a free video consultation.</p>
+              <a
+                className="button button-wine"
+                href={consultationWhatsAppLink}
+                aria-disabled={!whatsappNumber}
+                onClick={(event) => !whatsappNumber && event.preventDefault()}
+                target={whatsappNumber ? "_blank" : undefined}
+                rel={whatsappNumber ? "noreferrer" : undefined}
+                style={{ marginTop: ".9rem" }}
+              >
+                Message us on WhatsApp <Send aria-hidden="true" />
+              </a>
+              <p style={{ marginTop: ".9rem", marginBottom: ".45rem" }}>You can also message us on social media.</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: ".55rem" }}>
+                <a
+                  className="text-link"
+                  href={socialLinks.instagram || "#"}
+                  aria-disabled={!socialLinks.instagram}
+                  onClick={(event) => !socialLinks.instagram && event.preventDefault()}
+                  target={socialLinks.instagram ? "_blank" : undefined}
+                  rel={socialLinks.instagram ? "noreferrer" : undefined}
+                >Instagram</a>
+                <a
+                  className="text-link"
+                  href={socialLinks.facebook || "#"}
+                  aria-disabled={!socialLinks.facebook}
+                  onClick={(event) => !socialLinks.facebook && event.preventDefault()}
+                  target={socialLinks.facebook ? "_blank" : undefined}
+                  rel={socialLinks.facebook ? "noreferrer" : undefined}
+                >Facebook</a>
+                <a
+                  className="text-link"
+                  href={socialLinks.tiktok || "#"}
+                  aria-disabled={!socialLinks.tiktok}
+                  onClick={(event) => !socialLinks.tiktok && event.preventDefault()}
+                  target={socialLinks.tiktok ? "_blank" : undefined}
+                  rel={socialLinks.tiktok ? "noreferrer" : undefined}
+                >TikTok</a>
+              </div>
             </div>
           </article>
         </div>
@@ -430,9 +498,9 @@ export function LandingExperience() {
           <Sparkles aria-hidden="true" />
           <p>Made with care for life&apos;s most beautiful gatherings.</p>
           <div className="footer-socials" aria-label="Paperless Invites social media">
-            <span className="social-button" title="Facebook" aria-label="Facebook"><FacebookLogo /></span>
-            <span className="social-button" title="Instagram" aria-label="Instagram"><InstagramLogo /></span>
-            <span className="social-button" title="TikTok" aria-label="TikTok"><TikTokLogo /></span>
+            <SocialIconLink href={socialLinks.facebook} label="Facebook"><FacebookLogo /></SocialIconLink>
+            <SocialIconLink href={socialLinks.instagram} label="Instagram"><InstagramLogo /></SocialIconLink>
+            <SocialIconLink href={socialLinks.tiktok} label="TikTok"><TikTokLogo /></SocialIconLink>
           </div>
         </div>
         <div className="footer-bottom"><span>© {new Date().getFullYear()} Paperless Invites</span><a href="#top">Back to top ↑</a></div>
@@ -448,6 +516,18 @@ function ShowcaseCard({ card, small = false }: { card: { kind: string; image?: s
       {card.kind === "paper" && <><span>PAPERLESS INVITES</span><strong>{card.label.split("\n").map((line) => <i key={line}>{line}</i>)}</strong><em>✦</em></>}
       {card.kind === "seal" && <><div className="mini-seal">PI</div><strong>{card.label}</strong><span>OPEN TO BEGIN</span></>}
     </div>
+  );
+}
+
+function SocialIconLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
+  if (!href) {
+    return <span className="social-button" title={label} aria-label={label}>{children}</span>;
+  }
+
+  return (
+    <a className="social-button" href={href} title={label} aria-label={label} target="_blank" rel="noreferrer">
+      {children}
+    </a>
   );
 }
 
