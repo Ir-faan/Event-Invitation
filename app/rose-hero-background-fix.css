@@ -1,0 +1,27 @@
+/* Rose Afterglow hero backdrop.
+   The portrait artwork does not fill the full mobile viewport vertically, so
+   the hero background is extended with the same olive tones as the artwork
+   instead of showing separate dark bands above and below it. */
+
+main#invitation-top[class*="roseVariant"] [class*="scratchHero"] {
+  background: linear-gradient(
+    180deg,
+    #6b6a4f 0%,
+    #646348 42%,
+    #5d5d42 68%,
+    #56563b 100%
+  ) !important;
+}
+
+@media (max-width: 760px) {
+  main#invitation-top[class*="roseVariant"] [class*="scratchHero"] {
+    background: linear-gradient(
+      180deg,
+      #6b6a4f 0%,
+      #66654a 22%,
+      #606046 55%,
+      #5a5a3f 78%,
+      #56563b 100%
+    ) !important;
+  }
+}
