@@ -1,0 +1,183 @@
+/* Dynamic scattered-photo wall for “A Glimpse of Us”.
+   The React component can render anywhere from 1 to 15 uploaded photos; the
+   layout is deterministic, responsive and does not depend on image count
+   being known ahead of time. */
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] {
+  position: relative !important;
+  display: block !important;
+  width: min(78rem, 100%) !important;
+  height: clamp(35rem, 54vw, 50rem) !important;
+  margin: clamp(2.6rem, 4.5vw, 4.4rem) auto 0 !important;
+  overflow: visible;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure[class*="glimpsePhoto"] {
+  position: absolute !important;
+  left: var(--scatter-x);
+  top: var(--scatter-y);
+  width: var(--scatter-w);
+  min-width: 0;
+  margin: 0 !important;
+  z-index: var(--scatter-z, 1);
+  transform: rotate(var(--scatter-r, 0deg));
+  transform-origin: center;
+  transition:
+    opacity .8s var(--chapter-delay),
+    transform .45s cubic-bezier(.2,.72,.2,1),
+    filter .45s ease !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure[class*="glimpsePhoto"] [class*="glimpsePhotoFrame"] {
+  height: auto !important;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: clamp(.34rem, .55vw, .55rem) solid rgba(248, 243, 226, .96) !important;
+  border-bottom-width: clamp(.85rem, 1.4vw, 1.35rem) !important;
+  background: #eee6d3 !important;
+  box-shadow: 0 1.15rem 2.5rem rgba(23, 31, 19, .28) !important;
+  transform: none !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure[class*="glimpsePhoto"]:nth-child(3n + 1) [class*="glimpsePhotoFrame"] {
+  aspect-ratio: 3 / 4;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure[class*="glimpsePhoto"]:nth-child(4n + 2) [class*="glimpsePhotoFrame"] {
+  aspect-ratio: 1 / 1;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure[class*="glimpsePhoto"] img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure[class*="glimpsePhoto"] figcaption {
+  display: none !important;
+}
+
+/* Base 15-photo scatter map. If fewer photos exist, only the matching first
+   positions are rendered. The first five positions are refined below for
+   small galleries so 1–5 uploads still feel intentionally composed. */
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(1)  { --scatter-x: 38%; --scatter-y: 26%; --scatter-w: 25%; --scatter-r: -4deg; --scatter-z: 9; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(2)  { --scatter-x: 17%; --scatter-y: 8%;  --scatter-w: 22%; --scatter-r: 7deg;  --scatter-z: 5; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(3)  { --scatter-x: 62%; --scatter-y: 9%;  --scatter-w: 21%; --scatter-r: -7deg; --scatter-z: 4; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(4)  { --scatter-x: 3%;  --scatter-y: 31%; --scatter-w: 23%; --scatter-r: 5deg;  --scatter-z: 3; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(5)  { --scatter-x: 75%; --scatter-y: 34%; --scatter-w: 23%; --scatter-r: 8deg;  --scatter-z: 6; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(6)  { --scatter-x: 27%; --scatter-y: 55%; --scatter-w: 22%; --scatter-r: -6deg; --scatter-z: 7; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(7)  { --scatter-x: 53%; --scatter-y: 53%; --scatter-w: 21%; --scatter-r: 5deg;  --scatter-z: 8; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(8)  { --scatter-x: 6%;  --scatter-y: 63%; --scatter-w: 20%; --scatter-r: -8deg; --scatter-z: 4; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(9)  { --scatter-x: 79%; --scatter-y: 64%; --scatter-w: 19%; --scatter-r: 4deg;  --scatter-z: 5; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(10) { --scatter-x: 40%; --scatter-y: 2%;  --scatter-w: 18%; --scatter-r: 3deg;  --scatter-z: 2; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(11) { --scatter-x: 57%; --scatter-y: 75%; --scatter-w: 19%; --scatter-r: -3deg; --scatter-z: 6; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(12) { --scatter-x: 22%; --scatter-y: 76%; --scatter-w: 18%; --scatter-r: 6deg;  --scatter-z: 3; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(13) { --scatter-x: 0%;  --scatter-y: 4%;  --scatter-w: 19%; --scatter-r: -4deg; --scatter-z: 1; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(14) { --scatter-x: 81%; --scatter-y: 5%;  --scatter-w: 18%; --scatter-r: 6deg;  --scatter-z: 2; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(15) { --scatter-x: 42%; --scatter-y: 79%; --scatter-w: 20%; --scatter-r: -7deg; --scatter-z: 7; }
+
+/* Count-aware composition for small uploads. */
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:only-child) {
+  height: clamp(23rem, 36vw, 32rem) !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:only-child) > figure:only-child {
+  --scatter-x: 33%; --scatter-y: 8%; --scatter-w: 34%; --scatter-r: -3deg; --scatter-z: 2;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(2):last-child) {
+  height: clamp(25rem, 40vw, 34rem) !important;
+}
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(2):last-child) > figure:nth-child(1) {
+  --scatter-x: 22%; --scatter-y: 12%; --scatter-w: 34%; --scatter-r: -7deg; --scatter-z: 2;
+}
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(2):last-child) > figure:nth-child(2) {
+  --scatter-x: 48%; --scatter-y: 28%; --scatter-w: 32%; --scatter-r: 6deg; --scatter-z: 3;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(3):last-child) {
+  height: clamp(29rem, 45vw, 38rem) !important;
+}
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(3):last-child) > figure:nth-child(1) {
+  --scatter-x: 36%; --scatter-y: 19%; --scatter-w: 31%; --scatter-r: -4deg; --scatter-z: 4;
+}
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(3):last-child) > figure:nth-child(2) {
+  --scatter-x: 13%; --scatter-y: 4%; --scatter-w: 29%; --scatter-r: 7deg; --scatter-z: 2;
+}
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(3):last-child) > figure:nth-child(3) {
+  --scatter-x: 61%; --scatter-y: 7%; --scatter-w: 29%; --scatter-r: -7deg; --scatter-z: 3;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(4):last-child) > figure:nth-child(1) { --scatter-x: 35%; --scatter-y: 24%; --scatter-w: 29%; --scatter-r: -5deg; --scatter-z: 5; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(4):last-child) > figure:nth-child(2) { --scatter-x: 10%; --scatter-y: 5%;  --scatter-w: 27%; --scatter-r: 7deg;  --scatter-z: 2; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(4):last-child) > figure:nth-child(3) { --scatter-x: 65%; --scatter-y: 8%;  --scatter-w: 26%; --scatter-r: -6deg; --scatter-z: 3; }
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(4):last-child) > figure:nth-child(4) { --scatter-x: 14%; --scatter-y: 52%; --scatter-w: 28%; --scatter-r: -7deg; --scatter-z: 4; }
+
+@media (hover: hover) and (pointer: fine) {
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure[class*="glimpsePhoto"]:hover {
+    z-index: 20;
+    transform: rotate(0deg) scale(1.045);
+    filter: brightness(1.03);
+  }
+}
+
+@media (max-width: 760px) {
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] {
+    width: 100% !important;
+    height: clamp(44rem, 225vw, 62rem) !important;
+    margin-top: 2.2rem !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure[class*="glimpsePhoto"] [class*="glimpsePhotoFrame"] {
+    border-width: .3rem !important;
+    border-bottom-width: .8rem !important;
+    box-shadow: 0 .8rem 1.6rem rgba(23, 31, 19, .26) !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(1)  { --scatter-x: 30%; --scatter-y: 27%; --scatter-w: 45%; --scatter-r: -5deg; --scatter-z: 9; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(2)  { --scatter-x: 2%;  --scatter-y: 5%;  --scatter-w: 44%; --scatter-r: 7deg;  --scatter-z: 4; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(3)  { --scatter-x: 55%; --scatter-y: 4%;  --scatter-w: 43%; --scatter-r: -7deg; --scatter-z: 5; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(4)  { --scatter-x: 0%;  --scatter-y: 31%; --scatter-w: 41%; --scatter-r: 6deg;  --scatter-z: 3; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(5)  { --scatter-x: 58%; --scatter-y: 34%; --scatter-w: 41%; --scatter-r: 8deg;  --scatter-z: 6; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(6)  { --scatter-x: 8%;  --scatter-y: 51%; --scatter-w: 42%; --scatter-r: -8deg; --scatter-z: 7; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(7)  { --scatter-x: 48%; --scatter-y: 52%; --scatter-w: 43%; --scatter-r: 5deg;  --scatter-z: 8; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(8)  { --scatter-x: 1%;  --scatter-y: 68%; --scatter-w: 40%; --scatter-r: -6deg; --scatter-z: 4; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(9)  { --scatter-x: 59%; --scatter-y: 69%; --scatter-w: 40%; --scatter-r: 6deg;  --scatter-z: 5; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(10) { --scatter-x: 31%; --scatter-y: 1%;  --scatter-w: 39%; --scatter-r: 4deg;  --scatter-z: 2; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(11) { --scatter-x: 31%; --scatter-y: 73%; --scatter-w: 40%; --scatter-r: -4deg; --scatter-z: 7; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(12) { --scatter-x: 6%;  --scatter-y: 82%; --scatter-w: 38%; --scatter-r: 7deg;  --scatter-z: 3; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(13) { --scatter-x: 58%; --scatter-y: 83%; --scatter-w: 39%; --scatter-r: -7deg; --scatter-z: 4; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(14) { --scatter-x: 4%;  --scatter-y: 17%; --scatter-w: 37%; --scatter-r: -5deg; --scatter-z: 1; }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"] > figure:nth-child(15) { --scatter-x: 60%; --scatter-y: 18%; --scatter-w: 37%; --scatter-r: 5deg;  --scatter-z: 2; }
+
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:only-child) {
+    height: 27rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:only-child) > figure:only-child {
+    --scatter-x: 12%; --scatter-y: 4%; --scatter-w: 76%; --scatter-r: -3deg;
+  }
+
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(2):last-child) {
+    height: 31rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(2):last-child) > figure:nth-child(1) {
+    --scatter-x: 4%; --scatter-y: 7%; --scatter-w: 57%; --scatter-r: -7deg;
+  }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(2):last-child) > figure:nth-child(2) {
+    --scatter-x: 42%; --scatter-y: 28%; --scatter-w: 55%; --scatter-r: 7deg;
+  }
+
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(3):last-child) {
+    height: 36rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(3):last-child) > figure:nth-child(1) {
+    --scatter-x: 26%; --scatter-y: 24%; --scatter-w: 51%; --scatter-r: -4deg;
+  }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(3):last-child) > figure:nth-child(2) {
+    --scatter-x: 0%; --scatter-y: 3%; --scatter-w: 50%; --scatter-r: 7deg;
+  }
+  main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpseGallery"]:has(> figure:nth-child(3):last-child) > figure:nth-child(3) {
+    --scatter-x: 50%; --scatter-y: 5%; --scatter-w: 50%; --scatter-r: -7deg;
+  }
+}
