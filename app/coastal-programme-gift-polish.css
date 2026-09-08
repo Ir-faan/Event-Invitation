@@ -3,9 +3,9 @@
 
 main#invitation-top > section[aria-labelledby="gift-title"] {
   background:
-    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, .22), transparent 30%),
-    radial-gradient(circle at 86% 74%, rgba(185, 133, 79, .055), transparent 32%),
-    linear-gradient(180deg, #f5e8dc 0%, #efddcd 50%, #f5e8dc 100%) !important;
+    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, .34), transparent 30%),
+    radial-gradient(circle at 86% 74%, rgba(185, 133, 79, .045), transparent 32%),
+    linear-gradient(180deg, #fffaf5 0%, #fbf3eb 38%, #f8eee5 68%, #f5e8dc 100%) !important;
 }
 
 @media (max-width: 760px) {
@@ -33,7 +33,7 @@ main#invitation-top > section[aria-labelledby="gift-title"] {
     display: none !important;
   }
 
-  /* Turn the programme into a compact stack of full-width schedule rows. */
+  /* Turn the programme into a compact stack of equal full-width schedule rows. */
   main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) {
     width: min(23.5rem, 100%) !important;
     display: grid !important;
@@ -44,6 +44,11 @@ main#invitation-top > section[aria-labelledby="gift-title"] {
 
   main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article {
     position: relative;
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
     display: grid !important;
     grid-template-columns: 3rem minmax(0, 1fr) auto !important;
     grid-template-rows: auto auto !important;
@@ -118,16 +123,6 @@ main#invitation-top > section[aria-labelledby="gift-title"] {
     font-size: .61rem !important;
     line-height: 1 !important;
     white-space: nowrap !important;
-  }
-
-  /* A restrained alternating shift keeps the stack visually lively while
-     preserving a clear reading order for older guests. */
-  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article:nth-child(even) {
-    margin-left: .35rem;
-  }
-
-  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article:nth-child(odd) {
-    margin-right: .35rem;
   }
 
   main#invitation-top > section[aria-labelledby="gift-title"] {
