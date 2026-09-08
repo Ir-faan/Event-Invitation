@@ -1,9 +1,8 @@
-/* Coastal Reverie: smooth the gift transition and make the mobile day programme
-   use the full available width without changing the editable programme data. */
+/* Coastal Reverie: smooth the gift transition, make the mobile day programme
+   use the full available width, and keep adjacent sections visually connected. */
 
-/* The gift section is rendered inside the portal mount wrapper, so target that wrapper
-   instead of assuming the section is a direct child of main. Keep the wrapper and both
-   section edges on the same beige used by the programme/footer to remove hard seams. */
+/* The gift component is rendered inside a portal wrapper, so target both the
+   wrapper and the actual section. Keep one continuous vertical beige gradient. */
 main#invitation-top > [data-coastal-gift-section] {
   background: #f5e8dc !important;
 }
@@ -12,15 +11,58 @@ main#invitation-top > [data-coastal-gift-section] > section[aria-labelledby="gif
   background: linear-gradient(
     180deg,
     #f5e8dc 0%,
-    #f6eadf 42%,
-    #f6eadf 58%,
+    #f7ece2 34%,
+    #faf2e9 55%,
+    #f7ece2 76%,
     #f5e8dc 100%
   ) !important;
 }
 
+/* Tighter transitions between the requested neighbouring sections. The goal is
+   to preserve breathing room without making each boundary feel like a blank page. */
+main#invitation-top > section[aria-labelledby="story-title"] {
+  padding-top: clamp(4.4rem, 6.5vw, 6.4rem) !important;
+}
+
+main#invitation-top > section[aria-labelledby="seating-title"] {
+  padding-bottom: clamp(4rem, 5.6vw, 5.3rem) !important;
+}
+
+main#invitation-top > section[aria-labelledby="programme-title"] {
+  padding-top: clamp(4.2rem, 6vw, 5.8rem) !important;
+  padding-bottom: clamp(4rem, 5.6vw, 5.2rem) !important;
+}
+
+main#invitation-top > [data-coastal-gift-section] > section[aria-labelledby="gift-title"] {
+  padding-top: clamp(4rem, 5.8vw, 5.3rem) !important;
+  padding-bottom: clamp(3.8rem, 5.4vw, 5rem) !important;
+}
+
+main#invitation-top > footer {
+  padding-top: clamp(4rem, 5.7vw, 5rem) !important;
+}
+
 @media (max-width: 760px) {
+  /* Countdown -> Our Journey */
+  main#invitation-top > section[aria-labelledby="countdown-title"] {
+    min-height: 29.5rem !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="countdown-title"] > div[class*="countdownContent"] {
+    padding-bottom: 3.2rem !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="story-title"] {
+    padding-top: 3.55rem !important;
+  }
+
+  /* Seating Arrangement -> Day Programme */
+  main#invitation-top > section[aria-labelledby="seating-title"] {
+    padding-bottom: 3.45rem !important;
+  }
+
   main#invitation-top > section[aria-labelledby="programme-title"] {
-    padding: 4.8rem 1rem 4.6rem !important;
+    padding: 3.55rem 1rem 3.25rem !important;
   }
 
   main#invitation-top > section[aria-labelledby="programme-title"] > div:first-child {
@@ -49,7 +91,7 @@ main#invitation-top > [data-coastal-gift-section] > section[aria-labelledby="gif
     display: grid !important;
     grid-template-columns: 1fr !important;
     gap: .8rem !important;
-    margin: 2.8rem auto 0 !important;
+    margin: 2.45rem auto 0 !important;
   }
 
   main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article {
@@ -135,8 +177,14 @@ main#invitation-top > [data-coastal-gift-section] > section[aria-labelledby="gif
     white-space: nowrap !important;
   }
 
+  /* Day Programme -> Gift -> Footer */
   main#invitation-top > [data-coastal-gift-section] > section[aria-labelledby="gift-title"] {
-    padding-top: 4.8rem !important;
-    padding-bottom: 4.8rem !important;
+    padding-top: 3.2rem !important;
+    padding-bottom: 3.15rem !important;
+  }
+
+  main#invitation-top > footer {
+    padding-top: 3.45rem !important;
+    padding-bottom: 4.2rem !important;
   }
 }
