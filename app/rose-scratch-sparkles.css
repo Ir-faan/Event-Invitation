@@ -1,0 +1,117 @@
+/* Rose Afterglow: make the completed scratch reveal feel unmistakably celebratory.
+   The existing component renders 24 sparkle nodes; each node now gains two
+   satellite sparkles so the visible burst is much denser without changing the
+   scratch/reveal logic. */
+
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] {
+  left: 38% !important;
+  top: 47% !important;
+  width: 0;
+  height: 0;
+  filter: drop-shadow(0 0 .7rem rgba(255, 238, 177, .44));
+}
+
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"]::before,
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: clamp(5rem, 17vw, 11rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(.2);
+  pointer-events: none;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"]::before {
+  border: 1px solid rgba(245, 218, 146, .72);
+  box-shadow:
+    0 0 1.2rem rgba(255, 239, 188, .52),
+    inset 0 0 1.25rem rgba(255, 241, 194, .26);
+  animation: roseScratchHalo 1.05s cubic-bezier(.16,.72,.2,1) both;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"]::after {
+  background: radial-gradient(circle, rgba(255, 248, 214, .36) 0%, rgba(246, 215, 140, .12) 34%, transparent 70%);
+  animation: roseScratchGlow 1.08s ease-out both;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span {
+  color: #f1d68f !important;
+  font-size: clamp(1rem, 3vw, 1.55rem) !important;
+  text-shadow:
+    0 0 .35rem rgba(255,255,244,.98),
+    0 0 1rem rgba(255,226,145,.92),
+    0 0 1.7rem rgba(210,166,77,.52) !important;
+  animation-duration: 1.08s !important;
+}
+
+/* Two extra visible sparkles per existing particle = roughly 3x the density. */
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::before,
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::after {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+  transform-origin: center;
+  opacity: 0;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::before {
+  content: "✦";
+  color: rgba(255, 244, 194, .98);
+  font-size: .62em;
+  text-shadow: 0 0 .8rem rgba(255, 234, 156, .95);
+  animation: roseScratchSatelliteA .88s ease-out calc(var(--spark-delay) + 65ms) both;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::after {
+  content: "·";
+  color: rgba(255, 252, 224, 1);
+  font-size: 1.15em;
+  text-shadow: 0 0 .75rem rgba(255, 230, 145, .94);
+  animation: roseScratchSatelliteB .95s ease-out calc(var(--spark-delay) + 110ms) both;
+}
+
+@keyframes roseScratchHalo {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.18); }
+  28% { opacity: .95; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.7); }
+}
+
+@keyframes roseScratchGlow {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(.72); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.42); }
+}
+
+@keyframes roseScratchSatelliteA {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-16deg) translate(.15rem, .1rem) scale(.25); }
+  28% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(20deg) translate(1.2rem, -.8rem) scale(1.05); }
+}
+
+@keyframes roseScratchSatelliteB {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(14deg) translate(-.15rem, .1rem) scale(.3); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(-22deg) translate(-1rem, 1rem) scale(1.2); }
+}
+
+@media (max-width: 760px) {
+  main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] {
+    /* The mobile scratch oval is centred a touch farther left than the desktop composition. */
+    left: 38% !important;
+    top: 47% !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span {
+    font-size: clamp(.9rem, 4.8vw, 1.35rem) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] {
+    display: none !important;
+  }
+}
