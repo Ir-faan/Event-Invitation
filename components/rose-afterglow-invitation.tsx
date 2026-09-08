@@ -447,7 +447,7 @@ function ScratchInvitationHero({
         ) touched.current.add(`${gx}:${gy}`);
       }
     }
-    if (touched.current.size / eligibleCells >= 0.5) onReveal();
+    if (touched.current.size / eligibleCells >= 0.75) onReveal();
   };
 
   return (
