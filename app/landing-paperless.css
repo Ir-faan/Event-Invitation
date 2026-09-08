@@ -466,18 +466,20 @@
   place-items: center;
   width: 2.85rem;
   height: 2.85rem;
-  border: 0;
+  border: 1px solid rgba(74,25,34,.14);
   border-radius: 50%;
-  color: #2f2426;
-  background: #f3efeb;
-  box-shadow: inset 0 0 0 1px rgba(74,25,34,.025);
+  color: var(--wine);
+  background: #f2e0dc;
+  box-shadow: 0 .35rem .9rem rgba(74,25,34,.08);
   cursor: default;
-  transition: transform .2s ease, background .2s ease;
+  transition: transform .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
 .footer-socials .social-button:hover {
   transform: translateY(-2px);
-  background: #ece6e1;
+  color: #fff;
+  background: var(--wine);
+  box-shadow: 0 .6rem 1.2rem rgba(74,25,34,.18);
 }
 
 .footer-socials .brand-icon {
