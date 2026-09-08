@@ -483,7 +483,6 @@ function ScratchInvitationHero({
         </div>
       </div>
       {phase === "celebrating" && <div className={styles.revealSparkles} aria-hidden="true">{Array.from({ length: 24 }, (_, index) => <span key={index} style={{ "--angle": `${index * 15}deg`, "--distance": `${8 + (index % 5) * 2.4}rem`, "--spark-delay": `${(index % 4) * 45}ms` } as CSSProperties}>{index % 3 === 0 ? "✦" : "·"}</span>)}</div>}
-      {revealed && <p className={styles.continueHint}>Your invitation is revealed</p>}
     </section>
   );
 }
