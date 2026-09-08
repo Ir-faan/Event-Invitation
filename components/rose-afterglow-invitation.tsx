@@ -367,9 +367,9 @@ function ScratchInvitationHero({
       context.globalCompositeOperation = "source-over";
 
       const gradient = context.createLinearGradient(0, 0, rect.width, rect.height);
-      gradient.addColorStop(0, "rgba(255, 250, 241, .38)");
-      gradient.addColorStop(0.5, "rgba(218, 196, 175, .3)");
-      gradient.addColorStop(1, "rgba(255, 248, 239, .35)");
+      gradient.addColorStop(0, "rgba(255, 250, 241, .86)");
+      gradient.addColorStop(0.5, "rgba(218, 196, 175, .80)");
+      gradient.addColorStop(1, "rgba(255, 248, 239, .84)");
       context.fillStyle = gradient;
       context.fillRect(0, 0, rect.width, rect.height);
 
