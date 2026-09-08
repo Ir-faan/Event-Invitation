@@ -382,7 +382,7 @@ export function LandingExperience() {
                 <div><span>4</span><strong>Need something that is not listed?</strong></div>
                 <b>+ Rs 500</b>
               </div>
-              <p>We can add one custom part made specially for your invitation. This is for something that is not already available in the choices above. Your custom part will be planned with you during a video consultation.</p>
+              <p>We can add one custom part made specially for your invitation. This is for something that is not already available in the choices above. Your custom part will be planned with you during a free video consultation.</p>
             </div>
           </article>
         </div>
@@ -399,7 +399,7 @@ export function LandingExperience() {
             <Smartphone aria-hidden="true" />
             <div>
               <strong>Need help designing your invitation?</strong>
-              <p>If you are not sure what to choose, I can assist you through a video consultation. Custom parts are also planned together with you during a video consultation.</p>
+              <p>If you are having difficulty designing your invitation, I can help you through a free video consultation and guide you through the choices.</p>
             </div>
           </article>
         </div>
