@@ -26,6 +26,7 @@ import {
   Wine,
 } from "lucide-react";
 import styles from "@/app/templates/rose-afterglow/rose-afterglow.module.css";
+import { SeatingArrangement } from "@/components/seating-arrangement";
 
 const weddingTime = new Date("2027-10-12T16:30:00+04:00").getTime();
 
@@ -304,23 +305,7 @@ export function RoseAfterglowInvitation() {
         </div>
       </section>
 
-      <section className={styles.roseSeatingSection} aria-labelledby="seating-title">
-        <div className={styles.roseSeatingHeading} data-wedding-reveal>
-          <p>Find your place</p>
-          <h2 id="seating-title">Seating Arrangement</h2>
-          <span>Each family has a table reserved with love.</span>
-        </div>
-        <div className={styles.roseSeatingGrid}>
-          {seatingAssignments.map((assignment, index) => (
-            <article className={styles.roseTableCard} key={assignment.table} data-wedding-reveal style={{ "--chapter-delay": `${index * 55}ms` } as CSSProperties}>
-              <small>Table</small>
-              <strong>{assignment.table}</strong>
-              <h3>{assignment.family}</h3>
-              {assignment.note && <span>{assignment.note}</span>}
-            </article>
-          ))}
-        </div>
-      </section>
+      <SeatingArrangement assignments={seatingAssignments} />
 
       <section className={styles.programmeSection} aria-labelledby="programme-title">
         <div className={styles.programmeTitle} data-wedding-reveal>
