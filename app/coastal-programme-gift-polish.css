@@ -1,14 +1,19 @@
 /* Coastal Reverie: smooth the gift transition and make the mobile day programme
    use the full available width without changing the editable programme data. */
 
-main#invitation-top > section[aria-labelledby="gift-title"] {
-  /* Match the programme/footer beige at both edges and keep the transition vertical. */
+/* The gift section is rendered inside the portal mount wrapper, so target that wrapper
+   instead of assuming the section is a direct child of main. Keep the wrapper and both
+   section edges on the same beige used by the programme/footer to remove hard seams. */
+main#invitation-top > [data-coastal-gift-section] {
+  background: #f5e8dc !important;
+}
+
+main#invitation-top > [data-coastal-gift-section] > section[aria-labelledby="gift-title"] {
   background: linear-gradient(
     180deg,
     #f5e8dc 0%,
-    #f7ece2 34%,
-    #faf2e9 55%,
-    #f7ece2 76%,
+    #f6eadf 42%,
+    #f6eadf 58%,
     #f5e8dc 100%
   ) !important;
 }
@@ -130,7 +135,7 @@ main#invitation-top > section[aria-labelledby="gift-title"] {
     white-space: nowrap !important;
   }
 
-  main#invitation-top > section[aria-labelledby="gift-title"] {
+  main#invitation-top > [data-coastal-gift-section] > section[aria-labelledby="gift-title"] {
     padding-top: 4.8rem !important;
     padding-bottom: 4.8rem !important;
   }
