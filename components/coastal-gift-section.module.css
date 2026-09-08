@@ -3,10 +3,15 @@
   overflow: hidden;
   padding: clamp(5.4rem, 10vw, 8.2rem) 1.25rem clamp(5rem, 9vw, 7.2rem);
   color: var(--ink, #49382c);
-  background:
-    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, .56), transparent 28%),
-    radial-gradient(circle at 86% 76%, rgba(185, 133, 79, .07), transparent 30%),
-    linear-gradient(180deg, #f5e8dc 0%, #fbf4ec 56%, #fffaf5 100%);
+  /* Match the Day Programme and footer edge colours exactly so there is no hard seam.
+     The middle is only slightly lighter, and the gradient runs vertically (top to bottom). */
+  background: linear-gradient(
+    180deg,
+    #f5e8dc 0%,
+    #f6eadf 42%,
+    #f6eadf 58%,
+    #f5e8dc 100%
+  );
   text-align: center;
 }
 
