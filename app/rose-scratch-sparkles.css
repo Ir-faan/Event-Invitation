@@ -130,8 +130,10 @@ main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::afte
 
 @media (max-width: 760px) {
   main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] {
-    left: 38% !important;
-    top: 47% !important;
+    /* On the portrait artwork the oval photo is centred at the horizontal
+       midpoint and sits higher than it does in the desktop composition. */
+    left: 50% !important;
+    top: 38.5% !important;
   }
 
   main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span {
