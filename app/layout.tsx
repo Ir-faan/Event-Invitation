@@ -4,6 +4,7 @@ import "./coastal-reverie-decorations.css";
 import "./envelope-opening-fixes.css";
 import "./traditional-card-fixes.css";
 import "./coastal-programme-gift-polish.css";
+import "./rose-scratch-sparkles.css";
 import { TemplateCardRouter } from "@/components/template-card-router";
 
 export const metadata: Metadata = {
