@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./landing-paperless.css";
 import "./coastal-reverie-decorations.css";
 import "./envelope-opening-fixes.css";
 import "./traditional-card-fixes.css";
@@ -8,9 +9,9 @@ import "./rose-scratch-sparkles.css";
 import { TemplateCardRouter } from "@/components/template-card-router";
 
 export const metadata: Metadata = {
-  title: "Event Invitations — The most elegant save the date",
+  title: "Paperless Invites — The most elegant save the date",
   description:
-    "Modern digital invitations for weddings, engagements, birthdays and the celebrations worth remembering.",
+    "Modern digital invitations built around your chosen colours, interactive details and sections.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
