@@ -1,0 +1,603 @@
+/* Rose Afterglow keeps its olive palette and interactions, but these five
+   sections now use the same composition/layout language as Coastal Reverie
+   (Template 1): vertical journey timeline, paper memory card, event cards,
+   floating seating field and the original programme timeline. */
+
+/* -------------------------------------------------------------------------- */
+/* Our Journey — Template 1 vertical alternating timeline                     */
+/* -------------------------------------------------------------------------- */
+main#invitation-top[class*="roseVariant"] > section[class*="storySection"] {
+  padding: clamp(6rem, 10vw, 10rem) 5vw !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="storyTimeline"] {
+  position: relative !important;
+  width: min(68rem, 100%) !important;
+  display: block !important;
+  margin: 4rem auto 0 !important;
+  padding: 0 !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="storyTimeline"]::before {
+  top: 0 !important;
+  right: auto !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  width: 1px !important;
+  height: auto !important;
+  background: rgba(83, 99, 68, .28) !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="storyChapter"] {
+  position: relative !important;
+  min-width: 0 !important;
+  min-height: 15rem !important;
+  height: auto !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  align-items: start !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-align: initial !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="storyChapter"]:nth-child(odd) [class*="storyText"] {
+  grid-column: 1 !important;
+  padding: 0 3rem 0 0 !important;
+  text-align: right !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="storyChapter"]:nth-child(even) [class*="storyText"] {
+  grid-column: 2 !important;
+  padding: 0 0 0 3rem !important;
+  text-align: left !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="storyChapter"] [class*="storyDot"] {
+  top: .2rem !important;
+  left: 50% !important;
+  width: 1.6rem !important;
+  height: 1.6rem !important;
+  transform: translateX(-50%) !important;
+  box-shadow: 0 0 0 .55rem #f7f8f0 !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="storyChapter"]:nth-child(odd)[data-wedding-reveal] {
+  transform: translateX(-3.5rem) !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="storyChapter"]:nth-child(even)[data-wedding-reveal] {
+  transform: translateX(3.5rem) !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="storyChapter"][data-visible="true"] {
+  transform: none !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* In Loving Memory — Template 1 centred paper/card composition               */
+/* -------------------------------------------------------------------------- */
+main#invitation-top[class*="roseVariant"] > section[class*="memorySection"] {
+  min-height: 58rem !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: clamp(5rem, 9vw, 9rem) 1.5rem !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="memorySection"] [class*="memoryBackdrop"] {
+  opacity: .055 !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] {
+  width: min(50rem, 100%) !important;
+  margin: 0 !important;
+  padding: clamp(4rem, 7vw, 6.5rem) clamp(2rem, 8vw, 6.5rem) !important;
+  border: 1px solid rgba(122, 139, 100, .46) !important;
+  outline: 1px solid rgba(122, 139, 100, .2) !important;
+  outline-offset: -.9rem !important;
+  color: #38432f !important;
+  background: rgba(248, 249, 241, .97) !important;
+  box-shadow: 0 2.5rem 6rem rgba(34, 44, 28, .34) !important;
+  text-align: center !important;
+  transform: translateY(3rem) rotateX(5deg) !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"][data-visible="true"] {
+  transform: none !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] [class*="paperCorners"] {
+  display: block !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] h2 {
+  color: #586648 !important;
+  font-size: clamp(3.6rem, 6vw, 5.6rem) !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] > p:not([class*="eyebrow"]) {
+  max-width: 36rem !important;
+  margin: 0 auto 1.5rem !important;
+  color: #65705d !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] [class*="eyebrow"] {
+  color: #71805d !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] [class*="memoryRule"] {
+  color: #8d9a72 !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] [class*="memoryDedication"] {
+  max-width: 28rem !important;
+  margin: 2rem auto !important;
+  padding: 1.5rem 1rem !important;
+  border-top: 1px solid rgba(113, 128, 93, .26) !important;
+  border-bottom: 1px solid rgba(113, 128, 93, .26) !important;
+  background: transparent !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] [class*="memoryDedication"] small {
+  color: #71805d !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] [class*="memoryDedication"] strong {
+  color: #586648 !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] [class*="memoryDedication"] span {
+  color: #7c8575 !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] [class*="memorySignature"] {
+  color: #667554 !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Event Details — Template 1 three-card layout                               */
+/* -------------------------------------------------------------------------- */
+main#invitation-top[class*="roseVariant"] > section[class*="eventsSection"] {
+  padding: clamp(6rem, 9vw, 9rem) 5vw !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="eventsSection"] [class*="lightTitle"] {
+  max-width: 55rem !important;
+  margin: 0 auto 4.5rem !important;
+  text-align: center !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="eventsGrid"] {
+  width: min(88rem, 100%) !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 1.2rem !important;
+  margin: 0 auto !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="eventCard"] {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  padding: clamp(1.5rem, 3vw, 2.4rem) !important;
+  border: 0 !important;
+  border-radius: 1.2rem !important;
+  background: rgba(250, 251, 245, .9) !important;
+  box-shadow: 0 1.5rem 3.5rem rgba(45, 58, 37, .14) !important;
+  text-align: center !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="eventCard"] [class*="eventIcon"] {
+  width: 4rem !important;
+  height: 4rem !important;
+  margin: 0 auto 1.2rem !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="eventCard"] > p {
+  margin: 0 0 .5rem !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="eventCard"] h3 {
+  margin: 0 0 1.4rem !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="eventCard"] [class*="eventFacts"] {
+  display: grid !important;
+  gap: .8rem !important;
+  margin: 0 0 1.5rem !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="eventCard"] [class*="eventFacts"] > span {
+  justify-content: center !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="eventCard"] [class*="mapFrame"] {
+  width: 100% !important;
+  aspect-ratio: 1.35 !important;
+  margin-top: auto !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="eventCard"] > a {
+  justify-content: center !important;
+  margin-top: 1.2rem !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Seating Arrangement — Template 1 heading-left / floating-table field       */
+/* Existing Rose markup is retained, but presented with Template 1 geometry.  */
+/* -------------------------------------------------------------------------- */
+main#invitation-top[class*="roseVariant"] > section[class*="roseSeatingSection"] {
+  display: grid !important;
+  grid-template-columns: minmax(15rem, .72fr) minmax(0, 1.55fr) !important;
+  align-items: center !important;
+  gap: clamp(2rem, 5vw, 6rem) !important;
+  padding: clamp(5.5rem, 8vw, 8rem) 5vw !important;
+  background: linear-gradient(180deg, #d4dcc8, #f1f3e9 52%, #cbd5bd) !important;
+}
+
+main#invitation-top[class*="roseVariant"] section[class*="roseSeatingSection"] > [class*="roseSeatingHeading"] {
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding-right: clamp(.5rem, 2vw, 2rem) !important;
+  text-align: left !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingHeading"] h2 {
+  max-width: 10ch !important;
+  margin: 0 !important;
+  color: #46543b !important;
+  font: 500 clamp(3.6rem, 6.4vw, 6.7rem)/.82 var(--serif) !important;
+  letter-spacing: -.035em !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingHeading"] > p {
+  margin-bottom: 1rem !important;
+  font-size: .64rem !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingHeading"] > span {
+  display: block !important;
+  max-width: 23rem !important;
+  margin-top: 1.5rem !important;
+  color: #697262 !important;
+  font: italic clamp(1.05rem, 1.45vw, 1.32rem)/1.65 var(--serif) !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] {
+  position: relative !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: clamp(28rem, 39vw, 36rem) !important;
+  display: block !important;
+  margin: 0 !important;
+  isolation: isolate !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseTableCard"] {
+  position: absolute !important;
+  z-index: 1 !important;
+  width: clamp(8.5rem, 12vw, 12rem) !important;
+  min-height: 0 !important;
+  display: grid !important;
+  gap: .18rem !important;
+  margin: 0 !important;
+  padding: .4rem .35rem !important;
+  transform: translate(-50%, -50%) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-align: center !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseTableCard"] small,
+main#invitation-top[class*="roseVariant"] [class*="roseTableCard"] > span {
+  display: none !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseTableCard"] strong {
+  margin: 0 !important;
+  color: #4f5e42 !important;
+  font: 500 clamp(1.45rem, 2vw, 1.95rem)/1 var(--serif) !important;
+  letter-spacing: -.015em !important;
+}
+main#invitation-top[class*="roseVariant"] [class*="roseTableCard"] strong::before { content: "Table "; }
+
+main#invitation-top[class*="roseVariant"] [class*="roseTableCard"] h3 {
+  margin: 0 !important;
+  color: #697262 !important;
+  font: italic 400 clamp(.84rem, 1vw, 1rem)/1.25 var(--serif) !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(1)  { left: 24%; top: 18%; }
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(2)  { left: 50%; top: 14%; }
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(3)  { left: 76%; top: 20%; }
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(4)  { left: 14%; top: 39%; }
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(5)  { left: 38%; top: 34%; }
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(6)  { left: 62%; top: 38%; }
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(7)  { left: 86%; top: 41%; }
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(8)  { left: 24%; top: 58%; }
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(9)  { left: 50%; top: 54%; }
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(10) { left: 76%; top: 59%; }
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(11) { left: 38%; top: 77%; }
+main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(12) { left: 64%; top: 77%; }
+
+/* -------------------------------------------------------------------------- */
+/* Day Programme — Template 1 seven-column timeline / mobile vertical list    */
+/* -------------------------------------------------------------------------- */
+main#invitation-top[class*="roseVariant"] > section[class*="programmeSection"] {
+  padding: clamp(6rem, 9vw, 9rem) 3vw !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="programmeLine"] {
+  display: block !important;
+  left: 6% !important;
+  right: 6% !important;
+  top: 24.5rem !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="programmeGrid"] {
+  width: min(92rem, 100%) !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: clamp(1rem, 2vw, 2rem) !important;
+  align-items: initial !important;
+  margin: 5rem auto 0 !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="programmeItem"] {
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  text-align: center !important;
+}
+
+main#invitation-top[class*="roseVariant"] article[class*="programmeItem"]:nth-child(odd)[data-wedding-reveal] {
+  transform: translateY(2.8rem) !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="programmeItem"]:nth-child(even)[data-wedding-reveal] {
+  transform: translateY(-2.8rem) !important;
+}
+main#invitation-top[class*="roseVariant"] article[class*="programmeItem"][data-visible="true"] {
+  transform: none !important;
+}
+
+@media (max-width: 1000px) {
+  main#invitation-top[class*="roseVariant"] section[class*="eventsGrid"] {
+    grid-template-columns: 1fr !important;
+    width: min(30rem, 100%) !important;
+    gap: 1.2rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="eventCard"] [class*="mapFrame"] {
+    aspect-ratio: 1.8 !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] [class*="programmeGrid"] {
+    grid-template-columns: repeat(4, 1fr) !important;
+    row-gap: 2.5rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] [class*="programmeLine"] {
+    display: none !important;
+  }
+}
+
+@media (max-width: 760px) {
+  /* Explicitly close the remaining mobile gap around the Glimpse -> Journey
+     boundary while leaving the approved gradient intact. */
+  main#invitation-top[class*="roseVariant"] > section[class*="glimpseSection"] {
+    padding-bottom: .65rem !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] > section[class*="storySection"] {
+    padding: 1.15rem 1.1rem 4.8rem !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] section[class*="storyTimeline"] {
+    width: 100% !important;
+    margin-top: 3rem !important;
+    padding: 0 .2rem 0 0 !important;
+  }
+  main#invitation-top[class*="roseVariant"] section[class*="storyTimeline"]::before {
+    left: 1.2rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="storyChapter"] {
+    min-height: 0 !important;
+    display: block !important;
+    margin-bottom: 3.4rem !important;
+    padding: 0 0 0 3rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="storyChapter"]:nth-child(odd) [class*="storyText"],
+  main#invitation-top[class*="roseVariant"] article[class*="storyChapter"]:nth-child(even) [class*="storyText"] {
+    padding: 0 !important;
+    text-align: left !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="storyChapter"][data-wedding-reveal],
+  main#invitation-top[class*="roseVariant"] article[class*="storyChapter"]:nth-child(odd)[data-wedding-reveal],
+  main#invitation-top[class*="roseVariant"] article[class*="storyChapter"]:nth-child(even)[data-wedding-reveal] {
+    transform: translateY(1.4rem) !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="storyChapter"][data-visible="true"] {
+    transform: none !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="storyChapter"] [class*="storyDot"] {
+    left: 1.2rem !important;
+    top: .2rem !important;
+    width: 1.35rem !important;
+    height: 1.35rem !important;
+    box-shadow: 0 0 0 .42rem #f7f8f0 !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] > section[class*="memorySection"] {
+    min-height: 48rem !important;
+    padding: 3rem .8rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] {
+    width: 100% !important;
+    padding: 3.7rem 1.4rem !important;
+    transform: translateY(2rem) !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="memoryCard"][data-visible="true"] {
+    transform: none !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] h2 {
+    font-size: clamp(3.4rem, 16vw, 5rem) !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="memoryCard"] [class*="memoryDedication"] strong {
+    font-size: 2rem !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] > section[class*="eventsSection"] {
+    padding: 5.4rem 1rem 4.4rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] section[class*="eventsSection"] [class*="lightTitle"] {
+    margin-bottom: 2.4rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] section[class*="eventsGrid"] {
+    width: min(23.5rem, 100%) !important;
+    gap: 1rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="eventCard"] {
+    padding: 1rem .85rem 1.05rem !important;
+    border-radius: .95rem !important;
+    box-shadow: 0 1rem 2rem rgba(45, 58, 37, .13) !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="eventCard"] [class*="eventIcon"] {
+    width: 3rem !important;
+    height: 3rem !important;
+    margin-bottom: .75rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="eventCard"] > p { margin-bottom: .35rem !important; }
+  main#invitation-top[class*="roseVariant"] article[class*="eventCard"] h3 { margin-bottom: .85rem !important; }
+  main#invitation-top[class*="roseVariant"] article[class*="eventCard"] [class*="eventFacts"] {
+    gap: .48rem !important;
+    margin-bottom: .9rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="eventCard"] [class*="mapFrame"] {
+    aspect-ratio: 1.75 !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="eventCard"] > a {
+    margin-top: .85rem !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] > section[class*="roseSeatingSection"] {
+    grid-template-columns: 1fr !important;
+    gap: 2.1rem !important;
+    padding: 4.9rem 1rem 5.2rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] section[class*="roseSeatingSection"] > [class*="roseSeatingHeading"] {
+    padding-right: 0 !important;
+    text-align: center !important;
+  }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingHeading"] h2 {
+    max-width: 9ch !important;
+    margin: 0 auto !important;
+    font-size: clamp(3.15rem, 16vw, 4.65rem) !important;
+    line-height: .82 !important;
+  }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingHeading"] > span {
+    max-width: 16rem !important;
+    margin: 1rem auto 0 !important;
+    font-size: .92rem !important;
+    line-height: 1.55 !important;
+  }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] {
+    width: min(23rem, 100%) !important;
+    min-height: 29rem !important;
+    margin: 0 auto !important;
+  }
+  main#invitation-top[class*="roseVariant"] [class*="roseTableCard"] {
+    width: 6.75rem !important;
+    padding-inline: .12rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] [class*="roseTableCard"] strong { font-size: 1.12rem !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseTableCard"] h3 {
+    font-size: .66rem !important;
+    line-height: 1.2 !important;
+  }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(1)  { left: 18% !important; top: 10% !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(2)  { left: 50% !important; top: 9% !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(3)  { left: 82% !important; top: 12% !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(4)  { left: 20% !important; top: 33% !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(5)  { left: 50% !important; top: 31% !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(6)  { left: 80% !important; top: 35% !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(7)  { left: 18% !important; top: 56% !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(8)  { left: 50% !important; top: 55% !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(9)  { left: 82% !important; top: 58% !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(10) { left: 20% !important; top: 80% !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(11) { left: 50% !important; top: 78% !important; }
+  main#invitation-top[class*="roseVariant"] [class*="roseSeatingGrid"] > :nth-child(12) { left: 80% !important; top: 82% !important; }
+
+  main#invitation-top[class*="roseVariant"] > section[class*="programmeSection"] {
+    padding: 5rem 1.15rem 4.5rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] [class*="programmeGrid"] {
+    grid-template-columns: 1fr !important;
+    width: min(24rem, 100%) !important;
+    gap: 0 !important;
+    margin-top: 3.6rem !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="programmeItem"] {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 3.05rem minmax(0, max-content) max-content !important;
+    grid-template-rows: max-content max-content !important;
+    align-items: start !important;
+    column-gap: .55rem !important;
+    row-gap: .18rem !important;
+    min-height: 6.4rem !important;
+    padding: 0 0 1rem !important;
+    text-align: left !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="programmeItem"]::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 1.45rem !important;
+    top: 2.92rem !important;
+    bottom: .15rem !important;
+    width: 1px !important;
+    background: rgba(74, 88, 62, .22) !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="programmeItem"] time {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    justify-self: start !important;
+    min-width: 3.75rem !important;
+    min-height: 1.75rem !important;
+    margin: 0 !important;
+    padding: 0 .62rem !important;
+    font-size: .62rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="programmeItem"] > div {
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    align-self: start !important;
+    width: 2.9rem !important;
+    height: 2.9rem !important;
+    margin: 0 !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="programmeItem"] h3 {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+    margin: 0 !important;
+    font-size: .98rem !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="programmeItem"] p {
+    grid-column: 2 / 4 !important;
+    grid-row: 2 !important;
+    margin: .15rem 0 0 !important;
+    font-size: .76rem !important;
+    line-height: 1.42 !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="programmeItem"][data-wedding-reveal],
+  main#invitation-top[class*="roseVariant"] article[class*="programmeItem"]:nth-child(odd)[data-wedding-reveal],
+  main#invitation-top[class*="roseVariant"] article[class*="programmeItem"]:nth-child(even)[data-wedding-reveal] {
+    transform: translateY(1.4rem) !important;
+  }
+  main#invitation-top[class*="roseVariant"] article[class*="programmeItem"][data-visible="true"] {
+    transform: none !important;
+  }
+}
