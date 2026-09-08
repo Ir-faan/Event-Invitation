@@ -1,0 +1,168 @@
+/* More natural curtain motion for Rose Afterglow.
+   The existing wedding-curtain artwork is preserved; these overrides make the
+   fabric feel like it is gathering toward the sides instead of two flat image
+   halves simply sliding off-screen. */
+
+main#invitation-top[class*="roseVariant"] > div[class*="roseCurtainIntro"] {
+  perspective: 1600px;
+  background: transparent !important;
+}
+
+/* The closed curtain still has a dark backing. As the fabric separates, fade
+   this backing away so the actual invitation appears through the opening. */
+main#invitation-top[class*="roseVariant"] > div[class*="roseCurtainIntro"]::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(107, 123, 88, .24), transparent 48%),
+    linear-gradient(180deg, #536047, #46523d 72%, #3d4935);
+  opacity: 1;
+}
+
+main#invitation-top[class*="roseVariant"][class] > div[class*="roseCurtainIntro"][class*="roseCurtainsOpening"]::before {
+  animation: roseCurtainBackdropReveal 1.6s cubic-bezier(.2, .72, .22, 1) forwards;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseCurtainPanel"] {
+  overflow: hidden;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transition: none !important;
+  filter: drop-shadow(0 .8rem 1.8rem rgba(20, 28, 17, .30)) !important;
+  will-change: transform, filter;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseCurtainLeft"] {
+  transform-origin: left 48%;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseCurtainRight"] {
+  transform-origin: right 48%;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseCurtainPanel"] img {
+  transform: scale(1.012);
+  transform-origin: center top;
+  filter: saturate(.94) contrast(1.055) brightness(.96);
+  will-change: transform, filter;
+}
+
+/* Fine vertical highlights/shadows mimic the changing light across folds in
+   heavy fabric. They are deliberately subtle so the image artwork stays the
+   dominant visual. */
+main#invitation-top[class*="roseVariant"] [class*="roseCurtainPanel"]::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+  opacity: .58;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), transparent 16%, transparent 78%, rgba(13,20,11,.12)),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,.045) 0%,
+      rgba(255,255,255,.012) 5%,
+      rgba(12,19,10,.065) 10%,
+      rgba(255,255,255,.028) 15%,
+      rgba(255,255,255,.045) 20%
+    );
+  mix-blend-mode: soft-light;
+}
+
+/* A stronger shadow at the meeting edges gives the fabric thickness. */
+main#invitation-top[class*="roseVariant"] [class*="roseCurtainPanel"]::after {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  bottom: 0;
+  width: clamp(1.8rem, 7vw, 7rem);
+  pointer-events: none;
+  opacity: .72;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseCurtainLeft"]::after {
+  right: 0;
+  background: linear-gradient(90deg, transparent, rgba(20, 28, 17, .24));
+}
+
+main#invitation-top[class*="roseVariant"] [class*="roseCurtainRight"]::after {
+  left: 0;
+  background: linear-gradient(90deg, rgba(20, 28, 17, .24), transparent);
+}
+
+main#invitation-top[class*="roseVariant"] > div[class*="roseCurtainIntro"][class*="roseCurtainsOpening"] [class*="roseCurtainLeft"] {
+  animation: roseCurtainGatherLeft 1.6s cubic-bezier(.22, .67, .2, 1) forwards;
+}
+
+main#invitation-top[class*="roseVariant"] > div[class*="roseCurtainIntro"][class*="roseCurtainsOpening"] [class*="roseCurtainRight"] {
+  animation: roseCurtainGatherRight 1.6s cubic-bezier(.22, .67, .2, 1) forwards;
+}
+
+main#invitation-top[class*="roseVariant"] > div[class*="roseCurtainIntro"][class*="roseCurtainsOpening"] [class*="roseCurtainPanel"] img {
+  animation: roseCurtainFabricTension 1.6s cubic-bezier(.22, .67, .2, 1) forwards;
+}
+
+main#invitation-top[class*="roseVariant"] > div[class*="roseCurtainIntro"][class*="roseCurtainsOpening"] [class*="roseCurtainPanel"]::before {
+  animation: roseCurtainFoldLight 1.6s ease forwards;
+}
+
+main#invitation-top[class*="roseVariant"] > div[class*="roseCurtainIntro"][class*="roseCurtainsOpening"] [class*="roseCurtainTrigger"] {
+  opacity: 0 !important;
+  transform: scale(.975) !important;
+  transition: opacity .24s ease, transform .34s ease !important;
+  pointer-events: none;
+}
+
+@keyframes roseCurtainGatherLeft {
+  0%   { transform: translate3d(0, 0, 0) scaleX(1) rotateY(0deg) skewY(0deg); }
+  16%  { transform: translate3d(-2.5%, 0, 0) scaleX(.995) rotateY(.5deg) skewY(-.08deg); }
+  43%  { transform: translate3d(-31%, 0, 0) scaleX(.94) rotateY(3deg) skewY(-.22deg); }
+  72%  { transform: translate3d(-73%, 0, 0) scaleX(.82) rotateY(6deg) skewY(-.12deg); }
+  100% { transform: translate3d(-118%, 0, 0) scaleX(.70) rotateY(9deg) skewY(0deg); }
+}
+
+@keyframes roseCurtainGatherRight {
+  0%   { transform: translate3d(0, 0, 0) scaleX(1) rotateY(0deg) skewY(0deg); }
+  16%  { transform: translate3d(2.5%, 0, 0) scaleX(.995) rotateY(-.5deg) skewY(.08deg); }
+  43%  { transform: translate3d(31%, 0, 0) scaleX(.94) rotateY(-3deg) skewY(.22deg); }
+  72%  { transform: translate3d(73%, 0, 0) scaleX(.82) rotateY(-6deg) skewY(.12deg); }
+  100% { transform: translate3d(118%, 0, 0) scaleX(.70) rotateY(-9deg) skewY(0deg); }
+}
+
+@keyframes roseCurtainFabricTension {
+  0%, 12% { transform: scale(1.012); filter: saturate(.94) contrast(1.055) brightness(.96); }
+  48%     { transform: scale(1.025); filter: saturate(.96) contrast(1.07) brightness(.98); }
+  100%    { transform: scale(1.04); filter: saturate(.92) contrast(1.08) brightness(.93); }
+}
+
+@keyframes roseCurtainFoldLight {
+  0%   { opacity: .58; transform: scaleX(1); }
+  42%  { opacity: .72; transform: scaleX(.92); }
+  100% { opacity: .82; transform: scaleX(.72); }
+}
+
+@keyframes roseCurtainBackdropReveal {
+  0%, 10% { opacity: 1; }
+  42%     { opacity: .76; }
+  72%     { opacity: .28; }
+  100%    { opacity: 0; }
+}
+
+@media (max-width: 760px) {
+  main#invitation-top[class*="roseVariant"] [class*="roseCurtainPanel"]::after {
+    width: clamp(1.4rem, 10vw, 3rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main#invitation-top[class*="roseVariant"] [class*="roseCurtainPanel"],
+  main#invitation-top[class*="roseVariant"] [class*="roseCurtainPanel"] img,
+  main#invitation-top[class*="roseVariant"] > div[class*="roseCurtainIntro"]::before {
+    animation: none !important;
+  }
+}
