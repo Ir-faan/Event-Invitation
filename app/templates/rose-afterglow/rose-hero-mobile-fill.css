@@ -15,5 +15,11 @@
     height: auto;
     aspect-ratio: 941 / 1672;
     flex: none;
+
+    /* When the artwork becomes wider than the viewport, grid alignment can
+       keep the oversized item flush to one side. Anchor its midpoint to the
+       viewport midpoint so the ornate picture frame stays visually centered. */
+    left: 50%;
+    transform: translateX(-50%);
   }
 }
