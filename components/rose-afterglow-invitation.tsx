@@ -107,8 +107,15 @@ const programme = [
 
 const glimpsePhotos = [
   { src: "/images/rose-afterglow.webp", alt: "An enchanted rose garden glowing at sunset" },
-  { src: "/images/rose-scratch-hero-olive.webp", alt: "Bride and groom reaching for one another inside an ornate frame" },
+  { src: "/images/rose-couple-hands-default.webp", alt: "Bride and groom reaching for one another" },
+  { src: "/images/rose-scratch-hero-olive.webp", alt: "Bride and groom within the olive wedding portrait artwork" },
+  { src: "/images/rose-scratch-hero-wide-olive.webp", alt: "A wide olive wedding portrait scene" },
+  { src: "/images/rose-scratch-hero.webp", alt: "A romantic wedding portrait in warm tones" },
+  { src: "/images/rose-scratch-hero-wide.webp", alt: "A wide romantic wedding portrait" },
   { src: "/images/rose-wedding-curtains-olive.webp", alt: "Olive wedding curtains framed by flowers and greenery" },
+  { src: "/images/rose-wedding-curtains.webp", alt: "Wedding curtains surrounded by soft floral details" },
+  { src: "/images/moonlit-bloom.webp", alt: "A moonlit floral wedding scene" },
+  { src: "/images/coastal-reverie.webp", alt: "A soft romantic coastal wedding scene" },
 ];
 
 const heroCouplePhoto = {
