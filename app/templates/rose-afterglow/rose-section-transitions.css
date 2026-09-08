@@ -1,0 +1,68 @@
+/* Smooth background hand-offs between the main Rose Afterglow sections.
+   Each section now meets the next one on a shared colour so the page reads
+   as one continuous olive-green composition instead of stacked colour blocks. */
+
+main#invitation-top[class*="roseVariant"] > section[class*="countdownSection"] {
+  background:
+    linear-gradient(
+      180deg,
+      #43503a 0%,
+      rgba(67, 80, 58, .42) 5%,
+      rgba(67, 80, 58, 0) 14%,
+      rgba(83, 96, 70, 0) 85%,
+      rgba(83, 96, 70, .48) 93%,
+      #536046 100%
+    ),
+    linear-gradient(180deg, #dce3d2 0%, #f7f8f0 54%, #e5eadc 100%) !important;
+}
+
+main#invitation-top[class*="roseVariant"] > section[class*="glimpseSection"] {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, .09), transparent 34rem),
+    linear-gradient(
+      180deg,
+      rgba(220, 228, 209, 0) 0%,
+      rgba(220, 228, 209, 0) 89%,
+      rgba(220, 228, 209, .52) 95%,
+      #dce4d1 100%
+    ),
+    linear-gradient(145deg, #536046, #6a7659 48%, #46543c) !important;
+}
+
+main#invitation-top[class*="roseVariant"] > section[class*="storySection"] {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(62, 75, 54, 0) 0%,
+      rgba(62, 75, 54, 0) 88%,
+      rgba(62, 75, 54, .5) 95%,
+      #3e4b36 100%
+    ),
+    linear-gradient(180deg, #dce4d1 0%, #f8f9f2 52%, #dce4d1 100%) !important;
+}
+
+/* The memory section already uses ::after as its dark olive veil. Fade that
+   veil into the Event Details green at the bottom so the hand-off stays soft. */
+main#invitation-top[class*="roseVariant"] > section[class*="memorySection"]::after {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(229, 234, 219, 0) 0%,
+      rgba(229, 234, 219, 0) 86%,
+      rgba(229, 234, 219, .52) 94%,
+      #e5eadb 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(46, 58, 39, .95),
+      rgba(80, 94, 66, .78) 22%,
+      rgba(88, 101, 73, .7) 50%,
+      rgba(80, 94, 66, .78) 78%,
+      rgba(46, 58, 39, .95)
+    ),
+    radial-gradient(circle at center, rgba(255, 255, 255, .08), transparent 68%) !important;
+}
+
+main#invitation-top[class*="roseVariant"] > section[class*="eventsSection"] {
+  background: linear-gradient(180deg, #e5eadb 0%, #f8f9f2 58%, #d4dcc8 100%) !important;
+}
