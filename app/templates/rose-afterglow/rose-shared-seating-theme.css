@@ -1,0 +1,14 @@
+/* The Rose template now reuses the exact Template 1 seating component. Keep
+   its geometry untouched and only swap the inherited palette/background to
+   Rose Afterglow's olive greens. */
+main#invitation-top[class*="roseVariant"] > section[aria-labelledby="seating-title"] {
+  --olive: #71805d;
+  --olive-dark: #536046;
+  --olive-deep: #3f4c36;
+  --gold: #8d9a72;
+  --ink: #3f4c36;
+  --muted: #697262;
+  --paper: #f8f9f2;
+  color: #3f4c36;
+  background: linear-gradient(180deg, #d4dcc8 0%, #f1f3e9 52%, #cbd5bd 100%) !important;
+}
