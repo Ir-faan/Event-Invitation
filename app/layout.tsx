@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./landing-paperless.css";
+import "./landing-contact-polish.css";
 import "./coastal-reverie-decorations.css";
 import "./envelope-opening-fixes.css";
 import "./traditional-card-fixes.css";
