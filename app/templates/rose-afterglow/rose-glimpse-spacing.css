@@ -14,6 +14,14 @@ main#invitation-top[class*="roseVariant"] section[class*="storySection"] {
   padding-top: clamp(2.35rem, 3.25vw, 3.15rem) !important;
 }
 
+/* Keep uploaded Glimpse photos true to their original colours. The base Rose
+   styles add an olive/sepia treatment, so explicitly neutralise that here,
+   including the desktop hover state. */
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpsePhoto"] img,
+main#invitation-top[class*="roseVariant"] section[class*="glimpseSection"] [class*="glimpsePhoto"]:hover img {
+  filter: none !important;
+}
+
 @media (max-width: 760px) {
   main#invitation-top[class*="roseVariant"] section[class*="countdownSection"] [class*="countdownContent"] {
     padding-bottom: 1.8rem !important;
