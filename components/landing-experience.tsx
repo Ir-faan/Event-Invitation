@@ -179,7 +179,7 @@ export function LandingExperience() {
           <div className="spotlight-phone" aria-hidden="true">
             <div className="phone-speaker" />
             <img src="/images/coastal-reverie.webp" alt="" />
-            <div className="phone-copy"><span>COMING SOON</span><strong>Your story<br />begins here</strong><i>Save the date</i></div>
+            <div className="phone-copy"><span>PAPERLESS INVITES</span><strong>Your story<br />begins here</strong><i>Save the date</i></div>
           </div>
         </div>
         <a href="#collection" className="scroll-cue"><span>Scroll to explore</span><ChevronDown aria-hidden="true" /></a>
@@ -367,12 +367,14 @@ export function LandingExperience() {
             <div className="extra-group">
               <div className="extra-group-title">
                 <div><span>3</span><strong>Add more invitation parts</strong></div>
-                <small>Choose any you would like</small>
+                <small>Rs 150 each</small>
               </div>
               <div className="optional-parts-grid">
-                {optionalParts.map((part) => <span key={part}><Sparkles aria-hidden="true" />{part}</span>)}
+                {optionalParts.map((part) => (
+                  <span key={part}><Sparkles aria-hidden="true" /><span>{part}</span><b>+ Rs 150</b></span>
+                ))}
               </div>
-              <p className="extra-note">The price of the extra parts you choose will be added to your total and shown before payment.</p>
+              <p className="extra-note">Each extra invitation part costs Rs 150. Choose as many as you would like and the total will be shown before payment.</p>
             </div>
 
             <div className="extra-group custom-part-group">
@@ -380,7 +382,24 @@ export function LandingExperience() {
                 <div><span>4</span><strong>Need something that is not listed?</strong></div>
                 <b>+ Rs 500</b>
               </div>
-              <p>We can add one custom part made specially for your invitation. This is for something that is not already available in the choices above.</p>
+              <p>We can add one custom part made specially for your invitation. This is for something that is not already available in the choices above. Your custom part will be planned with you during a video consultation.</p>
+            </div>
+          </article>
+        </div>
+
+        <div className="pricing-service-notes reveal">
+          <article>
+            <CreditCard aria-hidden="true" />
+            <div>
+              <strong>Payment is made outside the website</strong>
+              <p>After your invitation is approved, the payment details will be sent to you. You can pay by MCB Juice or bank transfer.</p>
+            </div>
+          </article>
+          <article>
+            <Smartphone aria-hidden="true" />
+            <div>
+              <strong>Need help designing your invitation?</strong>
+              <p>If you are not sure what to choose, I can assist you through a video consultation. Custom parts are also planned together with you during a video consultation.</p>
             </div>
           </article>
         </div>
@@ -398,7 +417,7 @@ export function LandingExperience() {
           <h2 id="contact-title">Your date deserves<br /><em>a beautiful beginning.</em></h2>
           <p>Tell us about the celebration you are imagining and the components you would like to include.</p>
           <div className="contact-actions">
-            <span className="coming-soon"><span className="live-dot" /> Bookings opening soon</span>
+            <span className="coming-soon"><span className="live-dot" /> Enquiries welcome</span>
             <a className="button button-ivory" href="#pricing">Explore your options <ArrowRight aria-hidden="true" /></a>
           </div>
         </div>
@@ -410,10 +429,10 @@ export function LandingExperience() {
         <div className="footer-note">
           <Sparkles aria-hidden="true" />
           <p>Made with care for life&apos;s most beautiful gatherings.</p>
-          <div className="footer-socials" aria-label="Social media accounts coming soon">
-            <span className="social-button" title="Facebook — coming soon" aria-label="Facebook — coming soon"><FacebookLogo /></span>
-            <span className="social-button" title="Instagram — coming soon" aria-label="Instagram — coming soon"><InstagramLogo /></span>
-            <span className="social-button" title="TikTok — coming soon" aria-label="TikTok — coming soon"><TikTokLogo /></span>
+          <div className="footer-socials" aria-label="Paperless Invites social media">
+            <span className="social-button" title="Facebook" aria-label="Facebook"><FacebookLogo /></span>
+            <span className="social-button" title="Instagram" aria-label="Instagram"><InstagramLogo /></span>
+            <span className="social-button" title="TikTok" aria-label="TikTok"><TikTokLogo /></span>
           </div>
         </div>
         <div className="footer-bottom"><span>© {new Date().getFullYear()} Paperless Invites</span><a href="#top">Back to top ↑</a></div>
