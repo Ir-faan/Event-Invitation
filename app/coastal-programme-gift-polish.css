@@ -2,10 +2,15 @@
    use the full available width without changing the editable programme data. */
 
 main#invitation-top > section[aria-labelledby="gift-title"] {
-  background:
-    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, .34), transparent 30%),
-    radial-gradient(circle at 86% 74%, rgba(185, 133, 79, .045), transparent 32%),
-    linear-gradient(180deg, #fffaf5 0%, #fbf3eb 38%, #f8eee5 68%, #f5e8dc 100%) !important;
+  /* Match the programme/footer beige at both edges and keep the transition vertical. */
+  background: linear-gradient(
+    180deg,
+    #f5e8dc 0%,
+    #f7ece2 34%,
+    #faf2e9 55%,
+    #f7ece2 76%,
+    #f5e8dc 100%
+  ) !important;
 }
 
 @media (max-width: 760px) {
