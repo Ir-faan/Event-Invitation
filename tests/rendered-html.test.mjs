@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test, { after } from "node:test";
 import { fileURLToPath } from "node:url";
 import React from "react";
@@ -28,12 +28,32 @@ test("renders the guided invitation designer and mobile preview", async () => {
   const html = renderToStaticMarkup(React.createElement(Designer));
   assert.match(html, /Create your invitation/);
   assert.match(html, /Choose your colours/);
+  assert.match(html, /Add Bismillah at the top/);
+  assert.match(html, /Show Bismillah/);
   assert.match(html, /Envelope &amp; wax seal/);
   assert.match(html, /Interactive hero/);
   assert.match(html, /A Special Message/);
   assert.match(html, /Live mobile preview/);
   assert.match(html, /Save my design/);
   assert.match(html, /Rs 1,000/);
+  assert.match(html, /Add a moment/);
+  assert.match(html, /Add another event/);
+  assert.match(html, /Date to count down to/);
+  assert.match(html, /Standard parts \+ Rs 150/);
+  assert.match(html, /video consultation/);
+  assert.match(html, /Always visible · updates instantly/);
+});
+
+test("includes exact palette artwork for the builder", async () => {
+  const palettes = ["beige", "olive", "dusty-blue", "burgundy", "pink", "lilac"];
+  const assets = palettes.flatMap((palette) => [
+    `builder-bismillah-${palette}.webp`,
+    `builder-envelope-classic-${palette}.webp`,
+    `builder-envelope-botanical-${palette}.webp`,
+    `builder-curtain-classic-${palette}.webp`,
+    `builder-curtain-botanical-${palette}.webp`,
+  ]);
+  await Promise.all(assets.map((asset) => access(new URL(`../public/images/${asset}`, import.meta.url))));
 });
 
 test("renders the complete Coastal Reverie invitation", async () => {

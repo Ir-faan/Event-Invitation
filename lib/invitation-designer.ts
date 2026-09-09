@@ -14,6 +14,8 @@ export type SectionType =
 
 export const includedSectionTypes: SectionType[] = ["countdown", "journey", "event-details", "gift"];
 
+export type InvitationSectionItem = Record<string, string>;
+
 export type InvitationSection = {
   id: string;
   type: SectionType;
@@ -21,11 +23,16 @@ export type InvitationSection = {
   title: string;
   fields: Record<string, string>;
   images: string[];
+  /** Optional so drafts saved before repeatable items were introduced still open. */
+  items?: InvitationSectionItem[];
 };
 
 export type InvitationConfig = {
   version: 1;
   palette: PaletteId;
+  bismillah: {
+    enabled: boolean;
+  };
   opening: {
     type: OpeningType;
     asset: string;
@@ -48,101 +55,123 @@ export const paletteOptions = [
   {
     id: "beige" as const,
     name: "Beige",
-    description: "Soft ivory and warm sand",
-    colors: ["#f5ecdf", "#fffaf2", "#aa8562"],
-    theme: { background: "#f5ecdf", surface: "#fffaf2", primary: "#79543d", secondary: "#d7bea1", accent: "#b88b52", ink: "#3d2c23", muted: "#765f52" },
+    description: "Warm ivory and champagne",
+    colors: ["#f1d7b7", "#fff7e9", "#a76e35"],
+    theme: { background: "#f4dfc7", surface: "#fff8ed", primary: "#7a4326", secondary: "#d9a56c", accent: "#b67937", ink: "#3c2117", muted: "#765344" },
   },
   {
     id: "olive" as const,
     name: "Olive Green",
-    description: "Botanical olive and cream",
-    colors: ["#65704b", "#a7aa7e", "#f0eadb"],
-    theme: { background: "#e9e6d7", surface: "#f7f3e8", primary: "#59623e", secondary: "#9ca378", accent: "#b69a5c", ink: "#303623", muted: "#687052" },
+    description: "Fresh olive and warm cream",
+    colors: ["#687442", "#aab76b", "#eef0cf"],
+    theme: { background: "#dfe5bd", surface: "#f8f6df", primary: "#485523", secondary: "#98aa58", accent: "#9a752d", ink: "#263014", muted: "#5b6740" },
   },
   {
     id: "dusty-blue" as const,
     name: "Dusty Blue",
-    description: "Calm blue-grey and silver",
-    colors: ["#71879a", "#adbdc9", "#edf2f4"],
-    theme: { background: "#e8eef1", surface: "#f8fbfc", primary: "#536c80", secondary: "#a8bac7", accent: "#8197a8", ink: "#293a47", muted: "#607482" },
+    description: "Clear blue-grey and pearl",
+    colors: ["#557b98", "#9dc5dc", "#edf7fb"],
+    theme: { background: "#c9e1ed", surface: "#f4fbfe", primary: "#315c7c", secondary: "#82b6d1", accent: "#5e8098", ink: "#17364b", muted: "#4f7084" },
   },
   {
     id: "burgundy" as const,
     name: "Burgundy / Wine",
-    description: "Deep wine and muted gold",
-    colors: ["#55212b", "#8b4c56", "#efe0dc"],
-    theme: { background: "#efe1de", surface: "#fff8f5", primary: "#5a1f2a", secondary: "#b9878b", accent: "#c2a05e", ink: "#38161d", muted: "#765159" },
+    description: "Rich wine and antique gold",
+    colors: ["#681c38", "#b54f70", "#f2bccb"],
+    theme: { background: "#e8aebf", surface: "#fff1f5", primary: "#6d1735", secondary: "#c15376", accent: "#b88a39", ink: "#3c0d20", muted: "#794156" },
   },
   {
     id: "pink" as const,
     name: "Pink",
-    description: "Blush rose and soft ivory",
-    colors: ["#c88e9a", "#e7bdc5", "#fff0f2"],
-    theme: { background: "#f7e5e8", surface: "#fff7f8", primary: "#9b5e6b", secondary: "#d9a8b2", accent: "#bf8b74", ink: "#4c2a31", muted: "#80636a" },
+    description: "Bright blush and rose",
+    colors: ["#b94f78", "#e58eab", "#ffdbe6"],
+    theme: { background: "#f4bfd0", surface: "#fff2f7", primary: "#94375e", secondary: "#df789a", accent: "#b9785b", ink: "#4d1730", muted: "#825168" },
   },
   {
     id: "lilac" as const,
     name: "Purple / Lilac",
-    description: "Romantic lilac and pearl",
-    colors: ["#75617f", "#b8a2c1", "#f1eaf3"],
-    theme: { background: "#eee7f1", surface: "#faf6fb", primary: "#6d5676", secondary: "#b6a0bf", accent: "#9e7e9d", ink: "#3d3043", muted: "#706176" },
+    description: "Vivid lilac and pearl",
+    colors: ["#704187", "#b77bd0", "#ead4f3"],
+    theme: { background: "#dcc2ea", surface: "#faf0ff", primary: "#67357d", secondary: "#ac6ac6", accent: "#9c6b95", ink: "#351842", muted: "#6d4778" },
   },
 ] as const;
 
-export const heroPresets: Record<PaletteId, Array<{ name: string; url: string }>> = {
-  beige: [
-    { name: "Soft florals", url: "/images/coastal-reverie.webp" },
-    { name: "Ivory romance", url: "/images/rose-scratch-hero.webp" },
-  ],
-  olive: [
-    { name: "Olive hands", url: "/images/rose-couple-hands-default.webp" },
-    { name: "Garden moment", url: "/images/rose-scratch-hero-olive.webp" },
-  ],
-  "dusty-blue": [
-    { name: "Blue promise", url: "/images/builder-hero-dusty-blue.webp" },
-    { name: "Moonlit flowers", url: "/images/moonlit-bloom.webp" },
-  ],
-  burgundy: [
-    { name: "Velvet promise", url: "/images/builder-hero-burgundy.webp" },
-    { name: "Wine florals", url: "/images/rose-afterglow.webp" },
-  ],
-  pink: [
-    { name: "Rose garden", url: "/images/rose-scratch-hero-wide.webp" },
-    { name: "Blush afterglow", url: "/images/rose-afterglow.webp" },
-  ],
-  lilac: [
-    { name: "Lilac promise", url: "/images/builder-hero-lilac.webp" },
-    { name: "Moonlit romance", url: "/images/moonlit-bloom.webp" },
-  ],
+type HeroPreset = { id: string; name: string; url: string; objectPosition: string; zoom: number };
+
+function matchedHeroPresets(palette: PaletteId, url: string): HeroPreset[] {
+  return [
+    { id: `${palette}-full`, name: "Signature scene", url, objectPosition: "center center", zoom: 1 },
+    { id: `${palette}-close`, name: "Closer crop", url, objectPosition: "center 68%", zoom: 1.14 },
+  ];
+}
+
+/** Both crop choices retain their composition when the palette changes. */
+export const heroPresets: Record<PaletteId, HeroPreset[]> = {
+  beige: matchedHeroPresets("beige", "/images/builder-hero-beige.webp"),
+  olive: matchedHeroPresets("olive", "/images/builder-hero-olive.webp"),
+  "dusty-blue": matchedHeroPresets("dusty-blue", "/images/builder-hero-dusty-blue.webp"),
+  burgundy: matchedHeroPresets("burgundy", "/images/builder-hero-burgundy.webp"),
+  pink: matchedHeroPresets("pink", "/images/builder-hero-pink.webp"),
+  lilac: matchedHeroPresets("lilac", "/images/builder-hero-lilac.webp"),
+};
+
+export const interactiveFrameAssets: Record<PaletteId, string> = {
+  beige: "/images/builder-frame-beige.webp",
+  olive: "/images/builder-frame-olive.webp",
+  "dusty-blue": "/images/builder-frame-dusty-blue.webp",
+  burgundy: "/images/builder-frame-burgundy.webp",
+  pink: "/images/builder-frame-pink.webp",
+  lilac: "/images/builder-frame-lilac.webp",
+};
+
+/** The exact same Bismillah artwork, recoloured for each palette. */
+export const bismillahAssets: Record<PaletteId, string> = {
+  beige: "/images/builder-bismillah-beige.webp",
+  olive: "/images/builder-bismillah-olive.webp",
+  "dusty-blue": "/images/builder-bismillah-dusty-blue.webp",
+  burgundy: "/images/builder-bismillah-burgundy.webp",
+  pink: "/images/builder-bismillah-pink.webp",
+  lilac: "/images/builder-bismillah-lilac.webp",
 };
 
 export const openingOptions = [
   { id: "none" as const, name: "No opening", description: "Guests see the invitation immediately.", price: 0 },
-  { id: "envelope" as const, name: "Envelope & wax seal", description: "An envelope opens with your initials.", price: 200 },
-  { id: "curtain" as const, name: "Curtain reveal", description: "Elegant curtains part to reveal the invitation.", price: 200 },
+  { id: "envelope" as const, name: "Envelope & wax seal", description: "A full-screen envelope opens from the centre.", price: 200 },
+  { id: "curtain" as const, name: "Curtain reveal", description: "Elegant curtains part exactly from the middle.", price: 200 },
 ] as const;
+
+function paletteAssetUrls(prefix: string): Record<PaletteId, string> {
+  return {
+    beige: `/images/${prefix}-beige.webp`,
+    olive: `/images/${prefix}-olive.webp`,
+    "dusty-blue": `/images/${prefix}-dusty-blue.webp`,
+    burgundy: `/images/${prefix}-burgundy.webp`,
+    pink: `/images/${prefix}-pink.webp`,
+    lilac: `/images/${prefix}-lilac.webp`,
+  };
+}
 
 export const openingAssets = {
   envelope: [
-    { id: "classic-envelope", name: "Classic envelope", url: "/images/ivory-envelope-desktop.webp" },
-    { id: "botanical-envelope", name: "Botanical envelope", url: "/images/forest-envelope-desktop.webp" },
+    { id: "classic-envelope", name: "Classic botanical", urls: paletteAssetUrls("builder-envelope-classic") },
+    { id: "botanical-envelope", name: "Garden botanical", urls: paletteAssetUrls("builder-envelope-botanical") },
   ],
   curtain: [
-    { id: "classic-curtain", name: "Classic drape", url: "/images/rose-wedding-curtains.webp" },
-    { id: "botanical-curtain", name: "Botanical drape", url: "/images/rose-wedding-curtains-olive.webp" },
+    { id: "classic-curtain", name: "Classic florals", urls: paletteAssetUrls("builder-curtain-classic") },
+    { id: "botanical-curtain", name: "Garden florals", urls: paletteAssetUrls("builder-curtain-botanical") },
   ],
 };
 
 export const sectionDefinitions: Record<SectionType, { name: string; shortName: string; description: string; price: number }> = {
   countdown: { name: "Countdown", shortName: "Countdown", description: "Count down to the celebration date.", price: 150 },
-  journey: { name: "Order of Events (Our Journey)", shortName: "Our Journey", description: "Share the important moments in order.", price: 150 },
-  "event-details": { name: "Event Details + Location", shortName: "Event Details", description: "Date, time, venue and map link.", price: 150 },
+  journey: { name: "Order of Events (Our Journey)", shortName: "Our Journey", description: "Add as many moments as your story needs.", price: 150 },
+  "event-details": { name: "Event Details + Location", shortName: "Event Details", description: "Add every ceremony, venue and map.", price: 150 },
   gift: { name: "Gift Preferences", shortName: "Gift Preferences", description: "A kind note about gifts.", price: 150 },
   "special-message": { name: "A Special Message", shortName: "Special Message", description: "A dedication, thank-you or loving memory.", price: 150 },
-  seating: { name: "Seating Arrangement", shortName: "Seating", description: "Help guests find their table.", price: 150 },
-  "day-programme": { name: "Day Programme", shortName: "Programme", description: "Show the schedule for the day.", price: 150 },
-  glimpse: { name: "Glimpse Of Us", shortName: "Glimpse Of Us", description: "A small gallery of your photos.", price: 150 },
-  custom: { name: "Custom Part", shortName: "Custom Part", description: "A specially planned part that is not listed.", price: 500 },
+  seating: { name: "Seating Arrangement", shortName: "Seating", description: "List several families under each table.", price: 150 },
+  "day-programme": { name: "Day Programme", shortName: "Programme", description: "Times, programme details and small notes.", price: 150 },
+  glimpse: { name: "Glimpse Of Us", shortName: "Glimpse Of Us", description: "A scattered gallery of your photos.", price: 150 },
+  custom: { name: "Custom Part", shortName: "Custom Part", description: "Planned and designed with you by video consultation.", price: 500 },
 };
 
 function makeId(type: SectionType) {
@@ -154,56 +183,65 @@ export function createSection(type: SectionType, included = false): InvitationSe
 
   switch (type) {
     case "countdown":
-      return { ...common, title: "Counting down to our day", fields: { message: "We cannot wait to celebrate this beautiful moment with you." } };
+      return { ...common, title: "Counting the days", fields: { date: "2027-05-22", eyebrow: "You are invited to our big day", message: "to the most special day of our lives" }, items: [] };
     case "journey":
       return {
         ...common,
         title: "Our Journey",
-        fields: {
-          event1Title: "Our Nikah",
-          event1Date: "16 May 2027",
-          event1Text: "A quiet promise made with our closest family.",
-          event2Title: "Wedding Celebration",
-          event2Date: "22 May 2027",
-          event2Text: "Join us as we celebrate the beginning of our new chapter.",
-        },
+        fields: { introduction: "The moments that brought us here" },
+        items: [
+          { title: "Our Nikah", date: "16 May 2027", description: "A quiet promise made with our closest family." },
+          { title: "Wedding Celebration", date: "22 May 2027", description: "Join us as we celebrate the beginning of our new chapter." },
+        ],
       };
     case "event-details":
       return {
         ...common,
         title: "Event Details",
-        fields: {
-          date: "2027-05-22",
-          time: "18:30",
-          venue: "Royal Palm Hall",
-          address: "Port Louis, Mauritius",
-          mapUrl: "",
-        },
+        fields: { introduction: "We cannot wait to celebrate with you. Here is everything you need to know." },
+        items: [
+          { name: "Mehendi Evening", date: "2027-05-22", time: "18:30", venue: "Royal Green Gardens", address: "Moka, Mauritius", mapUrl: "" },
+        ],
       };
     case "gift":
-      return { ...common, title: "Gift Preferences", fields: { message: "Your presence and prayers are the greatest gifts. If you wish, a contribution towards our new chapter would be warmly appreciated." } };
+      return { ...common, title: "Gift Preferences", fields: { message: "Your presence and prayers are the greatest gifts. If you wish, a contribution towards our new chapter would be warmly appreciated." }, items: [] };
     case "special-message":
-      return { ...common, title: "In Loving Memory", fields: { recipient: "Our beloved grandparents", message: "Though you cannot be here in person, your love remains part of every step we take." } };
+      return { ...common, title: "In Loving Memory", fields: { recipient: "Our beloved grandparents", message: "Though you cannot be here in person, your love remains part of every step we take." }, items: [] };
     case "seating":
-      return { ...common, title: "Seating Arrangement", fields: { tables: "Table 1 — Family A\nTable 2 — Family B\nTable 3 — Friends\nTable 4 — Colleagues" } };
+      return {
+        ...common,
+        title: "Seating Arrangement",
+        fields: { introduction: "Please find your table below" },
+        items: [
+          { table: "Table 1", families: "Axel Family\nJohn Family" },
+          { table: "Table 2", families: "Rahman Family\nNoor Family" },
+        ],
+      };
     case "day-programme":
-      return { ...common, title: "Day Programme", fields: { items: "18:00|Guest arrival\n18:30|Nikah ceremony\n19:00|Family photographs\n19:30|Dinner" } };
+      return {
+        ...common,
+        title: "Day Programme",
+        fields: { introduction: "What we have prepared for you" },
+        items: [
+          { time: "18:00", details: "Guest arrival", note: "Welcome drinks will be served" },
+          { time: "18:30", details: "Nikah ceremony", note: "Please be seated a few minutes early" },
+          { time: "19:30", details: "Dinner", note: "Followed by family photographs" },
+        ],
+      };
     case "glimpse":
-      return { ...common, title: "A Glimpse Of Us", fields: { message: "A few moments from the story that brought us here." } };
+      return { ...common, title: "A Glimpse Of Us", fields: { message: "A few favourite memories from the story that brought us here." }, items: [] };
     case "custom":
-      return { ...common, title: "Our Custom Part", fields: { message: "Describe the custom part you would like us to create during your free consultation." } };
+      return { ...common, title: "Custom Part", fields: {}, items: [] };
   }
 }
 
 export function createInitialInvitation(): InvitationConfig {
-  const includedSections = includedSectionTypes.map((type) => ({
-    ...createSection(type, true),
-    id: `${type}-included`,
-  }));
+  const includedSections = includedSectionTypes.map((type) => ({ ...createSection(type, true), id: `${type}-included` }));
 
   return {
     version: 1,
     palette: "beige",
+    bismillah: { enabled: false },
     opening: { type: "none", asset: "classic-envelope", initials: "S ♥ S" },
     hero: {
       type: "basic",
@@ -228,8 +266,64 @@ export function getHeroImage(config: InvitationConfig) {
   return heroPresets[config.palette][config.hero.presetIndex]?.url ?? heroPresets[config.palette][0].url;
 }
 
+export function getHeroPreset(config: InvitationConfig) {
+  return heroPresets[config.palette][config.hero.presetIndex] ?? heroPresets[config.palette][0];
+}
+
 export function getEventDetails(config: InvitationConfig) {
   return config.sections.find((section) => section.type === "event-details") ?? createSection("event-details", true);
+}
+
+export function getSectionItems(section: InvitationSection): InvitationSectionItem[] {
+  if (Array.isArray(section.items) && section.items.length) return section.items;
+
+  // Backward-compatible conversion for drafts made with the first builder release.
+  if (section.type === "journey") {
+    return [1, 2].map((number) => ({
+      title: section.fields[`event${number}Title`] ?? "",
+      date: section.fields[`event${number}Date`] ?? "",
+      description: section.fields[`event${number}Text`] ?? "",
+    })).filter((item) => Object.values(item).some(Boolean));
+  }
+  if (section.type === "event-details") {
+    return [{
+      name: section.fields.name || "Wedding Celebration",
+      date: section.fields.date ?? "",
+      time: section.fields.time ?? "",
+      venue: section.fields.venue ?? "",
+      address: section.fields.address ?? "",
+      mapUrl: section.fields.mapUrl ?? "",
+    }];
+  }
+  if (section.type === "seating") {
+    return (section.fields.tables ?? "").split("\n").map((line) => {
+      const [table, ...families] = line.split(/[—|-]/);
+      return { table: table?.trim() || "Table", families: families.join(" ").trim() };
+    }).filter((item) => item.table || item.families);
+  }
+  if (section.type === "day-programme") {
+    return (section.fields.items ?? "").split("\n").map((line) => {
+      const [time, details] = line.split("|");
+      return { time: time?.trim() ?? "", details: details?.trim() || time?.trim() || "", note: "" };
+    }).filter((item) => item.time || item.details);
+  }
+  return [];
+}
+
+export function normalizeInvitationConfig(config: InvitationConfig): InvitationConfig {
+  const eventDetails = config.sections.find((section) => section.type === "event-details");
+  const firstEventDate = eventDetails ? getSectionItems(eventDetails)[0]?.date : "";
+  return {
+    ...config,
+    bismillah: config.bismillah ?? { enabled: false },
+    sections: config.sections.map((section) => ({
+      ...section,
+      fields: section.type === "countdown"
+        ? { date: firstEventDate || "2027-05-22", ...section.fields }
+        : section.fields,
+      items: getSectionItems(section),
+    })),
+  };
 }
 
 export function calculateInvitationPrice(config: InvitationConfig) {

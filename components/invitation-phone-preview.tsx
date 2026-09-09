@@ -1,33 +1,40 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   CalendarDays,
   Clock3,
-  Gift,
   Heart,
   Image as ImageIcon,
+  Leaf,
   MapPin,
   Navigation,
   RotateCcw,
   Sparkles,
 } from "lucide-react";
 import {
+  bismillahAssets,
   getEventDetails,
   getHeroImage,
+  getHeroPreset,
   getPalette,
+  getSectionItems,
+  interactiveFrameAssets,
   openingAssets,
   type InvitationConfig,
   type InvitationSection,
+  type InvitationSectionItem,
 } from "@/lib/invitation-designer";
 
 type PreviewProps = {
   config: InvitationConfig;
   replayKey: number;
+  focusTarget: string;
+  focusKey: number;
   onReplay: () => void;
 };
 
-export function InvitationPhonePreview({ config, replayKey, onReplay }: PreviewProps) {
+export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKey, onReplay }: PreviewProps) {
   const screenRef = useRef<HTMLDivElement>(null);
   const palette = getPalette(config.palette);
   const themeStyle = {
@@ -38,7 +45,24 @@ export function InvitationPhonePreview({ config, replayKey, onReplay }: PreviewP
     "--preview-accent": palette.theme.accent,
     "--preview-ink": palette.theme.ink,
     "--preview-muted": palette.theme.muted,
-  } as React.CSSProperties;
+  } as CSSProperties;
+  const footerDetails = getEventDetails(config);
+  const footerEvent = getSectionItems(footerDetails)[0];
+  const footerDate = formatDate(footerEvent?.date ?? footerDetails.fields.date);
+
+  useEffect(() => {
+    const screen = screenRef.current;
+    if (!screen) return;
+    if (focusTarget === "opening") {
+      screen.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    const target = Array.from(screen.querySelectorAll<HTMLElement>("[data-preview-section]"))
+      .find((element) => element.dataset.previewSection === focusTarget);
+    if (!target) return;
+    const top = Math.max(0, target.offsetTop - 12);
+    screen.scrollTo({ top, behavior: "smooth" });
+  }, [focusTarget, focusKey]);
 
   useEffect(() => {
     screenRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -50,7 +74,7 @@ export function InvitationPhonePreview({ config, replayKey, onReplay }: PreviewP
         <div>
           <span className="designer-live-dot" />
           <strong>Live mobile preview</strong>
-          <small>Updates as you type</small>
+          <small>Moves to the part you edit</small>
         </div>
         <button type="button" onClick={onReplay} disabled={config.opening.type === "none"}>
           <RotateCcw aria-hidden="true" /> Preview opening
@@ -62,18 +86,17 @@ export function InvitationPhonePreview({ config, replayKey, onReplay }: PreviewP
         <div className="designer-phone-screen" ref={screenRef}>
           <OpeningPreview config={config} replayKey={replayKey} />
           <HeroPreview config={config} replayKey={replayKey} />
-          {config.sections.map((section) => (
-            <SectionPreview key={section.id} section={section} config={config} />
-          ))}
+          {config.sections.map((section) => <SectionPreview key={section.id} section={section} />)}
           <footer className="invite-preview-footer">
-            <Sparkles aria-hidden="true" />
+            <div className="invite-preview-footer-monogram">{config.hero.firstName.charAt(0)}<Heart aria-hidden="true" />{config.hero.secondName.charAt(0)}</div>
             <strong>{config.hero.firstName} &amp; {config.hero.secondName}</strong>
-            <span>Made with Paperless Invites</span>
+            <time>{footerDate}</time>
+            <span>Made with <Heart aria-hidden="true" /> by Paperless Invites</span>
           </footer>
         </div>
         <div className="designer-phone-home" aria-hidden="true" />
       </div>
-      <p className="designer-preview-tip">Scroll inside the phone to review every part.</p>
+      <p className="designer-preview-tip">You can also scroll inside the phone at any time.</p>
     </aside>
   );
 }
@@ -85,19 +108,19 @@ function OpeningPreview({ config, replayKey }: { config: InvitationConfig; repla
   if (config.opening.type === "envelope") {
     const asset = openingAssets.envelope.find((item) => item.id === config.opening.asset) ?? openingAssets.envelope[0];
     return (
-      <div className="preview-opening preview-opening-envelope" key={`envelope-${replayKey}`} style={{ "--opening-tint": palette.theme.primary } as React.CSSProperties}>
-        <div className="preview-opening-copy"><span>Tap to open</span></div>
-        <div className="preview-envelope-art">
-          <img src={asset.url} alt="" />
-          <span className="preview-wax-initials">{config.opening.initials || "♥"}</span>
-        </div>
+      <div className="preview-opening preview-opening-envelope" key={`envelope-${replayKey}`} style={{ "--opening-tint": palette.theme.primary } as CSSProperties}>
+        <div className="preview-envelope-panel preview-envelope-left"><img src={asset.urls[config.palette]} alt="" /></div>
+        <div className="preview-envelope-panel preview-envelope-right"><img src={asset.urls[config.palette]} alt="" /></div>
+        <div className="preview-envelope-seam" aria-hidden="true" />
+        <span className="preview-envelope-seal-blank" aria-hidden="true" />
+        <span className="preview-opening-label">Tap to open</span>
       </div>
     );
   }
 
   const asset = openingAssets.curtain.find((item) => item.id === config.opening.asset) ?? openingAssets.curtain[0];
   return (
-    <div className="preview-opening preview-opening-curtain" key={`curtain-${replayKey}`} style={{ "--curtain-image": `url(${asset.url})`, "--opening-tint": palette.theme.primary } as React.CSSProperties}>
+    <div className="preview-opening preview-opening-curtain" key={`curtain-${replayKey}`} style={{ "--curtain-image": `url(${asset.urls[config.palette]})`, "--opening-tint": palette.theme.primary } as CSSProperties}>
       <div className="preview-curtain-half preview-curtain-left" />
       <div className="preview-curtain-half preview-curtain-right" />
       <span>Our story begins</span>
@@ -107,21 +130,59 @@ function OpeningPreview({ config, replayKey }: { config: InvitationConfig; repla
 
 function HeroPreview({ config, replayKey }: { config: InvitationConfig; replayKey: number }) {
   const image = getHeroImage(config);
+  const preset = getHeroPreset(config);
   const details = getEventDetails(config);
-  const formattedDate = formatDate(details.fields.date);
+  const firstEvent = getSectionItems(details)[0];
+  const formattedDate = formatDate(firstEvent?.date ?? details.fields.date);
+  const imageStyle = config.hero.photoSource === "preset"
+    ? { objectPosition: preset.objectPosition, transform: `scale(${preset.zoom})` }
+    : undefined;
+
+  if (config.hero.type === "interactive") {
+    return (
+      <section className={`invite-preview-hero is-interactive ${config.bismillah.enabled ? "has-bismillah" : ""}`} data-preview-section="hero">
+        <div className="interactive-hero-glow" aria-hidden="true" />
+        {config.bismillah.enabled && <BismillahArtwork config={config} />}
+        <div className="interactive-hero-heading">
+          <span>{config.hero.eyebrow}</span>
+          <h2>{config.hero.firstName}<i>&amp;</i>{config.hero.secondName}</h2>
+        </div>
+        <div className="interactive-frame-composition">
+          <div className="interactive-photo-viewport">
+            <img src={image} alt="Selected wedding photo" style={imageStyle} />
+            <ScratchPhoto key={`${image}-${config.palette}-${replayKey}`} color={getPalette(config.palette).theme.primary} />
+          </div>
+          <img className="interactive-ornate-frame" src={interactiveFrameAssets[config.palette]} alt="" />
+        </div>
+        <p className="interactive-hero-message">{config.hero.message}</p>
+        <time className="interactive-hero-date">{formattedDate}</time>
+      </section>
+    );
+  }
 
   return (
-    <section className={`invite-preview-hero ${config.hero.type === "interactive" ? "is-interactive" : ""}`}>
-      <img className="invite-preview-hero-image" src={image} alt="Selected wedding background" />
+    <section className={`invite-preview-hero ${config.bismillah.enabled ? "has-bismillah" : ""}`} data-preview-section="hero">
+      <img className="invite-preview-hero-image" src={image} alt="Selected wedding background" style={imageStyle} />
       <div className="invite-preview-hero-shade" />
+      {config.bismillah.enabled && <BismillahArtwork config={config} />}
       <div className="invite-preview-hero-copy">
         <span>{config.hero.eyebrow}</span>
+        <div className="invite-preview-monogram">{config.hero.firstName.charAt(0)}<i>&amp;</i>{config.hero.secondName.charAt(0)}</div>
         <h2>{config.hero.firstName}<i>&amp;</i>{config.hero.secondName}</h2>
+        <div className="invite-preview-hero-rule"><i /><Heart aria-hidden="true" /><i /></div>
         <p>{config.hero.message}</p>
         <time>{formattedDate}</time>
       </div>
-      {config.hero.type === "interactive" && <ScratchPhoto key={`${image}-${replayKey}`} color={getPalette(config.palette).theme.primary} />}
+      <span className="invite-preview-scroll-cue">Scroll into our story <i>↓</i></span>
     </section>
+  );
+}
+
+function BismillahArtwork({ config }: { config: InvitationConfig }) {
+  return (
+    <div className="invite-preview-bismillah" data-preview-section="bismillah" aria-label="Bismillah ir-Rahman ir-Rahim">
+      <img src={bismillahAssets[config.palette]} alt="Bismillah ir-Rahman ir-Rahim" />
+    </div>
   );
 }
 
@@ -147,18 +208,25 @@ function ScratchPhoto({ color }: { color: string }) {
       context.globalCompositeOperation = "source-over";
       context.fillStyle = color;
       context.fillRect(0, 0, bounds.width, bounds.height);
-      const glow = context.createRadialGradient(bounds.width * .5, bounds.height * .42, 10, bounds.width * .5, bounds.height * .42, bounds.width * .7);
-      glow.addColorStop(0, "rgba(255,255,255,.28)");
-      glow.addColorStop(1, "rgba(255,255,255,0)");
+      const glow = context.createRadialGradient(bounds.width * .5, bounds.height * .42, 8, bounds.width * .5, bounds.height * .42, bounds.width * .72);
+      glow.addColorStop(0, "rgba(255,255,255,.44)");
+      glow.addColorStop(1, "rgba(255,255,255,.05)");
       context.fillStyle = glow;
       context.fillRect(0, 0, bounds.width, bounds.height);
+      context.strokeStyle = "rgba(255,255,255,.18)";
+      context.lineWidth = 1;
+      for (let y = 10; y < bounds.height; y += 8) {
+        context.beginPath();
+        context.moveTo(0, y);
+        context.lineTo(bounds.width, y);
+        context.stroke();
+      }
       context.fillStyle = "rgba(255,255,255,.94)";
       context.textAlign = "center";
-      context.font = "italic 29px Georgia, serif";
-      context.fillText("Scratch to reveal", bounds.width / 2, bounds.height / 2 - 4);
-      context.font = "600 10px Arial, sans-serif";
-      context.letterSpacing = "2px";
-      context.fillText("MOVE YOUR FINGER OVER THE PHOTO", bounds.width / 2, bounds.height / 2 + 23);
+      context.font = '42px "Birthstone", "Segoe Script", cursive';
+      context.fillText("Scratch Me", bounds.width / 2, bounds.height / 2 + 2);
+      context.font = "600 8px Montserrat, Arial, sans-serif";
+      context.fillText("MOVE YOUR FINGER OVER THE PHOTO", bounds.width / 2, bounds.height / 2 + 28);
     };
     drawCover();
     const observer = new ResizeObserver(drawCover);
@@ -187,7 +255,7 @@ function ScratchPhoto({ color }: { color: string }) {
     if (!context || !previous) return;
     context.save();
     context.globalCompositeOperation = "destination-out";
-    context.lineWidth = 44;
+    context.lineWidth = 34;
     context.lineCap = "round";
     context.lineJoin = "round";
     context.beginPath();
@@ -221,98 +289,179 @@ function ScratchPhoto({ color }: { color: string }) {
 
   return (
     <div className={`scratch-preview ${complete ? "is-complete" : ""}`}>
-      <canvas
-        ref={canvasRef}
-        onPointerDown={begin}
-        onPointerMove={move}
-        onPointerUp={end}
-        onPointerCancel={end}
-        aria-label="Scratch the photo to preview the interactive reveal"
-      />
-      <button type="button" onClick={() => setComplete(true)}>Reveal for preview</button>
-      {complete && <div className="scratch-complete-sparkles" aria-hidden="true">{Array.from({ length: 12 }, (_, index) => <i key={index}>✦</i>)}</div>}
+      <canvas ref={canvasRef} onPointerDown={begin} onPointerMove={move} onPointerUp={end} onPointerCancel={end} aria-label="Scratch the framed photo to preview the interactive reveal" />
+      <button type="button" onClick={() => setComplete(true)}>Reveal</button>
+      {complete && <div className="scratch-complete-sparkles" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <i key={index}>✦</i>)}</div>}
     </div>
   );
 }
 
-function SectionPreview({ section, config }: { section: InvitationSection; config: InvitationConfig }) {
+function SectionPreview({ section }: { section: InvitationSection }) {
+  const items = getSectionItems(section);
   switch (section.type) {
     case "countdown":
-      return <CountdownPreview section={section} config={config} />;
+      return <CountdownPreview section={section} />;
     case "journey":
       return (
-        <PreviewSection section={section} className="preview-journey">
-          <div className="journey-line" aria-hidden="true" />
-          {[1, 2].map((index) => (
-            <article key={index}>
-              <time>{section.fields[`event${index}Date`]}</time>
-              <h4>{section.fields[`event${index}Title`]}</h4>
-              <p>{section.fields[`event${index}Text`]}</p>
-            </article>
-          ))}
-        </PreviewSection>
-      );
-    case "event-details": {
-      const mapLink = section.fields.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${section.fields.venue} ${section.fields.address}`)}`;
-      return (
-        <PreviewSection section={section} className="preview-details">
-          <div className="preview-detail-row"><CalendarDays aria-hidden="true" /><span><small>Date</small><strong>{formatDate(section.fields.date)}</strong></span></div>
-          <div className="preview-detail-row"><Clock3 aria-hidden="true" /><span><small>Time</small><strong>{formatTime(section.fields.time)}</strong></span></div>
-          <div className="preview-map-card">
-            <MapPin aria-hidden="true" />
-            <strong>{section.fields.venue}</strong>
-            <span>{section.fields.address}</span>
-            <a href={mapLink} target="_blank" rel="noreferrer"><Navigation aria-hidden="true" /> Open map</a>
+        <PreviewSection section={section} className="preview-journey" eyebrow={section.fields.introduction}>
+          <div className="preview-heart-rule preview-title-rule"><i /><Heart aria-hidden="true" /><i /></div>
+          <div className="journey-timeline">
+            {items.map((item, index) => (
+              <article key={index}>
+                <span className="journey-heart"><Heart aria-hidden="true" /></span>
+                <time>{item.date}</time>
+                <h4>{item.title}</h4>
+                <p>{item.description}</p>
+              </article>
+            ))}
           </div>
         </PreviewSection>
       );
-    }
+    case "event-details":
+      return (
+        <PreviewSection section={section} className="preview-details" eyebrow="Join us" introduction={section.fields.introduction}>
+          <div className="preview-event-list">
+            {items.map((event, index) => <EventCard event={event} key={index} />)}
+          </div>
+        </PreviewSection>
+      );
     case "gift":
-      return <PreviewSection section={section} className="preview-gift"><Gift aria-hidden="true" /><p>{section.fields.message}</p></PreviewSection>;
+      return (
+        <section className="invite-preview-section preview-gift" data-preview-section={section.id}>
+          <div className="preview-gift-ornament" aria-hidden="true"><i /><Sparkles /><i /></div>
+          <h3>{section.title}</h3>
+          <p>{section.fields.message}</p>
+        </section>
+      );
     case "special-message":
-      return <PreviewSection section={section} className="preview-message"><Heart aria-hidden="true" /><span>{section.fields.recipient}</span><p>{section.fields.message}</p></PreviewSection>;
+      return (
+        <section className="invite-preview-section preview-message" data-preview-section={section.id}>
+          <article className="preview-memory-card">
+            <span className="preview-paper-corners" aria-hidden="true"><Leaf /><Leaf /><Leaf /><Leaf /></span>
+            <span className="preview-section-eyebrow">With love, always</span>
+            <h3>{section.title}</h3>
+            <div className="preview-memory-rule"><i /><Leaf aria-hidden="true" /><i /></div>
+            <p>{section.fields.message}</p>
+            <div className="preview-memory-dedication"><small>Remembering with gratitude</small><strong>{section.fields.recipient}</strong><span>Whose love still lights our way</span></div>
+            <div className="preview-memory-signature">Forever remembered · Forever loved</div>
+          </article>
+        </section>
+      );
     case "seating":
-      return <PreviewSection section={section} className="preview-seating"><div className="preview-table-grid">{splitLines(section.fields.tables).map((table, index) => <span key={`${table}-${index}`}>{table}</span>)}</div></PreviewSection>;
+      return (
+        <section className="invite-preview-section preview-seating" data-preview-section={section.id}>
+          <div className="preview-seating-heading">
+            <span className="preview-section-eyebrow">You&apos;re among family</span>
+            <h3>{section.title}</h3>
+            <div className="preview-seating-flourish" aria-hidden="true"><i />✦<i /></div>
+            <p>{section.fields.introduction}</p>
+          </div>
+          <div className="preview-table-list" aria-label="Wedding seating arrangement">
+            {items.map((table, index) => (
+              <article key={index}>
+                <div className="preview-table-name"><strong>{table.table}</strong></div>
+                <div className="preview-family-list">{splitLines(table.families).map((family, familyIndex) => <span key={familyIndex}>{family}</span>)}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+      );
     case "day-programme":
-      return <PreviewSection section={section} className="preview-programme"><div>{splitLines(section.fields.items).map((item, index) => { const [time, label] = item.split("|"); return <article key={`${item}-${index}`}><time>{time}</time><span>{label || time}</span></article>; })}</div></PreviewSection>;
+      return (
+        <PreviewSection section={section} className="preview-programme" eyebrow="Celebrating every moment" introduction={section.fields.introduction}>
+          <div className="preview-programme-list">
+            {items.map((item, index) => (
+              <article key={index}>
+                <div className="programme-icon"><Sparkles aria-hidden="true" /></div>
+                <time>{formatTime(item.time)}</time>
+                <h4>{item.details}</h4>
+                <p>{item.note}</p>
+              </article>
+            ))}
+          </div>
+        </PreviewSection>
+      );
     case "glimpse":
       return (
-        <PreviewSection section={section} className="preview-glimpse">
+        <PreviewSection section={section} className="preview-glimpse" eyebrow="A few favourite memories">
           <p>{section.fields.message}</p>
           <div className="preview-gallery">
-            {section.images.length ? section.images.slice(0, 6).map((image, index) => <img key={`${image}-${index}`} src={image} alt="Uploaded couple preview" />) : Array.from({ length: 3 }, (_, index) => <span key={index}><ImageIcon aria-hidden="true" /><small>Your photo</small></span>)}
+            {section.images.length
+              ? section.images.slice(0, 6).map((image, index) => <figure key={`${image}-${index}`}><img src={image} alt={`Uploaded couple memory ${index + 1}`} /></figure>)
+              : Array.from({ length: 5 }, (_, index) => <span key={index}><ImageIcon aria-hidden="true" /><small>Your photo</small></span>)}
           </div>
         </PreviewSection>
       );
     case "custom":
-      return <PreviewSection section={section} className="preview-custom"><Sparkles aria-hidden="true" /><p>{section.fields.message}</p><small>We will plan this part with you.</small></PreviewSection>;
+      return <PreviewSection section={section} className="preview-custom"><Sparkles aria-hidden="true" /><p>This custom part will be discussed and designed with you during a video consultation.</p><small>Your final preview will be prepared after the consultation.</small></PreviewSection>;
   }
 }
 
-function PreviewSection({ section, className, children }: { section: InvitationSection; className?: string; children: React.ReactNode }) {
+function EventCard({ event }: { event: InvitationSectionItem }) {
+  const query = `${event.venue ?? ""} ${event.address ?? ""}`.trim();
+  const mapEmbed = `https://www.google.com/maps?q=${encodeURIComponent(query || "Mauritius")}&output=embed`;
+  const directions = event.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || "Mauritius")}`;
   return (
-    <section className={`invite-preview-section ${className ?? ""}`}>
-      <span className="preview-section-mark">✦</span>
+    <article className="preview-event-card">
+      <div className="preview-event-icon"><Sparkles aria-hidden="true" /></div>
+      <p>{formatWeekday(event.date)}</p>
+      <h4>{event.name || "Celebration"}</h4>
+      <div className="preview-event-facts">
+        <span><CalendarDays aria-hidden="true" />{formatDate(event.date)}</span>
+        <span><Clock3 aria-hidden="true" />{formatTime(event.time)}</span>
+        <span><MapPin aria-hidden="true" />{event.venue || "Choose a venue"}<small>{event.address}</small></span>
+      </div>
+      <div className="preview-map-frame"><iframe src={mapEmbed} title={`Map to ${event.venue || "event"}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /></div>
+      <a href={directions} target="_blank" rel="noreferrer">Open directions <Navigation aria-hidden="true" /></a>
+    </article>
+  );
+}
+
+function PreviewSection({ section, className, eyebrow, introduction, children }: { section: InvitationSection; className?: string; eyebrow?: string; introduction?: string; children: ReactNode }) {
+  return (
+    <section className={`invite-preview-section ${className ?? ""}`} data-preview-section={section.id}>
+      {eyebrow && <span className="preview-section-eyebrow">{eyebrow}</span>}
       <h3>{section.title}</h3>
+      {introduction && <p className="preview-section-introduction">{introduction}</p>}
       {children}
     </section>
   );
 }
 
-function CountdownPreview({ section, config }: { section: InvitationSection; config: InvitationConfig }) {
-  const details = useMemo(() => getEventDetails(config), [config]);
-  const [days, setDays] = useState(0);
+function CountdownPreview({ section }: { section: InvitationSection }) {
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
   useEffect(() => {
-    const target = new Date(`${details.fields.date || ""}T${details.fields.time || "00:00"}`).getTime();
-    setDays(Number.isFinite(target) ? Math.max(0, Math.ceil((target - Date.now()) / 86_400_000)) : 0);
-  }, [details.fields.date, details.fields.time]);
+    const update = () => setCountdown(getCountdownParts(section.fields.date));
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, [section.fields.date]);
 
   return (
-    <PreviewSection section={section} className="preview-countdown">
-      <div className="preview-countdown-number"><strong>{days}</strong><span>days</span></div>
-      <p>{section.fields.message}</p>
-    </PreviewSection>
+    <section className="invite-preview-section preview-countdown" data-preview-section={section.id}>
+      <span className="preview-garden-portal preview-portal-left" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></span>
+      <span className="preview-garden-portal preview-portal-right" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></span>
+      <span className="preview-section-eyebrow">{section.fields.eyebrow || "You are invited to our big day"}</span>
+      <h3>{section.title}</h3>
+      <p className="preview-countdown-intro">{section.fields.message}</p>
+      <div className="preview-countdown-grid" aria-live="polite">
+        {(Object.entries(countdown) as Array<[keyof typeof countdown, number]>).map(([label, value]) => <div key={label}><strong>{String(value).padStart(2, "0")}</strong><span>{label}</span></div>)}
+      </div>
+      <div className="preview-heart-rule"><i /><Heart aria-hidden="true" /><i /></div>
+    </section>
   );
+}
+
+function getCountdownParts(dateValue = "", timeValue = "00:00") {
+  const target = new Date(`${dateValue || ""}T${timeValue || "00:00"}`).getTime();
+  const distance = Number.isFinite(target) ? Math.max(0, target - Date.now()) : 0;
+  return {
+    days: Math.floor(distance / 86_400_000),
+    hours: Math.floor((distance / 3_600_000) % 24),
+    minutes: Math.floor((distance / 60_000) % 60),
+    seconds: Math.floor((distance / 1000) % 60),
+  };
 }
 
 function splitLines(value = "") {
@@ -324,6 +473,13 @@ function formatDate(value = "") {
   const date = new Date(`${value}T12:00:00`);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(date);
+}
+
+function formatWeekday(value = "") {
+  if (!value) return "Choose a day";
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-GB", { weekday: "long" }).format(date);
 }
 
 function formatTime(value = "") {

@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import Link from "next/link";
 import {
   ArrowLeft,
+  CalendarPlus,
   Check,
   ChevronDown,
   CircleDollarSign,
+  Clock3,
   Copy,
   Heart,
   Image as ImageIcon,
@@ -21,14 +24,19 @@ import {
   Sparkles,
   Trash2,
   Upload,
+  Users,
+  Video,
 } from "lucide-react";
 import { InvitationPhonePreview } from "@/components/invitation-phone-preview";
 import {
+  bismillahAssets,
   calculateInvitationPrice,
   createInitialInvitation,
   createSection,
   getPalette,
+  getSectionItems,
   heroPresets,
+  normalizeInvitationConfig,
   openingAssets,
   openingOptions,
   paletteOptions,
@@ -36,6 +44,7 @@ import {
   type HeroType,
   type InvitationConfig,
   type InvitationSection,
+  type InvitationSectionItem,
   type OpeningType,
   type PaletteId,
   type SectionType,
@@ -43,6 +52,7 @@ import {
 
 type DraftIdentity = { id: string; editToken: string };
 type SaveState = "idle" | "saving" | "saved" | "error";
+type PreviewFocus = { target: string; key: number };
 
 const draftStorageKey = "paperless-invites-active-draft";
 const maxImageBytes = 5 * 1024 * 1024;
@@ -57,10 +67,12 @@ export function InvitationDesigner() {
   const [notice, setNotice] = useState("");
   const [lastSaved, setLastSaved] = useState("");
   const [replayKey, setReplayKey] = useState(0);
+  const [previewFocus, setPreviewFocus] = useState<PreviewFocus>({ target: "hero", key: 0 });
   const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
   const objectUrls = useRef<string[]>([]);
   const price = useMemo(() => calculateInvitationPrice(config), [config]);
   const palette = getPalette(config.palette);
+  const saveButtonText = saveState === "saving" ? "Saving…" : draft ? "Save changes" : "Save my design";
 
   useEffect(() => {
     const saved = window.localStorage.getItem(draftStorageKey);
@@ -68,20 +80,18 @@ export function InvitationDesigner() {
     try {
       const identity = JSON.parse(saved) as DraftIdentity;
       if (!identity.id || !identity.editToken) return;
-      setDraft(identity);
+      window.setTimeout(() => setDraft(identity), 0);
       fetch(`/api/invitations?id=${encodeURIComponent(identity.id)}&token=${encodeURIComponent(identity.editToken)}`)
         .then(async (response) => {
           if (!response.ok) throw new Error("Draft unavailable");
           return response.json() as Promise<{ invitation: { config: InvitationConfig; updated_at?: string } }>;
         })
         .then(({ invitation }) => {
-          if (invitation.config?.version === 1) setConfig(invitation.config);
+          if (invitation.config?.version === 1) setConfig(normalizeInvitationConfig(invitation.config));
           if (invitation.updated_at) setLastSaved(formatSavedTime(invitation.updated_at));
           setNotice("Your last saved draft has been restored.");
         })
-        .catch(() => {
-          setNotice("Your saved draft could not be restored, so a fresh design is ready for you.");
-        });
+        .catch(() => setNotice("Your saved draft could not be restored, so a fresh design is ready for you."));
     } catch {
       window.localStorage.removeItem(draftStorageKey);
     }
@@ -94,18 +104,30 @@ export function InvitationDesigner() {
     if (saveState === "saved") setSaveState("idle");
   }
 
+  function activatePreview(target: string) {
+    setPreviewFocus((current) => ({ target, key: current.key + 1 }));
+  }
+
   function choosePalette(id: PaletteId) {
     updateConfig((current) => ({ ...current, palette: id }));
+    activatePreview(config.bismillah.enabled ? "bismillah" : "hero");
+  }
+
+  function chooseBismillah(enabled: boolean) {
+    updateConfig((current) => ({ ...current, bismillah: { enabled } }));
+    activatePreview(enabled ? "bismillah" : "hero");
   }
 
   function chooseOpening(type: OpeningType) {
     const defaultAsset = type === "curtain" ? openingAssets.curtain[0].id : openingAssets.envelope[0].id;
     updateConfig((current) => ({ ...current, opening: { ...current.opening, type, asset: defaultAsset } }));
     setReplayKey((key) => key + 1);
+    activatePreview(type === "none" ? "hero" : "opening");
   }
 
   function chooseHero(type: HeroType) {
     updateConfig((current) => ({ ...current, hero: { ...current.hero, type } }));
+    activatePreview("hero");
   }
 
   function chooseHeroPreset(index: 0 | 1) {
@@ -115,10 +137,14 @@ export function InvitationDesigner() {
       return next;
     });
     updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "preset", presetIndex: index } }));
+    activatePreview("hero");
   }
 
   function updateHero(field: keyof InvitationConfig["hero"], value: string | number) {
-    updateConfig((current) => ({ ...current, hero: { ...current.hero, [field]: value } } as InvitationConfig));
+    updateConfig((current) => ({
+      ...current,
+      hero: { ...current.hero, [field]: value } as InvitationConfig["hero"],
+    }));
   }
 
   function updateSection(id: string, updater: (section: InvitationSection) => InvitationSection) {
@@ -132,15 +158,40 @@ export function InvitationDesigner() {
     updateSection(id, (section) => ({ ...section, fields: { ...section.fields, [field]: value } }));
   }
 
+  function updateSectionItem(id: string, itemIndex: number, field: string, value: string) {
+    updateSection(id, (section) => {
+      const items = getSectionItems(section).map((item) => ({ ...item }));
+      items[itemIndex] = { ...items[itemIndex], [field]: value };
+      return { ...section, items };
+    });
+  }
+
+  function addSectionItem(id: string, item: InvitationSectionItem) {
+    updateSection(id, (section) => ({ ...section, items: [...getSectionItems(section), item] }));
+    activatePreview(id);
+  }
+
+  function removeSectionItem(id: string, itemIndex: number) {
+    updateSection(id, (section) => ({ ...section, items: getSectionItems(section).filter((_, index) => index !== itemIndex) }));
+    activatePreview(id);
+  }
+
   function addSection(type = addType) {
     const section = createSection(type, false);
     updateConfig((current) => ({ ...current, sections: [...current.sections, section] }));
-    setNotice(`${sectionDefinitions[type].name} added. Its example text is ready to edit.`);
+    setNotice(type === "custom" ? "Custom consultation added. We will design this part with you by video." : `${sectionDefinitions[type].name} added. Its example text is ready to edit.`);
     window.setTimeout(() => document.getElementById(`editor-${section.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
   }
 
   function duplicateSection(section: InvitationSection) {
-    const copy = { ...section, id: createSection(section.type).id, included: false, fields: { ...section.fields }, images: section.images.filter((url) => !url.startsWith("blob:")) };
+    const copy: InvitationSection = {
+      ...section,
+      id: createSection(section.type).id,
+      included: false,
+      fields: { ...section.fields },
+      items: getSectionItems(section).map((item) => ({ ...item })),
+      images: section.images.filter((url) => !url.startsWith("blob:")),
+    };
     updateConfig((current) => {
       const index = current.sections.findIndex((item) => item.id === section.id);
       const sections = [...current.sections];
@@ -167,13 +218,12 @@ export function InvitationDesigner() {
       [sections[index], sections[nextIndex]] = [sections[nextIndex], sections[index]];
       return { ...current, sections };
     });
+    activatePreview(id);
   }
 
   function validateFiles(files: File[]) {
-    const invalidType = files.find((file) => !acceptedImageTypes.has(file.type));
-    if (invalidType) return "Please choose JPG, PNG or WebP photos.";
-    const tooLarge = files.find((file) => file.size > maxImageBytes);
-    if (tooLarge) return "Each photo must be 5 MB or smaller.";
+    if (files.find((file) => !acceptedImageTypes.has(file.type))) return "Please choose JPG, PNG or WebP photos.";
+    if (files.find((file) => file.size > maxImageBytes)) return "Each photo must be 5 MB or smaller.";
     return "";
   }
 
@@ -186,6 +236,7 @@ export function InvitationDesigner() {
     objectUrls.current.push(url);
     setPendingFiles((current) => ({ ...current, hero: [file] }));
     updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "upload", uploadedUrl: url } }));
+    activatePreview("hero");
     setNotice("Your photo is now shown in the preview. Save the design when you are ready.");
   }
 
@@ -200,10 +251,11 @@ export function InvitationDesigner() {
     const slot = `section:${sectionId}:images`;
     setPendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), ...files] }));
     updateSection(sectionId, (section) => ({ ...section, images: [...section.images, ...urls].slice(0, 8) }));
+    activatePreview(sectionId);
     setNotice(`${files.length} photo${files.length === 1 ? "" : "s"} added to the live preview.`);
   }
 
-  async function saveDesign(event: React.FormEvent) {
+  async function saveDesign(event: FormEvent) {
     event.preventDefault();
     if (saveState === "saving") return;
     setSaveState("saving");
@@ -250,10 +302,15 @@ export function InvitationDesigner() {
     }
   }
 
+  function showMobilePreview() {
+    setMobileView("preview");
+    setPreviewFocus((current) => ({ ...current, key: current.key + 1 }));
+  }
+
   return (
-    <main className={`designer-page designer-mobile-${mobileView}`} style={{ "--builder-accent": palette.theme.primary, "--builder-soft": palette.theme.background } as React.CSSProperties}>
+    <main className={`designer-page designer-mobile-${mobileView}`} style={{ "--builder-accent": palette.theme.primary, "--builder-soft": palette.theme.background } as CSSProperties}>
       <header className="designer-header">
-        <a href="/" className="designer-back"><ArrowLeft aria-hidden="true" /> Back to Paperless Invites</a>
+        <Link href="/" className="designer-back"><ArrowLeft aria-hidden="true" /> Back to Paperless Invites</Link>
         <div className="designer-title">
           <span className="designer-brand-mark">PI</span>
           <div><p>Invitation designer</p><h1>Create your invitation</h1></div>
@@ -270,18 +327,18 @@ export function InvitationDesigner() {
 
       <div className="designer-mobile-switch" aria-label="Choose editor or preview">
         <button type="button" className={mobileView === "edit" ? "is-active" : ""} onClick={() => setMobileView("edit")}>Edit invitation</button>
-        <button type="button" className={mobileView === "preview" ? "is-active" : ""} onClick={() => setMobileView("preview")}>View preview</button>
+        <button type="button" className={mobileView === "preview" ? "is-active" : ""} onClick={showMobilePreview}>View preview</button>
       </div>
 
       <div className="designer-workspace">
-        <form className="designer-form" onSubmit={saveDesign}>
+        <form id="invitation-designer-form" className="designer-form" onSubmit={saveDesign}>
           <div className="designer-welcome">
             <Sparkles aria-hidden="true" />
-            <div><strong>Start with the choices below.</strong><p>There is no wrong choice. The phone preview changes immediately, and example words are already filled in for you.</p></div>
+            <div><strong>Start with the choices below.</strong><p>Your phone preview changes immediately. When you click into a field, it moves to that same part for you.</p></div>
           </div>
 
           <section className="designer-step-card" id="designer-colours">
-            <StepHeading number="1" icon={<Palette />} title="Choose your colours" description="Pick the colour style you would like for the full invitation." />
+            <StepHeading number="1" icon={<Palette />} title="Choose your colours" description="The same artwork changes into your selected colour, so the design stays consistent." />
             <div className="designer-palette-grid">
               {paletteOptions.map((option) => (
                 <button type="button" key={option.id} className={`designer-palette-option ${config.palette === option.id ? "is-selected" : ""}`} onClick={() => choosePalette(option.id)} aria-pressed={config.palette === option.id}>
@@ -291,10 +348,27 @@ export function InvitationDesigner() {
                 </button>
               ))}
             </div>
+
+            <div className="designer-bismillah-picker">
+              <div className="designer-subheading">
+                <strong>Add Bismillah at the top?</strong>
+                <span>The artwork automatically matches the colour palette above.</span>
+              </div>
+              <div className="designer-choice-grid">
+                <ChoiceButton selected={config.bismillah.enabled} title="Show Bismillah" description="Place the calligraphy above the invitation names." price={0} onClick={() => chooseBismillah(true)} />
+                <ChoiceButton selected={!config.bismillah.enabled} title="Without Bismillah" description="Start directly with the main photo area." price={0} onClick={() => chooseBismillah(false)} />
+              </div>
+              {config.bismillah.enabled && (
+                <div className="designer-bismillah-sample" aria-label={`${palette.name} Bismillah artwork selected`}>
+                  <img src={bismillahAssets[config.palette]} alt="Bismillah ir-Rahman ir-Rahim" />
+                  <span><strong>{palette.name} artwork</strong><small>It changes automatically when you choose another palette.</small></span>
+                </div>
+              )}
+            </div>
           </section>
 
-          <section className="designer-step-card" id="designer-opening">
-            <StepHeading number="2" icon={<Sparkles />} title="Choose how it opens" description="You can replay the opening as many times as you like." />
+          <section className="designer-step-card" id="designer-opening" onFocusCapture={() => activatePreview("opening")}>
+            <StepHeading number="2" icon={<Sparkles />} title="Choose how it opens" description="You can replay the opening as many times as you like while designing." />
             <div className="designer-choice-grid designer-opening-options">
               {openingOptions.map((option) => (
                 <ChoiceButton key={option.id} selected={config.opening.type === option.id} title={option.name} description={option.description} price={option.price} onClick={() => chooseOpening(option.id)} />
@@ -303,42 +377,47 @@ export function InvitationDesigner() {
 
             {config.opening.type !== "none" && (
               <div className="designer-conditional-panel">
-                <div className="designer-subheading"><strong>Choose the {config.opening.type === "envelope" ? "envelope" : "curtain"} style</strong><span>The selected colours are applied to every style.</span></div>
+                <div className="designer-subheading"><strong>Choose the {config.opening.type === "envelope" ? "envelope" : "curtain"} style</strong><span>It will open full-screen in your guest&apos;s invitation.</span></div>
                 <div className="designer-image-options designer-opening-images">
                   {(config.opening.type === "envelope" ? openingAssets.envelope : openingAssets.curtain).map((asset) => (
-                    <button type="button" key={asset.id} className={config.opening.asset === asset.id ? "is-selected" : ""} onClick={() => { updateConfig((current) => ({ ...current, opening: { ...current.opening, asset: asset.id } })); setReplayKey((key) => key + 1); }}>
-                      <span className="designer-opening-thumb" style={{ "--thumb-tint": palette.theme.primary } as React.CSSProperties}><img src={asset.url} alt="" /></span>
+                    <button type="button" key={asset.id} className={config.opening.asset === asset.id ? "is-selected" : ""} onClick={() => {
+                      updateConfig((current) => ({ ...current, opening: { ...current.opening, asset: asset.id } }));
+                      setReplayKey((key) => key + 1);
+                      activatePreview("opening");
+                    }}>
+                      <span className={`designer-opening-thumb ${config.opening.type === "envelope" ? "is-envelope" : ""}`}><img src={asset.urls[config.palette]} alt="" /></span>
                       <strong>{asset.name}</strong>
                       {config.opening.asset === asset.id && <Check aria-hidden="true" />}
                     </button>
                   ))}
                 </div>
-                {config.opening.type === "envelope" && <TextField label="Initials on the wax seal" hint="For example: S ♥ S" value={config.opening.initials} maxLength={12} onChange={(value) => updateConfig((current) => ({ ...current, opening: { ...current.opening, initials: value } }))} />}
-                <button className="designer-replay-button" type="button" onClick={() => { setReplayKey((key) => key + 1); setMobileView("preview"); }}><RotateCcw aria-hidden="true" /> Preview this opening again</button>
+                {config.opening.type === "envelope" && (
+                  <TextField
+                    label="Initials for the wax seal"
+                    hint="Your initials will not appear in this preview. They will be added to the finished envelope when your invitation is deployed."
+                    value={config.opening.initials}
+                    maxLength={12}
+                    onChange={(value) => updateConfig((current) => ({ ...current, opening: { ...current.opening, initials: value } }))}
+                  />
+                )}
+                <button className="designer-replay-button" type="button" onClick={() => { setReplayKey((key) => key + 1); activatePreview("opening"); showMobilePreview(); }}><RotateCcw aria-hidden="true" /> Preview this opening again</button>
               </div>
             )}
           </section>
 
-          <section className="designer-step-card" id="designer-hero">
+          <section className="designer-step-card" id="designer-hero" onFocusCapture={() => activatePreview("hero")}>
             <StepHeading number="3" icon={<ImageIcon />} title="Choose the main photo area" description="This is the first part your guests will see after the opening." />
             <div className="designer-choice-grid">
               <ChoiceButton selected={config.hero.type === "basic"} title="Basic hero" description="Your chosen photo appears in the background." price={0} onClick={() => chooseHero("basic")} />
-              <ChoiceButton selected={config.hero.type === "interactive"} title="Interactive hero" description="Guests scratch the photo to reveal it." price={100} onClick={() => chooseHero("interactive")} featured />
-            </div>
-
-            <div className="designer-fields-grid">
-              <TextField label="First name" value={config.hero.firstName} onChange={(value) => updateHero("firstName", value)} />
-              <TextField label="Second name" value={config.hero.secondName} onChange={(value) => updateHero("secondName", value)} />
-              <TextField label="Small text above the names" value={config.hero.eyebrow} onChange={(value) => updateHero("eyebrow", value)} full />
-              <TextArea label="Invitation message" value={config.hero.message} onChange={(value) => updateHero("message", value)} full rows={2} />
+              <ChoiceButton selected={config.hero.type === "interactive"} title="Interactive hero" description="Guests scratch only the framed photo to reveal it." price={100} onClick={() => chooseHero("interactive")} featured />
             </div>
 
             <div className="designer-photo-picker">
-              <div className="designer-subheading"><strong>Choose a photo</strong><span>Use one of our {palette.name} photos or upload your own.</span></div>
+              <div className="designer-subheading"><strong>Choose a photo</strong><span>Each preset keeps the exact same composition when you change colours.</span></div>
               <div className="designer-image-options designer-hero-images">
                 {heroPresets[config.palette].map((asset, index) => (
-                  <button type="button" key={asset.url} className={config.hero.photoSource === "preset" && config.hero.presetIndex === index ? "is-selected" : ""} onClick={() => chooseHeroPreset(index as 0 | 1)}>
-                    <img src={asset.url} alt={`${asset.name} preset`} />
+                  <button type="button" key={asset.id} className={config.hero.photoSource === "preset" && config.hero.presetIndex === index ? "is-selected" : ""} onClick={() => chooseHeroPreset(index as 0 | 1)}>
+                    <span className="designer-hero-thumb"><img src={asset.url} alt={`${asset.name} preset`} style={{ objectPosition: asset.objectPosition, transform: `scale(${asset.zoom})` }} /></span>
                     <strong>{asset.name}</strong>
                     {config.hero.photoSource === "preset" && config.hero.presetIndex === index && <Check aria-hidden="true" />}
                   </button>
@@ -350,11 +429,17 @@ export function InvitationDesigner() {
                 </label>
               </div>
             </div>
+
+            <div className="designer-fields-grid designer-hero-copy-fields">
+              <TextField label="Small text above the names" value={config.hero.eyebrow} onChange={(value) => updateHero("eyebrow", value)} full />
+              <TextField label="First name" value={config.hero.firstName} onChange={(value) => updateHero("firstName", value)} />
+              <TextField label="Second name" value={config.hero.secondName} onChange={(value) => updateHero("secondName", value)} />
+              <TextArea label="Invitation message" value={config.hero.message} onChange={(value) => updateHero("message", value)} full rows={2} />
+            </div>
           </section>
 
           <section className="designer-step-card designer-sections-step" id="designer-sections">
             <StepHeading number="4" icon={<Heart />} title="Choose and write your invitation parts" description="The four important parts are included. Add any other part as many times as you need." />
-
             <div className="designer-included-note"><LockKeyhole aria-hidden="true" /><span><strong>Already included:</strong> Countdown, Our Journey, Event Details + Location and Gift Preferences.</span></div>
 
             <div className="designer-section-list">
@@ -364,7 +449,11 @@ export function InvitationDesigner() {
                   section={section}
                   index={index}
                   total={config.sections.length}
+                  onActivate={() => activatePreview(section.id)}
                   onField={(field, value) => updateSectionField(section.id, field, value)}
+                  onItem={(itemIndex, field, value) => updateSectionItem(section.id, itemIndex, field, value)}
+                  onAddItem={(item) => addSectionItem(section.id, item)}
+                  onRemoveItem={(itemIndex) => removeSectionItem(section.id, itemIndex)}
                   onTitle={(value) => updateSection(section.id, (item) => ({ ...item, title: value }))}
                   onMove={(direction) => moveSection(section.id, direction)}
                   onDuplicate={() => duplicateSection(section)}
@@ -377,9 +466,9 @@ export function InvitationDesigner() {
             <div className="designer-add-section">
               <div><Plus aria-hidden="true" /><span><strong>Add another part</strong><small>You can add the same part more than once.</small></span></div>
               <label>
-                <span>Choose a part</span>
+                <span>Choose a part <small>Standard parts + Rs 150 · Custom part is designed by video consultation + Rs 500</small></span>
                 <select value={addType} onChange={(event) => setAddType(event.target.value as SectionType)}>
-                  {(Object.entries(sectionDefinitions) as Array<[SectionType, (typeof sectionDefinitions)[SectionType]]>).map(([type, definition]) => <option value={type} key={type}>{definition.name} (+ Rs {definition.price})</option>)}
+                  {(Object.entries(sectionDefinitions) as Array<[SectionType, (typeof sectionDefinitions)[SectionType]]>).map(([type, definition]) => <option value={type} key={type}>{definition.name}</option>)}
                 </select>
                 <ChevronDown aria-hidden="true" />
               </label>
@@ -395,26 +484,29 @@ export function InvitationDesigner() {
               {price.hero > 0 && <div><dt>Interactive hero</dt><dd>+ Rs {price.hero}</dd></div>}
               {price.sections > 0 && <div><dt>Extra invitation parts</dt><dd>+ Rs {price.sections.toLocaleString("en-US")}</dd></div>}
             </dl>
-            <p>The price is saved with your choices. You will still review the finished invitation before payment.</p>
+            <p>The price updates instantly. You will still review the finished invitation before payment.</p>
           </section>
 
-          <div className={`designer-save-bar is-${saveState}`}>
-            <div>
-              <LockKeyhole aria-hidden="true" />
-              <span><strong>{saveState === "saved" ? "Draft saved" : "Ready when you are"}</strong><small>{lastSaved ? `Last saved ${lastSaved}` : "Your design and uploaded photos will be saved privately."}</small></span>
-            </div>
-            <button type="submit" disabled={saveState === "saving"}><Save aria-hidden="true" />{saveState === "saving" ? "Saving…" : draft ? "Save changes" : "Save my design"}</button>
+          <div className={`designer-save-status is-${saveState}`}>
+            <LockKeyhole aria-hidden="true" />
+            <span><strong>{saveState === "saved" ? "Draft saved" : "Ready when you are"}</strong><small>{lastSaved ? `Last saved ${lastSaved}` : "Your design and uploaded photos will be saved privately."}</small></span>
           </div>
           {notice && <div className={`designer-notice ${saveState === "error" ? "is-error" : ""}`} role="status"><Info aria-hidden="true" />{notice}</div>}
         </form>
 
-        <InvitationPhonePreview config={config} replayKey={replayKey} onReplay={() => setReplayKey((key) => key + 1)} />
+        <InvitationPhonePreview config={config} replayKey={replayKey} focusTarget={previewFocus.target} focusKey={previewFocus.key} onReplay={() => { setReplayKey((key) => key + 1); activatePreview("opening"); }} />
+      </div>
+
+      <div className={`designer-fixed-price is-${saveState}`} role="status" aria-live="polite">
+        <div><small>Total price</small><strong>Rs {price.total.toLocaleString("en-US")}</strong></div>
+        <span>{saveState === "saved" ? `Saved ${lastSaved}` : "Always visible · updates instantly"}</span>
+        <button type="submit" form="invitation-designer-form" disabled={saveState === "saving"}><Save aria-hidden="true" />{saveButtonText}</button>
       </div>
     </main>
   );
 }
 
-function StepHeading({ number, icon, title, description }: { number: string; icon: React.ReactNode; title: string; description: string }) {
+function StepHeading({ number, icon, title, description }: { number: string; icon: ReactNode; title: string; description: string }) {
   return <div className="designer-step-heading"><span className="designer-step-number">{number}</span><span className="designer-step-icon" aria-hidden="true">{icon}</span><div><h2>{title}</h2><p>{description}</p></div></div>;
 }
 
@@ -432,7 +524,11 @@ type SectionEditorProps = {
   section: InvitationSection;
   index: number;
   total: number;
+  onActivate: () => void;
   onField: (field: string, value: string) => void;
+  onItem: (itemIndex: number, field: string, value: string) => void;
+  onAddItem: (item: InvitationSectionItem) => void;
+  onRemoveItem: (itemIndex: number) => void;
   onTitle: (value: string) => void;
   onMove: (direction: -1 | 1) => void;
   onDuplicate: () => void;
@@ -440,20 +536,20 @@ type SectionEditorProps = {
   onPhotos: (files: FileList | null) => void;
 };
 
-function SectionEditor({ section, index, total, onField, onTitle, onMove, onDuplicate, onRemove, onPhotos }: SectionEditorProps) {
+function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos }: SectionEditorProps) {
   const definition = sectionDefinitions[section.type];
   const [isOpen, setIsOpen] = useState(section.type === "event-details" || (!section.included && index === total - 1));
   return (
-    <details className="designer-section-editor" id={`editor-${section.id}`} open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)}>
-      <summary>
+    <details className="designer-section-editor" id={`editor-${section.id}`} open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)} onFocusCapture={onActivate}>
+      <summary onClick={onActivate}>
         <span className="designer-section-order">{String(index + 1).padStart(2, "0")}</span>
         <span><strong>{definition.name}</strong><small>{definition.description}</small></span>
         <b className={section.included ? "is-included" : ""}>{section.included ? "Included" : `+ Rs ${definition.price}`}</b>
         <ChevronDown aria-hidden="true" />
       </summary>
       <div className="designer-section-body">
-        <TextField label="Section heading" value={section.title} onChange={onTitle} full />
-        <SectionFields section={section} onField={onField} onPhotos={onPhotos} />
+        {section.type !== "custom" && <TextField label="Section heading" value={section.title} onChange={onTitle} full />}
+        <SectionFields section={section} onField={onField} onItem={onItem} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onPhotos={onPhotos} />
         <div className="designer-section-actions">
           <button type="button" onClick={() => onMove(-1)} disabled={index === 0}><MoveUp aria-hidden="true" /> Move up</button>
           <button type="button" onClick={() => onMove(1)} disabled={index === total - 1}><MoveDown aria-hidden="true" /> Move down</button>
@@ -465,35 +561,96 @@ function SectionEditor({ section, index, total, onField, onTitle, onMove, onDupl
   );
 }
 
-function SectionFields({ section, onField, onPhotos }: { section: InvitationSection; onField: (field: string, value: string) => void; onPhotos: (files: FileList | null) => void }) {
+function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPhotos }: {
+  section: InvitationSection;
+  onField: (field: string, value: string) => void;
+  onItem: (itemIndex: number, field: string, value: string) => void;
+  onAddItem: (item: InvitationSectionItem) => void;
+  onRemoveItem: (itemIndex: number) => void;
+  onPhotos: (files: FileList | null) => void;
+}) {
+  const items = getSectionItems(section);
   switch (section.type) {
     case "countdown":
-      return <TextArea label="Text below the countdown" value={section.fields.message} onChange={(value) => onField("message", value)} full rows={3} />;
+      return <div className="designer-fields-grid"><TextField label="Date to count down to" hint="The live countdown uses this date, independently from your event cards." type="date" value={section.fields.date ?? ""} onChange={(value) => onField("date", value)} full /><TextField label="Small text above the countdown" value={section.fields.eyebrow ?? ""} onChange={(value) => onField("eyebrow", value)} full /><TextArea label="Text below the countdown title" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} /></div>;
     case "journey":
-      return <div className="designer-fields-grid designer-journey-fields">{[1, 2].map((number) => <div className="designer-mini-event" key={number}><span>Moment {number}</span><TextField label="Title" value={section.fields[`event${number}Title`]} onChange={(value) => onField(`event${number}Title`, value)} /><TextField label="Date or short label" value={section.fields[`event${number}Date`]} onChange={(value) => onField(`event${number}Date`, value)} /><TextArea label="Short description" value={section.fields[`event${number}Text`]} onChange={(value) => onField(`event${number}Text`, value)} rows={2} /></div>)}</div>;
+      return (
+        <div className="designer-repeatable-fields">
+          <TextField label="Small introduction" value={section.fields.introduction ?? ""} onChange={(value) => onField("introduction", value)} full />
+          {items.map((item, itemIndex) => (
+            <div className="designer-mini-event" key={itemIndex}>
+              <div className="designer-mini-heading"><span>Moment {itemIndex + 1}</span>{items.length > 1 && <button type="button" onClick={() => onRemoveItem(itemIndex)}><Trash2 aria-hidden="true" /> Remove</button>}</div>
+              <div className="designer-fields-grid">
+                <TextField label="Moment title" value={item.title ?? ""} onChange={(value) => onItem(itemIndex, "title", value)} />
+                <TextField label="Date or short label" value={item.date ?? ""} onChange={(value) => onItem(itemIndex, "date", value)} />
+                <TextArea label="Short description" value={item.description ?? ""} onChange={(value) => onItem(itemIndex, "description", value)} full rows={2} />
+              </div>
+            </div>
+          ))}
+          <AddItemButton icon={<Plus />} label="Add a moment" onClick={() => onAddItem({ title: "Another special moment", date: "Add a date", description: "Tell your guests what made this moment special." })} />
+        </div>
+      );
     case "event-details":
       return (
-        <div className="designer-fields-grid">
-          <TextField label="Event date" type="date" value={section.fields.date} onChange={(value) => onField("date", value)} />
-          <TextField label="Start time" type="time" value={section.fields.time} onChange={(value) => onField("time", value)} />
-          <TextField label="Venue name" value={section.fields.venue} onChange={(value) => onField("venue", value)} />
-          <TextField label="Town or full address" value={section.fields.address} onChange={(value) => onField("address", value)} />
-          <TextField label="Google Maps link (optional)" type="url" hint="If left empty, we create a map search from the venue and address." value={section.fields.mapUrl} onChange={(value) => onField("mapUrl", value)} full icon={<MapPin />} />
+        <div className="designer-repeatable-fields">
+          <TextArea label="Introduction above the event cards" value={section.fields.introduction ?? ""} onChange={(value) => onField("introduction", value)} full rows={2} />
+          {items.map((item, itemIndex) => (
+            <div className="designer-mini-event designer-event-entry" key={itemIndex}>
+              <div className="designer-mini-heading"><span>Event {itemIndex + 1}</span>{items.length > 1 && <button type="button" onClick={() => onRemoveItem(itemIndex)}><Trash2 aria-hidden="true" /> Remove</button>}</div>
+              <div className="designer-fields-grid">
+                <TextField label="Event name" hint="For example: Nikah, Mehendi or Chawtari" value={item.name ?? ""} onChange={(value) => onItem(itemIndex, "name", value)} full />
+                <TextField label="Event date" type="date" value={item.date ?? ""} onChange={(value) => onItem(itemIndex, "date", value)} />
+                <TextField label="Start time" type="time" value={item.time ?? ""} onChange={(value) => onItem(itemIndex, "time", value)} icon={<Clock3 />} />
+                <TextField label="Venue name" value={item.venue ?? ""} onChange={(value) => onItem(itemIndex, "venue", value)} />
+                <TextField label="Town or full address" value={item.address ?? ""} onChange={(value) => onItem(itemIndex, "address", value)} />
+                <TextField label="Google Maps link (optional)" type="url" hint="If empty, the map searches for the venue and address." value={item.mapUrl ?? ""} onChange={(value) => onItem(itemIndex, "mapUrl", value)} full icon={<MapPin />} />
+              </div>
+            </div>
+          ))}
+          <AddItemButton icon={<CalendarPlus />} label="Add another event" onClick={() => onAddItem({ name: "Another celebration", date: "2027-05-23", time: "12:00", venue: "Venue name", address: "Town, Mauritius", mapUrl: "" })} />
         </div>
       );
     case "gift":
-    case "custom":
-      return <TextArea label={section.type === "gift" ? "Gift message" : "Describe the custom part"} value={section.fields.message} onChange={(value) => onField("message", value)} full rows={4} />;
+      return <TextArea label="Gift message" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={4} />;
     case "special-message":
-      return <div className="designer-fields-grid"><TextField label="Who is this message for?" hint="For example: Our grandparents, our parents or our family" value={section.fields.recipient} onChange={(value) => onField("recipient", value)} full /><TextArea label="Your message" value={section.fields.message} onChange={(value) => onField("message", value)} full rows={4} /></div>;
+      return <div className="designer-fields-grid"><TextField label="Who is this message for?" hint="For example: Our grandparents, our parents or our family" value={section.fields.recipient ?? ""} onChange={(value) => onField("recipient", value)} full /><TextArea label="Your message" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={4} /></div>;
     case "seating":
-      return <TextArea label="Tables and families" hint="Write one table on each line. Example: Table 1 — Family A" value={section.fields.tables} onChange={(value) => onField("tables", value)} full rows={6} />;
+      return (
+        <div className="designer-repeatable-fields">
+          <TextField label="Small introduction" value={section.fields.introduction ?? ""} onChange={(value) => onField("introduction", value)} full />
+          {items.map((item, itemIndex) => (
+            <div className="designer-mini-event designer-table-entry" key={itemIndex}>
+              <div className="designer-mini-heading"><span><Users aria-hidden="true" /> Table {itemIndex + 1}</span>{items.length > 1 && <button type="button" onClick={() => onRemoveItem(itemIndex)}><Trash2 aria-hidden="true" /> Remove</button>}</div>
+              <div className="designer-fields-grid">
+                <TextField label="Table name" value={item.table ?? ""} onChange={(value) => onItem(itemIndex, "table", value)} full />
+                <TextArea label="Families at this table" hint="Write one family name per line." value={item.families ?? ""} onChange={(value) => onItem(itemIndex, "families", value)} full rows={4} />
+              </div>
+            </div>
+          ))}
+          <AddItemButton icon={<Plus />} label="Add another table" onClick={() => onAddItem({ table: `Table ${items.length + 1}`, families: "Family name" })} />
+        </div>
+      );
     case "day-programme":
-      return <TextArea label="Programme items" hint="Write one item per line in this format: 18:00 | Guest arrival" value={section.fields.items} onChange={(value) => onField("items", value)} full rows={6} />;
+      return (
+        <div className="designer-repeatable-fields">
+          <TextField label="Small introduction" value={section.fields.introduction ?? ""} onChange={(value) => onField("introduction", value)} full />
+          {items.map((item, itemIndex) => (
+            <div className="designer-mini-event designer-programme-entry" key={itemIndex}>
+              <div className="designer-mini-heading"><span>Programme item {itemIndex + 1}</span>{items.length > 1 && <button type="button" onClick={() => onRemoveItem(itemIndex)}><Trash2 aria-hidden="true" /> Remove</button>}</div>
+              <div className="designer-fields-grid">
+                <TextField label="Choose the time" type="time" value={item.time ?? ""} onChange={(value) => onItem(itemIndex, "time", value)} icon={<Clock3 />} />
+                <TextField label="Programme details" value={item.details ?? ""} onChange={(value) => onItem(itemIndex, "details", value)} />
+                <TextField label="Small note below the programme" value={item.note ?? ""} onChange={(value) => onItem(itemIndex, "note", value)} full />
+              </div>
+            </div>
+          ))}
+          <AddItemButton icon={<Plus />} label="Add programme item" onClick={() => onAddItem({ time: "20:00", details: "Another programme item", note: "Add a helpful small note" })} />
+        </div>
+      );
     case "glimpse":
       return (
         <div className="designer-fields-grid">
-          <TextArea label="Gallery introduction" value={section.fields.message} onChange={(value) => onField("message", value)} full rows={2} />
+          <TextArea label="Gallery introduction" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} />
           <label className="designer-inline-upload">
             <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG or WebP photos. Each photo can be up to 5 MB.</small></span>
             <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => onPhotos(event.target.files)} />
@@ -501,15 +658,21 @@ function SectionFields({ section, onField, onPhotos }: { section: InvitationSect
           {section.images.length > 0 && <div className="designer-uploaded-strip">{section.images.map((image, index) => <img src={image} alt={`Glimpse preview ${index + 1}`} key={`${image}-${index}`} />)}</div>}
         </div>
       );
+    case "custom":
+      return <div className="designer-custom-consultation"><Video aria-hidden="true" /><div><strong>Your custom part will be designed with you.</strong><p>We will discuss the idea, wording, visuals and interaction during a video consultation. There is nothing to edit here yet.</p><span>Custom design consultation · + Rs 500</span></div></div>;
   }
 }
 
-function TextField({ label, hint, value, onChange, full = false, type = "text", maxLength, icon }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; type?: string; maxLength?: number; icon?: React.ReactNode }) {
-  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{icon}{label}</span><input type={type} value={value} maxLength={maxLength} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
+function AddItemButton({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
+  return <button type="button" className="designer-add-item" onClick={onClick}>{icon}{label}</button>;
+}
+
+function TextField({ label, hint, value, onChange, full = false, type = "text", maxLength, icon }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; type?: string; maxLength?: number; icon?: ReactNode }) {
+  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{icon}{label}</span><input type={type} value={value ?? ""} maxLength={maxLength} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
 }
 
 function TextArea({ label, hint, value, onChange, full = false, rows = 3 }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; rows?: number }) {
-  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{label}</span><textarea value={value} rows={rows} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
+  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{label}</span><textarea value={value ?? ""} rows={rows} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
 }
 
 async function saveInvitation(config: InvitationConfig, draft: DraftIdentity | null) {

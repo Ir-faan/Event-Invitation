@@ -20,6 +20,10 @@ function isInvitationConfig(value: unknown): value is InvitationConfig {
     config.version === 1
       && config.palette
       && paletteOptions.some((palette) => palette.id === config.palette)
+      && (config.bismillah === undefined || Boolean(
+        config.bismillah
+          && typeof config.bismillah.enabled === "boolean"
+      ))
       && config.opening
       && ["none", "envelope", "curtain"].includes(config.opening.type)
       && config.hero
@@ -39,7 +43,18 @@ function isInvitationConfig(value: unknown): value is InvitationConfig {
           && section.fields
           && typeof section.fields === "object"
           && Array.isArray(section.images)
-          && section.images.length <= 8,
+          && section.images.length <= 8
+          && (section.items === undefined || (
+            Array.isArray(section.items)
+            && section.items.length <= 100
+            && section.items.every((item) => Boolean(
+              item
+                && typeof item === "object"
+                && !Array.isArray(item)
+                && Object.keys(item).length <= 20
+                && Object.values(item).every((entry) => typeof entry === "string" && entry.length <= 5_000),
+            ))
+          )),
       )),
   );
 }
