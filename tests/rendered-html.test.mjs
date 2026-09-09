@@ -10,17 +10,30 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const vite = await createServer({ appType: "custom", configFile: false, root, resolve: { alias: { "@": root } }, server: { middlewareMode: true } });
 after(async () => vite.close());
 
-test("renders the complete Event Invitations landing page", async () => {
+test("renders the complete Paperless Invites landing page", async () => {
   const { default: Home } = await vite.ssrLoadModule("/app/page.tsx");
   const html = renderToStaticMarkup(React.createElement(Home));
   assert.match(html, /The most elegant/);
-  assert.match(html, /Coastal Reverie/);
-  assert.match(html, /Rose Afterglow/);
-  assert.match(html, /The magic begins/);
+  assert.match(html, /Soft &amp; Timeless/);
+  assert.match(html, /Olive Romance/);
+  assert.match(html, /Make the first tap/);
   assert.match(html, /Paper or digital/);
-  assert.match(html, /Simple, considered pricing/);
-  assert.match(html, /Bookings opening soon/);
-  assert.match(html, /\/templates\/coastal-reverie/);
+  assert.match(html, /Simple pricing/);
+  assert.match(html, /Enquiries welcome/);
+  assert.match(html, /\/design-invitation/);
+});
+
+test("renders the guided invitation designer and mobile preview", async () => {
+  const { default: Designer } = await vite.ssrLoadModule("/app/design-invitation/page.tsx");
+  const html = renderToStaticMarkup(React.createElement(Designer));
+  assert.match(html, /Create your invitation/);
+  assert.match(html, /Choose your colours/);
+  assert.match(html, /Envelope &amp; wax seal/);
+  assert.match(html, /Interactive hero/);
+  assert.match(html, /A Special Message/);
+  assert.match(html, /Live mobile preview/);
+  assert.match(html, /Save my design/);
+  assert.match(html, /Rs 1,000/);
 });
 
 test("renders the complete Coastal Reverie invitation", async () => {

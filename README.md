@@ -1,19 +1,30 @@
-# Event Invitations
+# Paperless Invites
 
-An animated, editorial landing page for modern digital invitations. The experience focuses on the brand story and visual direction before the invitation templates are designed.
+A mobile-first digital invitation service with an editorial landing page, two independent invitation examples, and a guided invitation designer.
 
-## Landing page sections
+## Invitation designer
 
-- Welcome and “save the date” hero
-- Moving 3D invitation showcase
-- Collection browser with three art directions
-- Animated digital envelope feature
-- Four-step process
-- Paper versus digital comparison
-- Custom-quotation pricing
-- Contact call-to-action and footer
+Open `/design-invitation` or choose **Design your invitation** on the landing page. The builder lets a customer:
 
-The page uses original project artwork, responsive layouts, pointer-driven 3D card tilts, scroll reveals, marquees, ambient sparkles and reduced-motion accessibility.
+- choose one of six colour palettes;
+- choose no opening, an envelope opening, or a curtain opening;
+- choose a basic or scratch-to-reveal hero and use a preset or uploaded photo;
+- edit the four included invitation parts;
+- add, repeat, reorder, duplicate, and remove extra parts;
+- enter the event date, time, venue, address, and an optional Google Maps link;
+- see an instant mobile-sized preview and live price; and
+- save the design and photos as a private editable draft.
+
+The existing Coastal Reverie and Rose Afterglow invitations remain separate from the builder. The traditional card has not been changed.
+
+## Supabase setup
+
+1. Create a Supabase project.
+2. In **SQL Editor**, run [`supabase/setup.sql`](supabase/setup.sql). It creates the invitation tables, indexes, private row policies, and the public `invitation-media` image bucket.
+3. Copy `.env.example` to `.env.local`.
+4. Add the project URL and the **service role key** from **Project Settings > API**. The service role key is server-only and must never be prefixed with `NEXT_PUBLIC_` or committed.
+
+Saved rows are protected by Row Level Security. Browser requests go through validated server routes, and returning customers receive a random local edit token whose hash is stored in Supabase.
 
 ## Local development
 
@@ -35,4 +46,4 @@ npm test
 npm run build
 ```
 
-Invitation templates, editing, booking and payment features will be added in later phases.
+Booking and online payment features are outside the current scope. Payment remains outside the website: customers review the finished invitation before paying by MCB Juice or bank transfer.
