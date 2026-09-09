@@ -37,23 +37,22 @@ const palettes = [
 const process = [
   { icon: Palette, number: "01", title: "You design it", copy: "Choose your colours, opening, photos and the invitation parts you want." },
   { icon: Sparkles, number: "02", title: "We make it", copy: "We build your invitation, put it online and send you the link so you can review the finished result." },
-  { icon: CreditCard, number: "03", title: "Payment", copy: "Pay only after you receive the link and are happy with your invitation. Payment is by MCB Juice or bank transfer." },
+  { icon: CreditCard, number: "03", title: "Payment", copy: "Pay only after you receive the link and are happy with your invitation." },
   { icon: Send, number: "04", title: "Share in a tap", copy: "Once payment is confirmed, your invitation link is ready to share with family and guests." },
 ];
 
 const includedParts = [
-  "Countdown",
-  "Order of Events (Our Journey)",
-  "Event Details + Location",
+  "Countdown to the big day",
+  "Order of Events",
+  "Event Details & Location",
   "Gift Preferences",
-  "Footer",
 ];
 
 const optionalParts = [
-  "In Loving Memory",
+  "A Special Message",
   "Seating Arrangement",
   "Day Programme",
-  "Glimpse Of Us",
+  "Glimpse Of You",
 ];
 
 const heroCards = [
@@ -392,7 +391,7 @@ export function LandingExperience() {
                   <span key={part}><Sparkles aria-hidden="true" /><span>{part}</span><b>+ Rs 150</b></span>
                 ))}
               </div>
-              <p className="extra-note">Each extra invitation part costs Rs 150. Choose as many as you would like and the total will be shown before payment.</p>
+              <p className="extra-note">Each extra invitation part costs Rs 150. Choose as many as you would like and the total price will be shown.</p>
             </div>
 
             <div className="extra-group custom-part-group">
@@ -402,7 +401,7 @@ export function LandingExperience() {
               </div>
               <p>We can add one custom part made specially for your invitation. This is for something that is not already available in the choices above.</p>
               <div className="custom-part-consultation">
-                <span>Your custom part will be planned with you during a free video consultation.</span>
+                <span>Your custom part will be planned with you during a free video consultation. If you already have something in mind or a design readily available, share it with us.</span>
                 <a
                   className="button button-wine"
                   href={customPartWhatsAppLink}
@@ -443,7 +442,7 @@ export function LandingExperience() {
                 <strong>Free video consultation</strong>
                 <span className="free-consultation-badge">Free</span>
               </div>
-              <p><b>Having trouble designing your invitation?</b> I can guide you through your choices and help you put the invitation together during a free video consultation.</p>
+              <p><b>Having trouble designing your invitation?</b> We can assist you through your choices and help you put the invitation together during a free video consultation.</p>
             </div>
             <div className="consultation-actions">
               <a
