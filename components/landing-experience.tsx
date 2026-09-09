@@ -8,7 +8,6 @@ import {
   ChevronDown,
   Clock3,
   CreditCard,
-  Eye,
   Gem,
   Heart,
   Leaf,
@@ -36,10 +35,10 @@ const palettes = [
 ];
 
 const process = [
-  { icon: Palette, number: "01", title: "Design the invitation", copy: "Choose the look, opening, hero and sections that fit your celebration." },
-  { icon: Eye, number: "02", title: "Review the design", copy: "Check the complete invitation and request the final adjustments before approval." },
-  { icon: CreditCard, number: "03", title: "Payment", copy: "Once the design is approved, complete payment for your chosen invitation setup." },
-  { icon: Send, number: "04", title: "Share in a tap", copy: "Receive one elegant link ready to share through WhatsApp, message or social media." },
+  { icon: Palette, number: "01", title: "You design it", copy: "Choose your colours, opening, photos and the invitation parts you want." },
+  { icon: Sparkles, number: "02", title: "We make it", copy: "We build your invitation, put it online and send you the link so you can review the finished result." },
+  { icon: CreditCard, number: "03", title: "Payment", copy: "Pay only after you receive the link and are happy with your invitation. Payment is by MCB Juice or bank transfer." },
+  { icon: Send, number: "04", title: "Share in a tap", copy: "Once payment is confirmed, your invitation link is ready to share with family and guests." },
 ];
 
 const includedParts = [
@@ -423,8 +422,8 @@ export function LandingExperience() {
           <article className="service-note-card payment-note">
             <CreditCard aria-hidden="true" />
             <div>
-              <strong>Payment is made outside the website</strong>
-              <p>After your invitation is approved, the payment details will be sent to you. You can pay by MCB Juice or bank transfer.</p>
+              <strong>Pay only after you receive your link</strong>
+              <p>We send you the finished invitation link first so you can review it and make sure you are happy. Payment is then made outside the website by MCB Juice or bank transfer. The payment details will be sent to you.</p>
             </div>
           </article>
 
@@ -432,8 +431,8 @@ export function LandingExperience() {
             <Clock3 aria-hidden="true" />
             <div>
               <strong>Ready in around 2–5 days</strong>
-              <p>Once payment is confirmed and all invitation details are final, your invitation will normally be delivered within 2–5 days.</p>
-              <span className="delivery-time">Designed carefully, then sent to you as one shareable link.</span>
+              <p>Once all invitation details are final, your invitation link will normally be ready within 2–5 days. You can review the live invitation before making payment.</p>
+              <span className="delivery-time">Your satisfaction comes first — payment is requested only after you receive the link.</span>
             </div>
           </article>
 
