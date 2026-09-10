@@ -377,7 +377,7 @@ export function LandingExperience() {
               </div>
               <div className="extra-options">
                 <div><span>Normal photo in the background</span><b>Included</b></div>
-                <div><span>Photo guests can interact with, such as scratch to reveal</span><b>+ Rs 100</b></div>
+                <div><span>Photo guests can interact with, such as scratch to reveal</span><b>+ Rs 200</b></div>
               </div>
             </div>
 

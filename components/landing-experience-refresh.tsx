@@ -365,7 +365,7 @@ export function LandingExperienceRefresh() {
               <div className="extra-group-title"><div><span>2</span><strong>Choose the main photo area</strong></div><small>The first big area guests see</small></div>
               <div className="extra-options">
                 <div><span>Normal photo in the background</span><b>Included</b></div>
-                <div><span>Photo guests can interact with, such as scratch to reveal</span><b>+ Rs 100</b></div>
+                <div><span>Photo guests can interact with, such as scratch to reveal</span><b>+ Rs 200</b></div>
               </div>
             </div>
 
