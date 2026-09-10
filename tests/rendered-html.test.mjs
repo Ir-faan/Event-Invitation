@@ -111,6 +111,43 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.doesNotMatch(designer, /setNotice/);
 });
 
+test("renders the private order dashboard shell without a public login", async () => {
+  const { default: Dashboard } = await vite.ssrLoadModule("/app/dashboard/page.tsx");
+  const html = renderToStaticMarkup(React.createElement(Dashboard));
+  assert.match(html, /Your invitation orders/);
+  assert.match(html, /Need your review/);
+  assert.match(html, /Currently live/);
+  assert.match(html, /Previous orders/);
+  assert.match(html, /Search names, phone or link/);
+  assert.doesNotMatch(html, /Login|Log in|Sign in/);
+});
+
+test("supports automatic invitation routes and order lifecycle storage", async () => {
+  const { createInitialInvitation } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
+  const { makeInvitationSlug, todayInMauritius } = await vite.ssrLoadModule("/lib/invitation-orders.ts");
+  const config = createInitialInvitation();
+  config.hero.firstName = "Salma";
+  config.hero.secondName = "Sam";
+  assert.equal(makeInvitationSlug(config), "salma-and-sam");
+  assert.equal(todayInMauritius(new Date("2027-05-22T20:00:00Z")), "2027-05-23");
+
+  const [migration, proxy, publicRoute, dashboardApi] = await Promise.all([
+    readFile(new URL("../supabase/dashboard-migration.sql", import.meta.url), "utf8"),
+    readFile(new URL("../proxy.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/[slug]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/dashboard/orders/route.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(migration, /status in \('pending', 'active', 'inactive'\)/);
+  assert.match(migration, /active_until/);
+  assert.match(migration, /invitations_slug_idx/);
+  assert.match(proxy, /DASHBOARD_USERNAME/);
+  assert.match(proxy, /\/api\/dashboard/);
+  assert.match(publicRoute, /getPublicInvitationBySlug/);
+  assert.match(publicRoute, /force-dynamic/);
+  assert.match(dashboardApi, /createUniqueInvitationSlug/);
+  assert.match(dashboardApi, /action === "deactivate"/);
+});
+
 test("renders the complete Coastal Reverie invitation", async () => {
   const { default: Invitation } = await vite.ssrLoadModule("/app/templates/coastal-reverie/page.tsx");
   const html = renderToStaticMarkup(React.createElement(Invitation));

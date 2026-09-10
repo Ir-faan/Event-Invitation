@@ -8,16 +8,49 @@ create table if not exists public.invitations (
   edit_token_hash text not null,
   config jsonb not null check (jsonb_typeof(config) = 'object'),
   total_price integer not null default 1000 check (total_price >= 1000),
-  status text not null default 'draft' check (status in ('draft', 'submitted', 'in_review', 'approved', 'archived')),
+  status text not null default 'pending' check (status in ('pending', 'active', 'inactive')),
+  slug text,
+  active_until date,
+  deployed_at timestamptz,
+  inactive_at timestamptz,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+-- These statements also upgrade projects created with the original designer script.
+alter table public.invitations add column if not exists slug text;
+alter table public.invitations add column if not exists active_until date;
+alter table public.invitations add column if not exists deployed_at timestamptz;
+alter table public.invitations add column if not exists inactive_at timestamptz;
+
+alter table public.invitations drop constraint if exists invitations_status_check;
+alter table public.invitations drop constraint if exists invitations_active_date_check;
+update public.invitations
+set status = case
+  when status in ('draft', 'submitted', 'in_review', 'approved') then 'pending'
+  when status = 'archived' then 'inactive'
+  when status in ('pending', 'active', 'inactive') then status
+  else 'pending'
+end;
+alter table public.invitations alter column status set default 'pending';
+alter table public.invitations
+  add constraint invitations_status_check check (status in ('pending', 'active', 'inactive'));
+alter table public.invitations
+  add constraint invitations_active_date_check check (status <> 'active' or active_until is not null);
 
 create unique index if not exists invitations_edit_token_hash_idx
   on public.invitations (id, edit_token_hash);
 
 create index if not exists invitations_status_updated_at_idx
   on public.invitations (status, updated_at desc);
+
+create unique index if not exists invitations_slug_idx
+  on public.invitations (slug)
+  where slug is not null;
+
+create index if not exists invitations_active_until_idx
+  on public.invitations (active_until)
+  where status = 'active';
 
 create table if not exists public.invitation_media (
   id uuid primary key default gen_random_uuid(),

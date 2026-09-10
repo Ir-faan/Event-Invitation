@@ -1,0 +1,26 @@
+.published-invitation {
+  --script: "Birthstone", "Snell Roundhand", "Segoe Script", cursive;
+  --serif: "Cormorant Garamond", Georgia, serif;
+  --sans: "Montserrat", Arial, sans-serif;
+  min-height: 100dvh;
+  display: grid;
+  place-items: start center;
+  background: #211b1d;
+}
+
+.published-invitation *,
+.published-invitation *::before,
+.published-invitation *::after { box-sizing: border-box; }
+
+.published-invitation-screen {
+  width: min(30rem, 100%);
+  height: 100dvh;
+  min-height: 100dvh;
+  border-radius: 0;
+  box-shadow: 0 0 5rem rgba(0, 0, 0, .4);
+  overscroll-behavior: auto;
+}
+
+@media (max-width: 30rem) {
+  .published-invitation-screen { box-shadow: none; }
+}

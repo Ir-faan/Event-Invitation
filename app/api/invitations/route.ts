@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   calculateInvitationPrice,
-  paletteOptions,
-  sectionDefinitions,
-  type InvitationConfig,
 } from "@/lib/invitation-designer";
+import { isInvitationConfig, validInvitationId } from "@/lib/invitation-validation";
 import {
   createEditToken,
   hashEditToken,
@@ -13,69 +11,12 @@ import {
 
 export const runtime = "edge";
 
-function isInvitationConfig(value: unknown): value is InvitationConfig {
-  if (!value || typeof value !== "object") return false;
-  const config = value as Partial<InvitationConfig>;
-  return Boolean(
-    config.version === 1
-      && config.palette
-      && paletteOptions.some((palette) => palette.id === config.palette)
-      && config.contact
-      && typeof config.contact.name === "string"
-      && config.contact.name.trim().length >= 2
-      && config.contact.name.length <= 120
-      && typeof config.contact.phone === "string"
-      && /^5\d{7}$/.test(config.contact.phone.trim())
-      && (config.bismillah === undefined || Boolean(
-        config.bismillah
-          && typeof config.bismillah.enabled === "boolean"
-      ))
-      && config.opening
-      && ["none", "envelope", "curtain"].includes(config.opening.type)
-      && config.hero
-      && ["basic", "interactive"].includes(config.hero.type)
-      && ["preset", "upload"].includes(config.hero.photoSource)
-      && (config.hero.type === "interactive" || config.hero.photoSource === "preset")
-      && Array.isArray(config.sections)
-      && config.sections.length > 0
-      && config.sections.length <= 40
-      && config.sections.every((section) => Boolean(
-        section
-          && typeof section.id === "string"
-          && section.id.length <= 100
-          && Object.hasOwn(sectionDefinitions, section.type)
-          && typeof section.included === "boolean"
-          && typeof section.title === "string"
-          && section.title.length <= 200
-          && section.fields
-          && typeof section.fields === "object"
-          && Array.isArray(section.images)
-          && section.images.length <= 8
-          && (section.items === undefined || (
-            Array.isArray(section.items)
-            && section.items.length <= 100
-            && section.items.every((item) => Boolean(
-              item
-                && typeof item === "object"
-                && !Array.isArray(item)
-                && Object.keys(item).length <= 20
-                && Object.values(item).every((entry) => typeof entry === "string" && entry.length <= 5_000),
-            ))
-          )),
-      )),
-  );
-}
-
-function validId(value: unknown): value is string {
-  return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-}
-
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const id = url.searchParams.get("id");
     const token = url.searchParams.get("token");
-    if (!validId(id) || !token || token.length < 32) {
+    if (!validInvitationId(id) || !token || token.length < 32) {
       return NextResponse.json({ error: "The saved draft details are incomplete." }, { status: 400 });
     }
 
@@ -111,17 +52,24 @@ export async function POST(request: Request) {
     const price = calculateInvitationPrice(body.config);
     const now = new Date().toISOString();
 
-    if ((body.id || body.editToken) && !(validId(body.id) && typeof body.editToken === "string" && body.editToken.length >= 32)) {
+    if ((body.id || body.editToken) && !(validInvitationId(body.id) && typeof body.editToken === "string" && body.editToken.length >= 32)) {
       return NextResponse.json({ error: "The saved draft details are incomplete." }, { status: 400 });
     }
 
-    if (validId(body.id) && typeof body.editToken === "string" && body.editToken.length >= 32) {
+    if (validInvitationId(body.id) && typeof body.editToken === "string" && body.editToken.length >= 32) {
       const tokenHash = await hashEditToken(body.editToken);
       const params = new URLSearchParams({ id: `eq.${body.id}`, edit_token_hash: `eq.${tokenHash}` });
       const response = await supabaseRequest(`/rest/v1/invitations?${params.toString()}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Prefer: "return=representation" },
-        body: JSON.stringify({ config: body.config, total_price: price.total, updated_at: now }),
+        body: JSON.stringify({
+          config: body.config,
+          total_price: price.total,
+          status: "pending",
+          active_until: null,
+          inactive_at: null,
+          updated_at: now,
+        }),
       });
       const rows = (await response.json()) as Array<{ id: string; updated_at: string }>;
       if (!rows[0]) return NextResponse.json({ error: "This draft could not be updated." }, { status: 404 });
@@ -139,7 +87,7 @@ export async function POST(request: Request) {
         edit_token_hash: editTokenHash,
         config: body.config,
         total_price: price.total,
-        status: "draft",
+        status: "pending",
         created_at: now,
         updated_at: now,
       }),

@@ -1,6 +1,6 @@
 # Paperless Invites
 
-A mobile-first digital invitation service with an editorial landing page, two independent invitation examples, and a guided invitation designer.
+A mobile-first digital invitation service with an editorial landing page, two independent invitation examples, a guided invitation designer, and a private order dashboard.
 
 ## Invitation designer
 
@@ -13,7 +13,7 @@ Open `/design-invitation` or choose **Design your invitation** on the landing pa
 - add, repeat, reorder, duplicate, and remove extra parts;
 - enter the event date, time, venue, address, and an optional Google Maps link;
 - see an instant mobile-sized preview and live price; and
-- save the design and photos as a private editable draft.
+- submit the design and photos as a new order for review.
 
 The existing Coastal Reverie and Rose Afterglow invitations remain separate from the builder. The traditional card has not been changed.
 
@@ -25,6 +25,30 @@ The existing Coastal Reverie and Rose Afterglow invitations remain separate from
 4. Add the project URL and the **service role key** from **Project Settings > API**. The service role key is server-only and must never be prefixed with `NEXT_PUBLIC_` or committed.
 
 Saved rows are protected by Row Level Security. Browser requests go through validated server routes, and returning customers receive a random local edit token whose hash is stored in Supabase.
+
+If the original setup script was already run before the order dashboard was added, run [`supabase/dashboard-migration.sql`](supabase/dashboard-migration.sql) once instead. It preserves existing invitations while adding deployment status, public slugs, and active-until dates.
+
+## Private order dashboard
+
+Open `/dashboard` directly. There is intentionally no login button or login page. Until database-backed administrator accounts are introduced, the route and its server API use the browser's native HTTP Basic Authentication prompt.
+
+Add these server-side values to `.env.local` and to the deployed environment:
+
+```bash
+DASHBOARD_USERNAME=admin
+DASHBOARD_PASSWORD=use-a-long-unique-password
+PUBLIC_SITE_URL=https://www.paperless-invites.com
+```
+
+The dashboard lets the administrator:
+
+- search and filter orders that need review, are live, or are inactive;
+- open every order to edit its complete form values and see the mobile preview;
+- deploy without editing source code, producing a memorable route such as `/salma-and-sam`;
+- choose or update the final active date, take a live invitation offline, and redeploy it later; and
+- contact the customer through a direct WhatsApp shortcut.
+
+Public invitation routes check their status and active date on every request. Once the selected Mauritius date has passed, the route immediately becomes unavailable and the order moves to the inactive list the next time it is read.
 
 ## Local development
 

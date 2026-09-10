@@ -36,19 +36,6 @@ type PreviewProps = {
 
 export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKey, onReplay }: PreviewProps) {
   const screenRef = useRef<HTMLDivElement>(null);
-  const palette = getPalette(config.palette);
-  const themeStyle = {
-    "--preview-bg": palette.theme.background,
-    "--preview-surface": palette.theme.surface,
-    "--preview-primary": palette.theme.primary,
-    "--preview-secondary": palette.theme.secondary,
-    "--preview-accent": palette.theme.accent,
-    "--preview-ink": palette.theme.ink,
-    "--preview-muted": palette.theme.muted,
-  } as CSSProperties;
-  const footerDetails = getEventDetails(config);
-  const footerEvent = getSectionItems(footerDetails)[0];
-  const footerDate = formatDate(footerEvent?.date ?? footerDetails.fields.date);
 
   useEffect(() => {
     const screen = screenRef.current;
@@ -85,24 +72,59 @@ export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKe
         </button>
       </div>
 
-      <div className="designer-phone-shell" style={themeStyle}>
+      <div className="designer-phone-shell" style={getThemeStyle(config)}>
         <div className="designer-phone-top" aria-hidden="true"><span /></div>
         <div className="designer-phone-screen" ref={screenRef}>
-          <OpeningPreview config={config} replayKey={replayKey} />
-          <HeroPreview config={config} replayKey={replayKey} />
-          {config.sections.map((section) => <SectionPreview key={section.id} section={section} />)}
-          <footer className="invite-preview-footer">
-            <div className="invite-preview-footer-monogram">{config.hero.firstName.charAt(0)}<Heart aria-hidden="true" />{config.hero.secondName.charAt(0)}</div>
-            <strong>{config.hero.firstName} &amp; {config.hero.secondName}</strong>
-            <time>{footerDate}</time>
-            <span>Made with <Heart aria-hidden="true" /> by Paperless Invites</span>
-          </footer>
+          <InvitationPreviewContent config={config} replayKey={replayKey} />
         </div>
         <div className="designer-phone-home" aria-hidden="true" />
       </div>
       <p className="designer-preview-tip">You can also scroll inside the phone at any time.</p>
     </aside>
   );
+}
+
+/** The full invitation without the builder's decorative phone frame. */
+export function PublishedInvitation({ config }: { config: InvitationConfig }) {
+  return (
+    <main className="published-invitation" style={getThemeStyle(config)}>
+      <div className="designer-phone-screen published-invitation-screen">
+        <InvitationPreviewContent config={config} replayKey={0} />
+      </div>
+    </main>
+  );
+}
+
+function InvitationPreviewContent({ config, replayKey }: { config: InvitationConfig; replayKey: number }) {
+  const footerDetails = getEventDetails(config);
+  const footerEvent = getSectionItems(footerDetails)[0];
+  const footerDate = formatDate(footerEvent?.date ?? footerDetails.fields.date);
+  return (
+    <>
+      <OpeningPreview config={config} replayKey={replayKey} />
+      <HeroPreview config={config} replayKey={replayKey} />
+      {config.sections.map((section) => <SectionPreview key={section.id} section={section} />)}
+      <footer className="invite-preview-footer">
+        <div className="invite-preview-footer-monogram">{config.hero.firstName.charAt(0)}<Heart aria-hidden="true" />{config.hero.secondName.charAt(0)}</div>
+        <strong>{config.hero.firstName} &amp; {config.hero.secondName}</strong>
+        <time>{footerDate}</time>
+        <span>Made with <Heart aria-hidden="true" /> by Paperless Invites</span>
+      </footer>
+    </>
+  );
+}
+
+function getThemeStyle(config: InvitationConfig) {
+  const palette = getPalette(config.palette);
+  return {
+    "--preview-bg": palette.theme.background,
+    "--preview-surface": palette.theme.surface,
+    "--preview-primary": palette.theme.primary,
+    "--preview-secondary": palette.theme.secondary,
+    "--preview-accent": palette.theme.accent,
+    "--preview-ink": palette.theme.ink,
+    "--preview-muted": palette.theme.muted,
+  } as CSSProperties;
 }
 
 function OpeningPreview({ config, replayKey }: { config: InvitationConfig; replayKey: number }) {
