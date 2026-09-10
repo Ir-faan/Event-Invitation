@@ -47,6 +47,7 @@ export type InvitationConfig = {
     photoSource: "preset" | "upload";
     presetIndex: number;
     uploadedUrl: string;
+    date: string;
     firstName: string;
     secondName: string;
     eyebrow: string;
@@ -124,9 +125,9 @@ export const heroPresets: Record<PaletteId, HeroPreset[]> = {
 
 /** Intimate portrait photos reserved for the scratch-to-reveal hero. */
 export const interactiveHeroPresets: HeroPreset[] = [
-  { id: "interactive-hands", name: "Hands & rings", url: "/images/builder-interactive-hands.webp", objectPosition: "center center", zoom: 1 },
-  { id: "interactive-bouquet", name: "Shared bouquet", url: "/images/builder-interactive-bouquet.webp", objectPosition: "center center", zoom: 1 },
-  { id: "interactive-garden-walk", name: "Garden walk", url: "/images/builder-interactive-garden-walk.webp", objectPosition: "center center", zoom: 1 },
+  { id: "interactive-henna-hands", name: "Henna promise", url: "/images/builder-interactive-henna-hands.webp", objectPosition: "center center", zoom: 1 },
+  { id: "interactive-orchid-bouquet", name: "Orchid exchange", url: "/images/builder-interactive-orchid-bouquet.webp", objectPosition: "center center", zoom: 1 },
+  { id: "interactive-island-walk", name: "Island sunrise", url: "/images/builder-interactive-island-walk.webp", objectPosition: "center center", zoom: 1 },
 ];
 
 export const interactiveFrameAssets: Record<PaletteId, string> = {
@@ -220,7 +221,19 @@ export function createSection(type: SectionType, included = false): InvitationSe
     case "gift":
       return { ...common, title: "Gift Preferences", fields: { message: "Your presence and prayers are the greatest gifts. If you wish, a contribution towards our new chapter would be warmly appreciated." }, items: [] };
     case "special-message":
-      return { ...common, title: "In Loving Memory", fields: { recipient: "Our beloved grandparents", message: "Though you cannot be here in person, your love remains part of every step we take." }, items: [] };
+      return {
+        ...common,
+        title: "In Loving Memory",
+        fields: {
+          eyebrow: "With love, always",
+          message: "Though you cannot be here in person, your love remains part of every step we take.",
+          dedicationLabel: "Remembering with gratitude",
+          recipient: "Our beloved grandparents",
+          dedicationNote: "Whose love still lights our way",
+          signature: "Forever remembered · Forever loved",
+        },
+        items: [],
+      };
     case "seating":
       return {
         ...common,
@@ -263,6 +276,7 @@ export function createInitialInvitation(): InvitationConfig {
       photoSource: "preset",
       presetIndex: 0,
       uploadedUrl: "",
+      date: "2027-05-22",
       firstName: "Sara",
       secondName: "Sameer",
       eyebrow: "Together with their families",
@@ -344,17 +358,21 @@ export function normalizeInvitationConfig(config: InvitationConfig): InvitationC
     bismillah: config.bismillah ?? { enabled: false },
     hero: {
       ...config.hero,
+      date: config.hero.date || firstEventDate || "2027-05-22",
       photoSource: config.hero.type === "basic" ? "preset" : config.hero.photoSource,
       uploadedUrl: config.hero.type === "basic" ? "" : config.hero.uploadedUrl,
       presetIndex,
     },
-    sections: config.sections.map((section) => ({
-      ...section,
-      fields: section.type === "countdown"
-        ? { date: firstEventDate || "2027-05-22", ...section.fields }
-        : section.fields,
-      items: getSectionItems(section),
-    })),
+    sections: config.sections.map((section) => {
+      const defaults = createSection(section.type, section.included).fields;
+      return {
+        ...section,
+        fields: section.type === "countdown"
+          ? { ...defaults, date: firstEventDate || "2027-05-22", ...section.fields }
+          : { ...defaults, ...section.fields },
+        items: getSectionItems(section),
+      };
+    }),
   };
 }
 

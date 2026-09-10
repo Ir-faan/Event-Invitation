@@ -34,7 +34,7 @@ const palettes = [
   { name: "Purple / Lilac", colours: ["#75617f", "#b8a2c1", "#f1eaf3"] },
 ];
 
-const process = [
+const designProcess = [
   { icon: Palette, number: "01", title: "You design it", copy: "Choose your colours, opening, photos and the invitation parts you want." },
   { icon: Sparkles, number: "02", title: "We make it", copy: "We build your invitation, put it online and send you the link so you can review the finished result." },
   { icon: CreditCard, number: "03", title: "Payment", copy: "Pay only after you receive the link and are happy with your invitation." },
@@ -67,7 +67,7 @@ const ribbonMessage = "LOVE STORIES IN MOTION ✦ WEDDINGS WITH SOUL ✦ ENGAGEM
 
 // Add the WhatsApp number with country code and social links here when they are ready.
 // Example WhatsApp format for Mauritius: 2305XXXXXXX (numbers only, no + or spaces).
-const whatsappNumber = "";
+const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
 const socialLinks = {
   facebook: "",
   instagram: "",
@@ -267,7 +267,7 @@ export function LandingExperience() {
         </div>
         <div className="process-line reveal" aria-hidden="true"><span /></div>
         <div className="process-grid">
-          {process.map((step, index) => (
+          {designProcess.map((step, index) => (
             <article className="process-step reveal" key={step.number} style={{ "--reveal-delay": `${index * 100}ms` } as React.CSSProperties}>
               <div className="step-icon"><step.icon aria-hidden="true" /><span>{step.number}</span></div>
               <h3>{step.title}</h3>
@@ -435,7 +435,7 @@ export function LandingExperience() {
             </div>
           </article>
 
-          <article className="service-note-card consultation-note">
+          <article className="service-note-card consultation-note" id="consultation">
             <Smartphone aria-hidden="true" />
             <div className="consultation-copy">
               <div className="consultation-title-row">

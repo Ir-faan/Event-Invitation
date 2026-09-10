@@ -15,6 +15,7 @@ import {
   Info,
   LockKeyhole,
   MapPin,
+  MessageCircle,
   Monitor,
   MoveDown,
   MoveUp,
@@ -32,7 +33,6 @@ import {
 } from "lucide-react";
 import { InvitationPhonePreview } from "@/components/invitation-phone-preview";
 import {
-  bismillahAssets,
   calculateInvitationPrice,
   createInitialInvitation,
   createSection,
@@ -60,6 +60,8 @@ type PreviewFocus = { target: string; key: number };
 const draftStorageKey = "paperless-invites-active-draft";
 const maxImageBytes = 5 * 1024 * 1024;
 const acceptedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const whatsappSupportNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
+const whatsappSupportMessage = "Hi, I had trouble saving my invitation design. Could you please help me?";
 
 export function InvitationDesigner() {
   const [config, setConfig] = useState<InvitationConfig>(() => createInitialInvitation());
@@ -68,6 +70,7 @@ export function InvitationDesigner() {
   const [draft, setDraft] = useState<DraftIdentity | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [saveError, setSaveError] = useState("");
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showDesktopTip, setShowDesktopTip] = useState(true);
   const [replayKey, setReplayKey] = useState(0);
   const [previewFocus, setPreviewFocus] = useState<PreviewFocus>({ target: "hero", key: 0 });
@@ -77,6 +80,10 @@ export function InvitationDesigner() {
   const palette = getPalette(config.palette);
   const availableHeroPresets = getHeroPresets(config);
   const saveButtonText = saveState === "saving" ? "Saving…" : draft ? "Save changes" : "Save my design";
+  const hasCustomPart = config.sections.some((section) => section.type === "custom");
+  const whatsappSupportUrl = whatsappSupportNumber
+    ? `https://wa.me/${whatsappSupportNumber}?text=${encodeURIComponent(whatsappSupportMessage)}`
+    : "/#consultation";
 
   useEffect(() => {
     const saved = window.localStorage.getItem(draftStorageKey);
@@ -125,7 +132,7 @@ export function InvitationDesigner() {
 
   function chooseBismillah(enabled: boolean) {
     updateConfig((current) => ({ ...current, bismillah: { enabled } }));
-    activatePreview(enabled ? "bismillah" : "hero");
+    activatePreview("bismillah");
   }
 
   function chooseOpening(type: OpeningType) {
@@ -136,6 +143,10 @@ export function InvitationDesigner() {
   }
 
   function chooseHero(type: HeroType) {
+    if (config.hero.uploadedUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(config.hero.uploadedUrl);
+      objectUrls.current = objectUrls.current.filter((item) => item !== config.hero.uploadedUrl);
+    }
     setPendingFiles((current) => {
       const next = { ...current };
       delete next.hero;
@@ -149,12 +160,16 @@ export function InvitationDesigner() {
   }
 
   function chooseHeroPreset(index: number) {
+    if (config.hero.uploadedUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(config.hero.uploadedUrl);
+      objectUrls.current = objectUrls.current.filter((item) => item !== config.hero.uploadedUrl);
+    }
     setPendingFiles((current) => {
       const next = { ...current };
       delete next.hero;
       return next;
     });
-    updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "preset", presetIndex: index } }));
+    updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "preset", presetIndex: index, uploadedUrl: "" } }));
     activatePreview("hero");
   }
 
@@ -167,6 +182,7 @@ export function InvitationDesigner() {
 
   function updateContact(field: keyof InvitationConfig["contact"], value: string) {
     const normalized = field === "phone" ? value.replace(/\D/g, "").slice(0, 8) : value;
+    if (validationErrors.length) setValidationErrors([]);
     updateConfig((current) => ({ ...current, contact: { ...current.contact, [field]: normalized } }));
   }
 
@@ -252,10 +268,32 @@ export function InvitationDesigner() {
     if (!file) return;
     const error = validateFiles([file]);
     if (error) return;
+    if (config.hero.uploadedUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(config.hero.uploadedUrl);
+      objectUrls.current = objectUrls.current.filter((item) => item !== config.hero.uploadedUrl);
+    }
     const url = URL.createObjectURL(file);
     objectUrls.current.push(url);
     setPendingFiles((current) => ({ ...current, hero: [file] }));
     updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "upload", uploadedUrl: url } }));
+    activatePreview("hero");
+  }
+
+  function removeHeroPhoto() {
+    const url = config.hero.uploadedUrl;
+    if (url.startsWith("blob:")) {
+      URL.revokeObjectURL(url);
+      objectUrls.current = objectUrls.current.filter((item) => item !== url);
+    }
+    setPendingFiles((current) => {
+      const next = { ...current };
+      delete next.hero;
+      return next;
+    });
+    updateConfig((current) => ({
+      ...current,
+      hero: { ...current.hero, photoSource: "preset", presetIndex: 0, uploadedUrl: "" },
+    }));
     activatePreview("hero");
   }
 
@@ -273,9 +311,49 @@ export function InvitationDesigner() {
     activatePreview(sectionId);
   }
 
+  function removeGlimpsePhoto(sectionId: string, imageIndex: number) {
+    const section = config.sections.find((item) => item.id === sectionId);
+    const url = section?.images[imageIndex];
+    if (!section || !url) return;
+
+    if (url.startsWith("blob:")) {
+      const pendingIndex = section.images
+        .slice(0, imageIndex + 1)
+        .filter((image) => image.startsWith("blob:"))
+        .length - 1;
+      const slot = `section:${sectionId}:images`;
+      URL.revokeObjectURL(url);
+      objectUrls.current = objectUrls.current.filter((item) => item !== url);
+      setPendingFiles((current) => {
+        const next = { ...current };
+        const files = [...(next[slot] ?? [])];
+        files.splice(pendingIndex, 1);
+        if (files.length) next[slot] = files;
+        else delete next[slot];
+        return next;
+      });
+    }
+
+    updateSection(sectionId, (item) => ({
+      ...item,
+      images: item.images.filter((_, index) => index !== imageIndex),
+    }));
+    activatePreview(sectionId);
+  }
+
   async function saveDesign(event: FormEvent) {
     event.preventDefault();
     if (saveState === "saving") return;
+    const errors: string[] = [];
+    if (config.contact.name.trim().length < 2) errors.push("Please enter your name so we know who placed the order.");
+    if (!/^5\d{7}$/.test(config.contact.phone.trim())) errors.push("Enter a Mauritian phone number with exactly 8 digits, starting with 5.");
+    if (errors.length) {
+      setValidationErrors(errors);
+      setSaveState("idle");
+      window.setTimeout(() => document.getElementById("designer-contact-title")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
+      return;
+    }
+    setValidationErrors([]);
     setSaveState("saving");
     setSaveError("");
 
@@ -325,6 +403,11 @@ export function InvitationDesigner() {
 
   return (
     <main className={`designer-page designer-mobile-${mobileView}`} style={{ "--builder-accent": palette.theme.primary, "--builder-soft": palette.theme.background } as CSSProperties}>
+      <div className="designer-page-petals" aria-hidden="true">
+        {Array.from({ length: 14 }, (_, index) => (
+          <span key={index} style={{ "--petal-x": `${(index * 29) % 97}%`, "--petal-delay": `${-(index % 7) * 2.1}s`, "--petal-duration": `${15 + (index % 5) * 2.4}s` } as CSSProperties}>{index % 3 === 0 ? "❀" : "·"}</span>
+        ))}
+      </div>
       <header className="designer-header">
         <Link href="/" className="designer-back"><ArrowLeft aria-hidden="true" /> Back to Paperless Invites</Link>
         <div className="designer-title">
@@ -346,14 +429,10 @@ export function InvitationDesigner() {
         <button type="button" className={mobileView === "preview" ? "is-active" : ""} onClick={showMobilePreview}>View preview</button>
       </div>
 
-      <div className="designer-fixed-price" role="status" aria-live="polite">
-        <div><small>Total price</small><strong>Rs {price.total.toLocaleString("en-US")}</strong></div>
-      </div>
-
       {showDesktopTip && <div className="designer-device-tip" role="status"><Monitor aria-hidden="true" /><span>For the easiest design experience, use a laptop or desktop computer.</span></div>}
 
       <div className="designer-workspace">
-        <form id="invitation-designer-form" className="designer-form" onSubmit={saveDesign}>
+        <form id="invitation-designer-form" className="designer-form" onSubmit={saveDesign} noValidate>
           <div className="designer-welcome">
             <Sparkles aria-hidden="true" />
             <div><strong>Start with the choices below.</strong><p>Your phone preview changes immediately. When you click into a field, it moves to that same part for you.</p></div>
@@ -374,18 +453,12 @@ export function InvitationDesigner() {
             <div className="designer-bismillah-picker">
               <div className="designer-subheading">
                 <strong>Add Bismillah at the top?</strong>
-                <span>The calligraphy is always displayed in white for a clear, elegant finish.</span>
+                <span>Add or remove it with one tap.</span>
               </div>
               <div className="designer-choice-grid">
                 <ChoiceButton selected={config.bismillah.enabled} title="Show Bismillah" description="Place the calligraphy above the invitation names." price={0} onClick={() => chooseBismillah(true)} />
                 <ChoiceButton selected={!config.bismillah.enabled} title="Without Bismillah" description="Start directly with the main photo area." price={0} onClick={() => chooseBismillah(false)} />
               </div>
-              {config.bismillah.enabled && (
-                <div className="designer-bismillah-sample" aria-label="White Bismillah artwork selected">
-                  <img src={bismillahAssets[config.palette]} alt="Bismillah ir-Rahman ir-Rahim" />
-                  <span><strong>White calligraphy</strong><small>The same clear artwork is used with every colour palette.</small></span>
-                </div>
-              )}
             </div>
           </section>
 
@@ -422,7 +495,7 @@ export function InvitationDesigner() {
                       onChange={(value) => updateConfig((current) => ({ ...current, opening: { ...current.opening, initials: value } }))}
                     />
                   )}
-                  <button className="designer-replay-button" type="button" onClick={() => { setReplayKey((key) => key + 1); activatePreview("opening"); showMobilePreview(); }}><RotateCcw aria-hidden="true" /> Preview this opening again</button>
+                  <button className="designer-replay-button" type="button" onClick={() => { setReplayKey((key) => key + 1); activatePreview("opening"); showMobilePreview(); }}><RotateCcw aria-hidden="true" /> Preview again</button>
                   {config.opening.type === "envelope" && <p className="designer-opening-note">Your initials do not appear in the mobile preview. They will be added only to the finished envelope when your invitation is deployed.</p>}
                 </div>
               </div>
@@ -447,11 +520,13 @@ export function InvitationDesigner() {
                   </button>
                 ))}
                 {config.hero.type === "interactive" && (
-                  <label className={`designer-upload-option ${config.hero.photoSource === "upload" ? "is-selected" : ""}`}>
-                    {config.hero.photoSource === "upload" && config.hero.uploadedUrl ? <img src={config.hero.uploadedUrl} alt="Your uploaded hero preview" /> : <span><Upload aria-hidden="true" /><strong>Upload your photo</strong><small>JPG, PNG or WebP · max 5 MB</small></span>}
-                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectHeroPhoto(event.target.files)} />
-                    {config.hero.photoSource === "upload" && <Check aria-hidden="true" />}
-                  </label>
+                  <div className={`designer-upload-card ${config.hero.photoSource === "upload" ? "is-selected" : ""}`}>
+                    <label className={`designer-upload-option ${config.hero.photoSource === "upload" ? "is-selected" : ""}`}>
+                      {config.hero.photoSource === "upload" && config.hero.uploadedUrl ? <img src={config.hero.uploadedUrl} alt="Your uploaded hero preview" /> : <span><Upload aria-hidden="true" /><strong>Upload your photo</strong><small>JPG, PNG or WebP · max 5 MB</small></span>}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { selectHeroPhoto(event.target.files); event.currentTarget.value = ""; }} />
+                    </label>
+                    {config.hero.photoSource === "upload" && config.hero.uploadedUrl && <button type="button" className="designer-photo-remove" onClick={removeHeroPhoto} aria-label="Remove uploaded hero photo"><Trash2 aria-hidden="true" /></button>}
+                  </div>
                 )}
               </div>
             </div>
@@ -461,6 +536,7 @@ export function InvitationDesigner() {
               <TextField label="First name" value={config.hero.firstName} onChange={(value) => updateHero("firstName", value)} />
               <TextField label="Second name" value={config.hero.secondName} onChange={(value) => updateHero("secondName", value)} />
               <TextArea label="Invitation message" value={config.hero.message} onChange={(value) => updateHero("message", value)} full rows={2} />
+              <TextField label="Wedding date shown on the hero and footer" type="date" value={config.hero.date} onChange={(value) => updateHero("date", value)} full />
             </div>
           </section>
 
@@ -485,6 +561,7 @@ export function InvitationDesigner() {
                   onDuplicate={() => duplicateSection(section)}
                   onRemove={() => removeSection(section.id)}
                   onPhotos={(files) => selectGlimpsePhotos(section.id, files)}
+                  onRemovePhoto={(imageIndex) => removeGlimpsePhoto(section.id, imageIndex)}
                 />
               ))}
             </div>
@@ -522,11 +599,26 @@ export function InvitationDesigner() {
             </div>
           </section>
 
-          {saveError && <div className="designer-notice is-error" role="alert"><Info aria-hidden="true" />{saveError}</div>}
-          <button className="designer-final-save" type="submit" disabled={saveState === "saving"}><Save aria-hidden="true" />{saveButtonText}</button>
+          {validationErrors.length > 0 && (
+            <div className="designer-validation-card" role="alert">
+              <span><Info aria-hidden="true" /></span>
+              <div><strong>Please check your contact details</strong><ul>{validationErrors.map((error) => <li key={error}>{error}</li>)}</ul></div>
+            </div>
+          )}
+          {saveError && (
+            <div className="designer-notice is-error" role="alert">
+              <Info aria-hidden="true" />
+              <span>{saveError}</span>
+              <a href={whatsappSupportUrl} target={whatsappSupportNumber ? "_blank" : undefined} rel={whatsappSupportNumber ? "noreferrer" : undefined}><MessageCircle aria-hidden="true" /> WhatsApp</a>
+            </div>
+          )}
+          <div className="designer-submit-panel">
+            <button className="designer-final-save" type="submit" disabled={saveState === "saving"}><Save aria-hidden="true" />{saveButtonText}</button>
+            <p>{hasCustomPart ? "We will contact you to arrange the video consultation for your custom part, then share payment details when your order is ready." : "Once your order is ready, we will contact you with the payment details."}</p>
+          </div>
         </form>
 
-        <InvitationPhonePreview config={config} replayKey={replayKey} focusTarget={previewFocus.target} focusKey={previewFocus.key} onReplay={() => { setReplayKey((key) => key + 1); activatePreview("opening"); }} />
+        <InvitationPhonePreview config={config} replayKey={replayKey} focusTarget={previewFocus.target} focusKey={previewFocus.key} priceTotal={price.total} onReplay={() => { setReplayKey((key) => key + 1); activatePreview("opening"); }} />
       </div>
 
     </main>
@@ -599,9 +691,10 @@ type SectionEditorProps = {
   onDuplicate: () => void;
   onRemove: () => void;
   onPhotos: (files: FileList | null) => void;
+  onRemovePhoto: (imageIndex: number) => void;
 };
 
-function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos }: SectionEditorProps) {
+function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto }: SectionEditorProps) {
   const definition = sectionDefinitions[section.type];
   const [isOpen, setIsOpen] = useState(section.type === "event-details" || (!section.included && index === total - 1));
   return (
@@ -614,7 +707,7 @@ function SectionEditor({ section, index, total, onActivate, onField, onItem, onA
       </summary>
       <div className="designer-section-body">
         {section.type !== "custom" && <TextField label="Section heading" value={section.title} onChange={onTitle} full />}
-        <SectionFields section={section} onField={onField} onItem={onItem} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onPhotos={onPhotos} />
+        <SectionFields section={section} onField={onField} onItem={onItem} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onPhotos={onPhotos} onRemovePhoto={onRemovePhoto} />
         <div className="designer-section-actions">
           <button type="button" onClick={() => onMove(-1)} disabled={index === 0}><MoveUp aria-hidden="true" /> Move up</button>
           <button type="button" onClick={() => onMove(1)} disabled={index === total - 1}><MoveDown aria-hidden="true" /> Move down</button>
@@ -626,13 +719,14 @@ function SectionEditor({ section, index, total, onActivate, onField, onItem, onA
   );
 }
 
-function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPhotos }: {
+function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPhotos, onRemovePhoto }: {
   section: InvitationSection;
   onField: (field: string, value: string) => void;
   onItem: (itemIndex: number, field: string, value: string) => void;
   onAddItem: (item: InvitationSectionItem) => void;
   onRemoveItem: (itemIndex: number) => void;
   onPhotos: (files: FileList | null) => void;
+  onRemovePhoto: (imageIndex: number) => void;
 }) {
   const items = getSectionItems(section);
   switch (section.type) {
@@ -678,21 +772,36 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
     case "gift":
       return <TextArea label="Gift message" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={4} />;
     case "special-message":
-      return <div className="designer-fields-grid"><TextField label="Who is this message for?" hint="For example: Our grandparents, our parents or our family" value={section.fields.recipient ?? ""} onChange={(value) => onField("recipient", value)} full /><TextArea label="Your message" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={4} /></div>;
+      return (
+        <div className="designer-fields-grid">
+          <TextField label="Small text above the heading" value={section.fields.eyebrow ?? ""} onChange={(value) => onField("eyebrow", value)} full />
+          <TextArea label="Your main message" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={3} />
+          <TextField label="Small dedication label" value={section.fields.dedicationLabel ?? ""} onChange={(value) => onField("dedicationLabel", value)} full />
+          <TextField label="Who is this message for?" hint="For example: Our grandparents, our parents or our family" value={section.fields.recipient ?? ""} onChange={(value) => onField("recipient", value)} full />
+          <TextField label="Small text below their name" value={section.fields.dedicationNote ?? ""} onChange={(value) => onField("dedicationNote", value)} full />
+          <TextField label="Closing words" value={section.fields.signature ?? ""} onChange={(value) => onField("signature", value)} full />
+        </div>
+      );
     case "seating":
       return (
         <div className="designer-repeatable-fields">
           <TextField label="Small introduction" value={section.fields.introduction ?? ""} onChange={(value) => onField("introduction", value)} full />
-          {items.map((item, itemIndex) => (
-            <div className="designer-mini-event designer-table-entry" key={itemIndex}>
-              <div className="designer-mini-heading"><span><Users aria-hidden="true" /> Table {itemIndex + 1}</span>{items.length > 1 && <button type="button" onClick={() => onRemoveItem(itemIndex)}><Trash2 aria-hidden="true" /> Remove</button>}</div>
-              <div className="designer-fields-grid">
-                <TextField label="Table name" value={item.table ?? ""} onChange={(value) => onItem(itemIndex, "table", value)} />
-                <TextArea label="Families at this table" hint="Write one family name per line." value={item.families ?? ""} onChange={(value) => onItem(itemIndex, "families", value)} rows={2} />
+          <div className="designer-table-grid">
+            {items.map((item, itemIndex) => (
+              <div className="designer-mini-event designer-table-entry" key={itemIndex}>
+                <div className="designer-mini-heading"><span><Users aria-hidden="true" /> Table {itemIndex + 1}</span>{items.length > 1 && <button type="button" onClick={() => onRemoveItem(itemIndex)} aria-label={`Delete table ${itemIndex + 1}`}><Trash2 aria-hidden="true" /> Delete</button>}</div>
+                <div className="designer-table-fields">
+                  <TextField label="Table name or number" value={item.table ?? ""} onChange={(value) => onItem(itemIndex, "table", value)} />
+                  <TextArea label="People at this table" hint="Write one family or guest name per line." value={item.families ?? ""} onChange={(value) => onItem(itemIndex, "families", value)} rows={3} />
+                </div>
               </div>
-            </div>
-          ))}
-          <AddItemButton icon={<Plus />} label="Add another table" onClick={() => onAddItem({ table: `Table ${items.length + 1}`, families: "Family name" })} />
+            ))}
+            <button type="button" className="designer-add-table" onClick={() => onAddItem({ table: `Table ${items.length + 1}`, families: "Family name" })}>
+              <span><Plus aria-hidden="true" /></span>
+              <strong>Add another table</strong>
+              <small>Create another table card</small>
+            </button>
+          </div>
         </div>
       );
     case "day-programme":
@@ -718,9 +827,18 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
           <TextArea label="Gallery introduction" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} />
           <label className="designer-inline-upload">
             <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG or WebP photos. Each photo can be up to 5 MB.</small></span>
-            <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => onPhotos(event.target.files)} />
+            <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => { onPhotos(event.target.files); event.currentTarget.value = ""; }} />
           </label>
-          {section.images.length > 0 && <div className="designer-uploaded-strip">{section.images.map((image, index) => <img src={image} alt={`Glimpse preview ${index + 1}`} key={`${image}-${index}`} />)}</div>}
+          {section.images.length > 0 && (
+            <div className="designer-uploaded-strip">
+              {section.images.map((image, index) => (
+                <figure key={`${image}-${index}`}>
+                  <img src={image} alt={`Glimpse preview ${index + 1}`} />
+                  <button type="button" onClick={() => onRemovePhoto(index)} aria-label={`Remove glimpse photo ${index + 1}`}><Trash2 aria-hidden="true" /></button>
+                </figure>
+              ))}
+            </div>
+          )}
         </div>
       );
     case "custom":
@@ -733,7 +851,7 @@ function AddItemButton({ icon, label, onClick }: { icon: ReactNode; label: strin
 }
 
 function TextField({ label, hint, value, onChange, full = false, type = "text", minLength, maxLength, pattern, title, icon, autoComplete, inputMode, required = false }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; type?: string; minLength?: number; maxLength?: number; pattern?: string; title?: string; icon?: ReactNode; autoComplete?: string; inputMode?: "text" | "tel" | "email" | "numeric"; required?: boolean }) {
-  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{icon}{label}</span><input type={type} value={value ?? ""} minLength={minLength} maxLength={maxLength} pattern={pattern} title={title} autoComplete={autoComplete} inputMode={inputMode} required={required} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
+  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{icon}{label}</span><input type={type} lang={type === "time" ? "en-GB" : undefined} value={value ?? ""} minLength={minLength} maxLength={maxLength} pattern={pattern} title={title} autoComplete={autoComplete} inputMode={inputMode} required={required} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
 }
 
 function TextArea({ label, hint, value, onChange, full = false, rows = 3 }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; rows?: number }) {

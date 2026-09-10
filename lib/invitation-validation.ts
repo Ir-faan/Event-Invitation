@@ -36,6 +36,10 @@ export function isInvitationConfig(value: unknown): value is InvitationConfig {
       && Number(config.hero.presetIndex) <= 20
       && typeof config.hero.uploadedUrl === "string"
       && config.hero.uploadedUrl.length <= 2_000
+      && (config.hero.date === undefined || (
+        typeof config.hero.date === "string"
+        && config.hero.date.length <= 40
+      ))
       && typeof config.hero.firstName === "string"
       && config.hero.firstName.length <= 120
       && typeof config.hero.secondName === "string"

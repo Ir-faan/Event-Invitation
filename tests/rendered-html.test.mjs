@@ -45,6 +45,9 @@ test("renders the guided invitation designer and mobile preview", async () => {
   assert.match(html, /For the easiest design experience/);
   assert.match(html, /Your name/);
   assert.match(html, /Mauritian phone or WhatsApp number/);
+  assert.match(html, /Wedding date shown on the hero and footer/);
+  assert.match(html, /Once your order is ready/);
+  assert.doesNotMatch(html, /White calligraphy/);
   assert.match(html, /Grand ballroom/);
   assert.match(html, /Garden ceremony/);
   assert.match(html, /Islamic elegance/);
@@ -63,9 +66,9 @@ test("includes exact palette artwork for the builder", async () => {
     `builder-hero-islamic-hall-${palette}.webp`,
   ]);
   assets.push(
-    "builder-interactive-hands.webp",
-    "builder-interactive-bouquet.webp",
-    "builder-interactive-garden-walk.webp",
+    "builder-interactive-henna-hands.webp",
+    "builder-interactive-orchid-bouquet.webp",
+    "builder-interactive-island-walk.webp",
   );
   await Promise.all(assets.map((asset) => access(new URL(`../public/images/${asset}`, import.meta.url))));
 });
@@ -102,13 +105,23 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.doesNotMatch(preview, /preview-envelope-seal-blank/);
   assert.doesNotMatch(preview, /invite-preview-monogram/);
   assert.match(styles, /\.designer-steps \{\s*position: relative/);
-  assert.match(styles, /\.designer-fixed-price \{ position: sticky/);
+  assert.match(styles, /\.designer-preview-panel \{ position: sticky/);
+  assert.match(styles, /\.designer-preview-price \{/);
   assert.match(styles, /\.designer-opening-thumb \{ height: auto; aspect-ratio: 2 \/ 3/);
   assert.match(styles, /\.invite-preview-hero-shade::after \{ content: none/);
   assert.match(styles, /\.invite-preview-bismillah img \{[^}]*brightness\(0\) invert\(1\)/);
   assert.match(styles, /@keyframes preview-sparkle-burst/);
   assert.match(designer, /pattern="5\[0-9\]\{7\}"/);
   assert.doesNotMatch(designer, /setNotice/);
+  assert.doesNotMatch(preview, /preview-envelope-seam/);
+  assert.match(preview, /focusTarget === "opening" \|\| focusTarget === "bismillah"/);
+  assert.match(preview, /formatDate\(config\.hero\.date\)/);
+  assert.match(preview, /String\(hours\)\.padStart\(2, "0"\)/);
+  assert.doesNotMatch(preview, /With love, always|Remembering with gratitude|Forever remembered/);
+  assert.match(designer, /designer-photo-remove/);
+  assert.match(designer, /Small dedication label/);
+  assert.match(designer, /Closing words/);
+  assert.match(styles, /@keyframes designer-petal-fall/);
 });
 
 test("renders the private order dashboard shell without a public login", async () => {

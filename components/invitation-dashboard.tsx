@@ -399,6 +399,7 @@ function OrderConfigEditor({ config, onChange }: { config: InvitationConfig; onC
           <EditorField label="First name"><input value={config.hero.firstName} onChange={(event) => update((next) => { next.hero.firstName = event.target.value; })} /></EditorField>
           <EditorField label="Second name"><input value={config.hero.secondName} onChange={(event) => update((next) => { next.hero.secondName = event.target.value; })} /></EditorField>
           <EditorField label="Invitation message" full><textarea value={config.hero.message} onChange={(event) => update((next) => { next.hero.message = event.target.value; })} /></EditorField>
+          <EditorField label="Wedding date shown on hero and footer" full><input type="date" value={config.hero.date} onChange={(event) => update((next) => { next.hero.date = event.target.value; })} /></EditorField>
         </div>
       </EditorGroup>
 
@@ -457,7 +458,7 @@ function EditorField({ label, full = false, children }: { label: string; full?: 
 function renderValueInput(key: string, value: string, onChange: (value: string) => void) {
   const common = { value, onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(event.target.value) };
   if (key.toLocaleLowerCase().includes("date") && /^\d{4}-\d{2}-\d{2}$/.test(value)) return <input type="date" {...common} />;
-  if (key.toLocaleLowerCase() === "time") return <input type="time" {...common} />;
+  if (key.toLocaleLowerCase() === "time") return <input type="time" lang="en-GB" {...common} />;
   if (key.toLocaleLowerCase().includes("url")) return <input type="url" {...common} />;
   if (isLongValue(key, value)) return <textarea {...common} />;
   return <input {...common} />;

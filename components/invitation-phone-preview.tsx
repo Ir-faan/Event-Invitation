@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import {
   bismillahAssets,
-  getEventDetails,
   getHeroImage,
   getHeroPreset,
   getPalette,
@@ -32,15 +31,16 @@ type PreviewProps = {
   focusTarget: string;
   focusKey: number;
   onReplay: () => void;
+  priceTotal?: number;
 };
 
-export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKey, onReplay }: PreviewProps) {
+export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKey, onReplay, priceTotal }: PreviewProps) {
   const screenRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const screen = screenRef.current;
     if (!screen) return;
-    if (focusTarget === "opening") {
+    if (focusTarget === "opening" || focusTarget === "bismillah") {
       screen.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -61,6 +61,12 @@ export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKe
 
   return (
     <aside className="designer-preview-panel" aria-label="Live mobile invitation preview">
+      {typeof priceTotal === "number" && (
+        <div className="designer-preview-price" role="status" aria-live="polite">
+          <small>Total price</small>
+          <strong>Rs {priceTotal.toLocaleString("en-US")}</strong>
+        </div>
+      )}
       <div className="designer-preview-heading">
         <div>
           <span className="designer-live-dot" />
@@ -96,9 +102,7 @@ export function PublishedInvitation({ config }: { config: InvitationConfig }) {
 }
 
 function InvitationPreviewContent({ config, replayKey }: { config: InvitationConfig; replayKey: number }) {
-  const footerDetails = getEventDetails(config);
-  const footerEvent = getSectionItems(footerDetails)[0];
-  const footerDate = formatDate(footerEvent?.date ?? footerDetails.fields.date);
+  const footerDate = formatDate(config.hero.date);
   return (
     <>
       <OpeningPreview config={config} replayKey={replayKey} />
@@ -137,7 +141,6 @@ function OpeningPreview({ config, replayKey }: { config: InvitationConfig; repla
       <div className="preview-opening preview-opening-envelope" key={`envelope-${replayKey}`} style={{ "--opening-tint": palette.theme.primary } as CSSProperties}>
         <div className="preview-envelope-panel preview-envelope-left"><img src={asset.urls[config.palette]} alt="" /></div>
         <div className="preview-envelope-panel preview-envelope-right"><img src={asset.urls[config.palette]} alt="" /></div>
-        <div className="preview-envelope-seam" aria-hidden="true" />
         <span className="preview-opening-label">Tap to open</span>
       </div>
     );
@@ -156,9 +159,7 @@ function OpeningPreview({ config, replayKey }: { config: InvitationConfig; repla
 function HeroPreview({ config, replayKey }: { config: InvitationConfig; replayKey: number }) {
   const image = getHeroImage(config);
   const preset = getHeroPreset(config);
-  const details = getEventDetails(config);
-  const firstEvent = getSectionItems(details)[0];
-  const formattedDate = formatDate(firstEvent?.date ?? details.fields.date);
+  const formattedDate = formatDate(config.hero.date);
   const imageStyle = config.hero.photoSource === "preset"
     ? { objectPosition: preset.objectPosition, transform: `scale(${preset.zoom})` }
     : undefined;
@@ -397,16 +398,28 @@ function SectionPreview({ section }: { section: InvitationSection }) {
         </section>
       );
     case "special-message":
+      const hasMessage = Boolean(section.fields.message?.trim());
+      const hasDedication = Boolean(
+        section.fields.dedicationLabel?.trim()
+        || section.fields.recipient?.trim()
+        || section.fields.dedicationNote?.trim(),
+      );
       return (
         <section className="invite-preview-section preview-message" data-preview-section={section.id}>
           <article className="preview-memory-card">
             <span className="preview-paper-corners" aria-hidden="true"><Leaf /><Leaf /><Leaf /><Leaf /></span>
-            <span className="preview-section-eyebrow">With love, always</span>
+            {section.fields.eyebrow?.trim() && <span className="preview-section-eyebrow">{section.fields.eyebrow}</span>}
             <h3>{section.title}</h3>
-            <div className="preview-memory-rule"><i /><Leaf aria-hidden="true" /><i /></div>
-            <p>{section.fields.message}</p>
-            <div className="preview-memory-dedication"><small>Remembering with gratitude</small><strong>{section.fields.recipient}</strong><span>Whose love still lights our way</span></div>
-            <div className="preview-memory-signature">Forever remembered · Forever loved</div>
+            {hasMessage && <div className="preview-memory-rule"><i /><Leaf aria-hidden="true" /><i /></div>}
+            {hasMessage && <p>{section.fields.message}</p>}
+            {hasDedication && (
+              <div className="preview-memory-dedication">
+                {section.fields.dedicationLabel?.trim() && <small>{section.fields.dedicationLabel}</small>}
+                {section.fields.recipient?.trim() && <strong>{section.fields.recipient}</strong>}
+                {section.fields.dedicationNote?.trim() && <span>{section.fields.dedicationNote}</span>}
+              </div>
+            )}
+            {section.fields.signature?.trim() && <div className="preview-memory-signature">{section.fields.signature}</div>}
           </article>
         </section>
       );
@@ -549,6 +562,5 @@ function formatTime(value = "") {
   if (!value) return "Choose a time";
   const [hours, minutes] = value.split(":").map(Number);
   if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return value;
-  const date = new Date(2020, 0, 1, hours, minutes);
-  return new Intl.DateTimeFormat("en-GB", { hour: "numeric", minute: "2-digit" }).format(date);
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
