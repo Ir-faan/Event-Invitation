@@ -36,7 +36,7 @@ const examples = [
   { name: "Evening Elegance", mood: "Deep colours & an elegant look", image: "/images/moonlit-bloom.webp" },
 ];
 
-// 8 cards total: 6 hero/scratch photos + 2 opening effects = exactly 25% openings.
+// Each marquee row has its own images. Six photo cards + two opening cards keeps openings at 25%.
 const movingShowcase = [
   { image: "/images/builder-hero-beige.webp", label: "Warm beige hero", type: "photo" },
   { image: "/images/builder-interactive-henna-hands.webp", label: "Scratch reveal — henna hands", type: "photo" },
@@ -46,6 +46,17 @@ const movingShowcase = [
   { image: "/images/builder-interactive-island-walk.webp", label: "Scratch reveal — island walk", type: "photo" },
   { image: "/images/builder-envelope-botanical-beige.webp", label: "Botanical envelope opening", type: "opening" },
   { image: "/images/builder-curtain-classic-burgundy.webp", label: "Burgundy curtain reveal", type: "opening" },
+];
+
+const movingShowcaseSecondRow = [
+  { image: "/images/builder-hero-burgundy.webp", label: "Burgundy wedding hero", type: "photo" },
+  { image: "/images/builder-interactive-bouquet.webp", label: "Scratch reveal — bridal bouquet", type: "photo" },
+  { image: "/images/builder-hero-islamic-hall-lilac.webp", label: "Lilac wedding hall hero", type: "photo" },
+  { image: "/images/builder-interactive-garden-walk.webp", label: "Scratch reveal — garden walk", type: "photo" },
+  { image: "/images/builder-hero-ballroom-pink.webp", label: "Pink ballroom hero", type: "photo" },
+  { image: "/images/builder-interactive-hands.webp", label: "Scratch reveal — couple hands", type: "photo" },
+  { image: "/images/builder-envelope-classic-olive.webp", label: "Olive envelope opening", type: "opening" },
+  { image: "/images/builder-curtain-botanical-dusty-blue.webp", label: "Dusty blue curtain reveal", type: "opening" },
 ];
 
 const designProcess = [
@@ -169,7 +180,7 @@ export function LandingExperienceRefresh() {
           </div>
           <div className="marquee-row row-two" aria-hidden="true">
             <div className="marquee-track reverse">
-              {[...movingShowcase].reverse().concat([...movingShowcase].reverse()).map((card, index) => <MovingCard key={`b-${index}`} card={card} small />)}
+              {[...movingShowcaseSecondRow, ...movingShowcaseSecondRow].map((card, index) => <MovingCard key={`b-${index}`} card={card} small />)}
             </div>
           </div>
           <div className="spotlight-phone" aria-hidden="true">
