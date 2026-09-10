@@ -1,0 +1,7 @@
+.landing-refresh .moving-image-card::after {
+  content: none !important;
+}
+
+.landing-refresh .moving-image-card figcaption {
+  display: none !important;
+}
