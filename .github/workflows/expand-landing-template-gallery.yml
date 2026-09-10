@@ -1,0 +1,80 @@
+name: Expand landing template gallery
+
+on:
+  push:
+    branches:
+      - landing-page-gallery-customizer-refresh
+
+permissions:
+  contents: write
+
+jobs:
+  update-gallery:
+    if: github.event.head_commit.message == 'Expand landing template gallery'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: landing-page-gallery-customizer-refresh
+          fetch-depth: 0
+
+      - name: Add more template cards
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('components/landing-experience-refresh.tsx')
+          text = path.read_text()
+
+          replacement = '''const examples = [
+  { name: "Soft & Timeless", mood: "Beige, ivory & warm colours", image: "/images/coastal-reverie.webp" },
+  { name: "Olive Romance", mood: "Olive green & soft flowers", image: "/images/rose-scratch-hero-olive.webp" },
+  { name: "Evening Elegance", mood: "Deep colours & an elegant look", image: "/images/moonlit-bloom.webp" },
+  { name: "Warm Garden", mood: "Soft beige & garden romance", image: "/images/builder-hero-beige.webp" },
+  { name: "Dusty Blue Ballroom", mood: "Dusty blue & refined details", image: "/images/builder-hero-ballroom-dusty-blue.webp" },
+  { name: "Burgundy Evening", mood: "Burgundy, warmth & candlelight", image: "/images/builder-hero-burgundy.webp" },
+  { name: "Lilac Hall", mood: "Lilac tones & elegant arches", image: "/images/builder-hero-islamic-hall-lilac.webp" },
+  { name: "Blush Ballroom", mood: "Soft pink & romantic light", image: "/images/builder-hero-ballroom-pink.webp" },
+];'''
+
+          updated, count = re.subn(
+              r'const examples = \[.*?\n\];',
+              replacement,
+              text,
+              count=1,
+              flags=re.S,
+          )
+          if count != 1:
+              raise SystemExit('Could not locate examples array')
+
+          path.write_text(updated)
+          PY
+
+      - name: Verify eight cards
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          text = Path('components/landing-experience-refresh.tsx').read_text()
+          block = re.search(r'const examples = \[(.*?)\n\];', text, re.S)
+          if not block:
+              raise SystemExit('examples array missing')
+          count = block.group(1).count('{ name:')
+          print(f'Template cards: {count}')
+          if count < 8:
+              raise SystemExit('Expected at least eight template cards')
+          PY
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/landing-experience-refresh.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "Add eight compact landing template cards [skip ci]"
+          git push origin HEAD:landing-page-gallery-customizer-refresh
