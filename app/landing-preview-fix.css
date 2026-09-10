@@ -1,0 +1,80 @@
+.landing-refresh .customizer-demo {
+  overflow: hidden;
+  padding: .7rem;
+}
+
+/* The designer is shown as a non-interactive visual preview, not as a tiny
+   scrollable app. Render a wider desktop viewport inside the card so the
+   form fields and the full phone preview are visible together. */
+.landing-refresh .customizer-frame {
+  position: relative;
+  height: auto !important;
+  aspect-ratio: 1.4 / 1;
+  overflow: hidden;
+  border: 1px solid rgba(74,25,34,.08);
+  border-radius: 1rem;
+  background: #f7f1eb;
+}
+
+.landing-refresh .customizer-frame iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(190% + 32px);
+  height: calc(190% + 32px);
+  border: 0;
+  transform: scale(.5263158);
+  transform-origin: top left;
+  pointer-events: none;
+  background: #f7f1eb;
+}
+
+/* Keep the visual clean: the live-preview idea is already explained beside
+   the image and inside the designer itself. */
+.landing-refresh .customizer-live-badge {
+  display: none;
+}
+
+.landing-refresh .customizer-demo > p {
+  margin: .75rem .5rem .2rem;
+}
+
+@media (max-width: 1080px) {
+  .landing-refresh .customizer-demo {
+    width: min(62rem, 100%);
+  }
+
+  .landing-refresh .customizer-frame iframe {
+    width: calc(175% + 32px);
+    height: calc(175% + 32px);
+    transform: scale(.5714286);
+  }
+}
+
+@media (max-width: 760px) {
+  .landing-refresh .customizer-frame {
+    aspect-ratio: 1.28 / 1;
+  }
+
+  .landing-refresh .customizer-frame iframe {
+    width: calc(160% + 28px);
+    height: calc(160% + 28px);
+    transform: scale(.625);
+  }
+}
+
+@media (max-width: 520px) {
+  .landing-refresh .customizer-browser-bar {
+    min-height: 2.55rem;
+  }
+
+  .landing-refresh .customizer-frame {
+    aspect-ratio: 1.12 / 1;
+  }
+
+  .landing-refresh .customizer-frame iframe {
+    width: calc(150% + 24px);
+    height: calc(150% + 24px);
+    transform: scale(.6666667);
+  }
+}
