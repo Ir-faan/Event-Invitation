@@ -13,6 +13,7 @@ import "./landing-preview-fix.css";
 import "./landing-navbar-cleanup.css";
 import "./footer-contact-cleanup.css";
 import "./landing-palette-compact.css";
+import "./landing-gallery-row-fix.css";
 import { TemplateCardRouter } from "@/components/template-card-router";
 
 export const metadata: Metadata = {
