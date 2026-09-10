@@ -5,3 +5,11 @@
 .landing-refresh .moving-image-card figcaption {
   display: none !important;
 }
+
+.landing-refresh .moving-image-card img {
+  transition: none !important;
+}
+
+.landing-refresh .moving-image-card:hover img {
+  transform: none !important;
+}
