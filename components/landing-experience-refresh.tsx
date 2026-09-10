@@ -34,6 +34,11 @@ const examples = [
   { name: "Soft & Timeless", mood: "Beige, ivory & warm colours", image: "/images/coastal-reverie.webp" },
   { name: "Olive Romance", mood: "Olive green & soft flowers", image: "/images/rose-scratch-hero-olive.webp" },
   { name: "Evening Elegance", mood: "Deep colours & an elegant look", image: "/images/moonlit-bloom.webp" },
+  { name: "Warm Garden", mood: "Soft beige & garden romance", image: "/images/builder-hero-beige.webp" },
+  { name: "Dusty Blue Ballroom", mood: "Dusty blue & refined details", image: "/images/builder-hero-ballroom-dusty-blue.webp" },
+  { name: "Burgundy Evening", mood: "Burgundy, warmth & candlelight", image: "/images/builder-hero-burgundy.webp" },
+  { name: "Lilac Hall", mood: "Lilac tones & elegant arches", image: "/images/builder-hero-islamic-hall-lilac.webp" },
+  { name: "Blush Ballroom", mood: "Soft pink & romantic light", image: "/images/builder-hero-ballroom-pink.webp" },
 ];
 
 // Each marquee row has its own images. Six photo cards + two opening cards keeps openings at 25%.
