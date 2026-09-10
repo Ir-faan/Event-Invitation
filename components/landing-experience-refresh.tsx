@@ -9,6 +9,8 @@ import {
   Clock3,
   CreditCard,
   Eye,
+  Gem,
+  Heart,
   Layers3,
   Leaf,
   Menu,
@@ -67,6 +69,15 @@ const extraParts = [
   "Glimpse Of Us",
 ];
 
+const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
+const socialLinks = { facebook: "", instagram: "", tiktok: "" };
+const consultationMessage = "Hi, I would like some help designing my invitation and would like to arrange a free video consultation.";
+const customPartMessage = "Hi, I would like to add a custom part to my invitation and discuss it during the free video consultation.";
+
+function getWhatsAppLink(message: string) {
+  return whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}` : "#";
+}
+
 export function LandingExperienceRefresh() {
   useEffect(() => {
     const reveals = document.querySelectorAll<HTMLElement>(".landing-refresh .reveal");
@@ -88,6 +99,9 @@ export function LandingExperienceRefresh() {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  const consultationWhatsAppLink = getWhatsAppLink(consultationMessage);
+  const customPartWhatsAppLink = getWhatsAppLink(customPartMessage);
 
   return (
     <main id="top" className="landing-refresh">
@@ -114,7 +128,7 @@ export function LandingExperienceRefresh() {
           <span>Paperless Invites</span>
         </a>
         <nav aria-label="Main navigation">
-          <a href="#gallery">Examples</a>
+          <a href="#collection">Examples</a>
           <a href="#customise">Customise</a>
           <a href="#process">How it works</a>
           <a href="#compare">Why digital</a>
@@ -124,7 +138,7 @@ export function LandingExperienceRefresh() {
         <details className="mobile-menu">
           <summary aria-label="Open navigation"><Menu aria-hidden="true" /></summary>
           <div>
-            <a href="#gallery">Examples</a>
+            <a href="#collection">Examples</a>
             <a href="#customise">Customise</a>
             <a href="#process">How it works</a>
             <a href="#compare">Why digital</a>
@@ -143,7 +157,7 @@ export function LandingExperienceRefresh() {
           <p>Beautiful digital invitations for weddings and special days. Choose the details you love, preview them live and share your finished invitation in a tap.</p>
           <div className="hero-actions">
             <a className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></a>
-            <a className="text-link" href="#gallery">See what you can create <ArrowDownRight aria-hidden="true" /></a>
+            <a className="text-link" href="#collection">See what you can create <ArrowDownRight aria-hidden="true" /></a>
           </div>
         </div>
 
@@ -164,7 +178,40 @@ export function LandingExperienceRefresh() {
             <div className="phone-copy"><span>PAPERLESS INVITES</span><strong>Your story<br />begins here</strong><i>Save the date</i></div>
           </div>
         </div>
-        <a href="#compare" className="scroll-cue"><span>Why digital?</span><ChevronDown aria-hidden="true" /></a>
+        <a href="#collection" className="scroll-cue"><span>Browse invitations</span><ChevronDown aria-hidden="true" /></a>
+      </section>
+
+      <section className="collection section" id="collection" aria-labelledby="collection-title">
+        <div className="section-heading centered reveal">
+          <p className="eyebrow">✦ Invitation inspiration</p>
+          <h2 id="collection-title">Start with an idea.<br /><em>Then make it your own.</em></h2>
+          <p>These examples show a few moods you can create. Your final invitation can mix the colours, opening, photos and parts that suit you.</p>
+        </div>
+        <div className="collection-grid">
+          {examples.map((item, index) => (
+            <article className="collection-card reveal" key={item.name} style={{ "--reveal-delay": `${index * 110}ms` } as React.CSSProperties}>
+              <img src={item.image} alt={`${item.name} digital invitation example`} />
+              <div className="collection-number">0{index + 1}</div>
+              <div className="collection-content">
+                <span>{item.mood}</span>
+                <h3>{item.name}</h3>
+                <p>Invitation inspiration</p>
+              </div>
+              <a href="/design-invitation" aria-label={`Design an invitation inspired by ${item.name}`}><ArrowDownRight aria-hidden="true" /></a>
+            </article>
+          ))}
+        </div>
+        <div className="palette-showcase reveal" aria-label="Available colour choices">
+          <span className="palette-showcase-label">Choose from these colour palettes</span>
+          <div className="palette-showcase-grid">
+            {palettes.map((palette) => (
+              <div className="palette-pill" key={palette.name}>
+                <span className="palette-dots" aria-hidden="true">{palette.colours.map((colour) => <i key={colour} style={{ background: colour }} />)}</span>
+                <strong>{palette.name}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="comparison section landing-comparison" id="compare" aria-labelledby="comparison-title">
@@ -217,61 +264,25 @@ export function LandingExperienceRefresh() {
           </div>
           <div className="customizer-live-badge"><span className="live-dot" /> Live preview while you design</div>
           <div className="customizer-frame">
-            <iframe
-              src="/design-invitation"
-              title="Paperless Invites invitation designer preview"
-              loading="lazy"
-              tabIndex={-1}
-            />
+            <iframe src="/design-invitation" title="Paperless Invites invitation designer preview" loading="lazy" tabIndex={-1} />
           </div>
           <p>This is the same creation page you will use to design your invitation.</p>
         </div>
       </section>
 
-      <section className="collection section" id="collection" aria-labelledby="collection-title">
-        <div className="section-heading centered reveal">
-          <p className="eyebrow">✦ Invitation inspiration</p>
-          <h2 id="collection-title">Start with an idea.<br /><em>Then make it your own.</em></h2>
-          <p>These examples show a few moods you can create. Your final invitation can mix the colours, opening, photos and parts that suit you.</p>
+      <section className="envelope-section" aria-labelledby="envelope-title">
+        <div className="envelope-visual reveal">
+          <div className="envelope-halo" aria-hidden="true" />
+          <img src="/images/digital-envelope.webp" alt="Ivory digital envelope with a burgundy wax seal" />
+          <span className="floating-note note-one">Your colours</span>
+          <span className="floating-note note-two">Your story</span>
+          <span className="floating-note note-three">Your moment</span>
         </div>
-        <div className="collection-grid">
-          {examples.map((item, index) => (
-            <article className="collection-card reveal" key={item.name} style={{ "--reveal-delay": `${index * 110}ms` } as React.CSSProperties}>
-              <img src={item.image} alt={`${item.name} digital invitation example`} />
-              <div className="collection-number">0{index + 1}</div>
-              <div className="collection-content">
-                <span>{item.mood}</span>
-                <h3>{item.name}</h3>
-                <p>Invitation inspiration</p>
-              </div>
-              <a href="/design-invitation" aria-label={`Design an invitation inspired by ${item.name}`}><ArrowDownRight aria-hidden="true" /></a>
-            </article>
-          ))}
-        </div>
-        <div className="palette-showcase reveal" aria-label="Available colour choices">
-          <span className="palette-showcase-label">Choose from these colour palettes</span>
-          <div className="palette-showcase-grid">
-            {palettes.map((palette) => (
-              <div className="palette-pill" key={palette.name}>
-                <span className="palette-dots" aria-hidden="true">{palette.colours.map((colour) => <i key={colour} style={{ background: colour }} />)}</span>
-                <strong>{palette.name}</strong>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="opening-showcase" aria-labelledby="opening-title">
-        <div className="opening-gallery reveal" aria-hidden="true">
-          <figure className="opening-shot opening-shot-main"><img src="/images/builder-envelope-botanical-beige.webp" alt="" /></figure>
-          <figure className="opening-shot opening-shot-side"><img src="/images/builder-curtain-classic-burgundy.webp" alt="" /></figure>
-          <figure className="opening-shot opening-shot-small"><img src="/images/builder-envelope-classic-olive.webp" alt="" /></figure>
-        </div>
-        <div className="opening-copy reveal">
-          <p className="eyebrow"><Sparkles aria-hidden="true" /> Optional opening</p>
-          <h2 id="opening-title">Make the first tap<br /><em>feel special.</em></h2>
-          <p>Begin with an elegant envelope, reveal the invitation behind curtains, or let guests see the invitation immediately. The opening is your choice.</p>
-          <a className="text-link opening-link" href="/design-invitation">See the opening choices <ArrowRight aria-hidden="true" /></a>
+        <div className="envelope-copy reveal">
+          <p className="eyebrow"><span className="live-dot" /> Optional opening</p>
+          <h2 id="envelope-title">Make the first tap <em>feel special.</em></h2>
+          <p>You can start with a digital envelope, a curtain opening, or no opening at all. Choose the one you like best.</p>
+          <div className="mini-features"><span><Palette aria-hidden="true" /> Your colours</span><span><Gem aria-hidden="true" /> Your initials</span><span><Heart aria-hidden="true" /> Your choice</span></div>
         </div>
       </section>
 
@@ -296,7 +307,7 @@ export function LandingExperienceRefresh() {
         <div className="pricing-heading centered reveal">
           <p className="eyebrow">Simple pricing</p>
           <h2 id="pricing-title">Start at Rs 1,000.<br /><em>Add only what you want.</em></h2>
-          <p>The base invitation includes the essential parts. Extra invitation parts cost Rs 200 each, while another copy of an already-included part costs Rs 150.</p>
+          <p>Your invitation starts with the main parts already included. You only pay more when you choose an extra feature or an extra part.</p>
         </div>
 
         <div className="price-formula reveal" aria-label="Pricing formula">
@@ -304,75 +315,137 @@ export function LandingExperienceRefresh() {
           <Plus aria-hidden="true" />
           <div className="formula-extra"><span>Add your choices</span><strong>Only the extras you want</strong></div>
           <span className="formula-equals">=</span>
-          <div className="formula-total"><span>Your final price</span><strong>Shown while you design</strong></div>
+          <div className="formula-total"><span>Your final price</span><strong>Shown before payment</strong></div>
         </div>
 
         <div className="simple-pricing-layout">
           <article className="base-invite-card reveal">
             <div className="simple-price-badge">Step 1 · Start here</div>
-            <div className="base-price-row"><div><span>Basic invitation</span><strong>Rs 1,000</strong></div><Check aria-hidden="true" /></div>
-            <p>A complete digital invitation with the important parts already included.</p>
+            <div className="base-price-row">
+              <div><span>Basic invitation</span><strong>Rs 1,000</strong></div>
+              <Check aria-hidden="true" />
+            </div>
+            <p>This gives you a complete invitation with the important parts already included.</p>
+
             <div className="base-choice-block">
               <strong>Choose your colours</strong>
-              <span>Pick one of the six colour palettes.</span>
+              <span>Pick 1 of the 6 colour styles.</span>
               <div className="mini-palette-row" aria-label="Six available colour styles">
-                {palettes.map((palette) => <div key={palette.name} title={palette.name}>{palette.colours.slice(0, 2).map((colour) => <i key={colour} style={{ background: colour }} />)}</div>)}
+                {palettes.map((palette) => (
+                  <div key={palette.name} title={palette.name}>
+                    {palette.colours.slice(0, 2).map((colour) => <i key={colour} style={{ background: colour }} />)}
+                  </div>
+                ))}
               </div>
             </div>
+
             <div className="included-parts">
-              <strong>Included once in the base invitation</strong>
-              <span className="parts-help">You can add another version of any of these for Rs 150 each.</span>
+              <strong>These parts are included</strong>
+              <span className="parts-help">A “part” is one block of the invitation, such as the countdown or event details.</span>
               <ul>{includedParts.map((part) => <li key={part}><Check aria-hidden="true" />{part}</li>)}</ul>
+              <span className="parts-help">Want another copy of one of these included parts? Add it for Rs 150 each.</span>
             </div>
           </article>
 
           <article className="extras-card reveal">
             <div className="simple-price-badge">Step 2 · Add extras if you want</div>
             <h3>Choose your extras</h3>
-            <p>Your designer calculates the total as you choose. Nothing extra is required.</p>
+            <p>You do not need to add anything. Choose only the extras that matter to you.</p>
 
-            <PricingGroup number="1" title="How should the invitation open?" note="Opening effect">
+            <div className="extra-group">
+              <div className="extra-group-title"><div><span>1</span><strong>How should the invitation open?</strong></div><small>Opening effect</small></div>
               <div className="extra-options">
                 <div><span>No special opening</span><b>Included</b></div>
-                <div><span>Envelope & wax seal opening</span><b>+ Rs 200</b></div>
-                <div><span>Curtain reveal</span><b>+ Rs 200</b></div>
+                <div><span>Envelope opening with initials on wax seal</span><b>+ Rs 200</b></div>
+                <div><span>Curtain opening</span><b>+ Rs 200</b></div>
               </div>
-            </PricingGroup>
+            </div>
 
-            <PricingGroup number="2" title="Choose the main photo area" note="Hero interaction">
+            <div className="extra-group">
+              <div className="extra-group-title"><div><span>2</span><strong>Choose the main photo area</strong></div><small>The first big area guests see</small></div>
               <div className="extra-options">
                 <div><span>Normal photo in the background</span><b>Included</b></div>
-                <div><span>Interactive photo, such as scratch to reveal</span><b>+ Rs 100</b></div>
+                <div><span>Photo guests can interact with, such as scratch to reveal</span><b>+ Rs 100</b></div>
               </div>
-            </PricingGroup>
+            </div>
 
-            <PricingGroup number="3" title="Add more invitation parts" note="Rs 200 each">
+            <div className="extra-group">
+              <div className="extra-group-title"><div><span>3</span><strong>Add more invitation parts</strong></div><small>Rs 200 each</small></div>
               <div className="optional-parts-grid">
                 {extraParts.map((part) => <span key={part}><Sparkles aria-hidden="true" /><span>{part}</span><b>+ Rs 200</b></span>)}
               </div>
-              <p className="extra-note">Each additional invitation part from this list costs Rs 200.</p>
-            </PricingGroup>
-
-            <PricingGroup number="4" title="Repeat an included part" note="Rs 150 each">
-              <div className="optional-parts-grid repeat-parts-grid">
-                {includedParts.map((part) => <span key={part}><Plus aria-hidden="true" /><span>{part}</span><b>+ Rs 150</b></span>)}
-              </div>
-              <p className="extra-note">The first version is included in the base invitation. Add another countdown, event group, journey or gift section for Rs 150 each.</p>
-            </PricingGroup>
+              <p className="extra-note">Each extra invitation part costs Rs 200. Choose as many as you would like and the total price will be shown.</p>
+            </div>
 
             <div className="extra-group custom-part-group">
-              <div className="extra-group-title"><div><span>5</span><strong>Need something that is not listed?</strong></div><b>+ Rs 500</b></div>
-              <p>We can plan and create one completely custom invitation part with you.</p>
+              <div className="extra-group-title"><div><span>4</span><strong>Need something that is not listed?</strong></div><b>+ Rs 500</b></div>
+              <p>We can add one custom part made specially for your invitation. This is for something that is not already available in the choices above.</p>
+              <div className="custom-part-consultation">
+                <span>Your custom part will be planned with you during a free video consultation. If you already have something in mind or a design readily available, share it with us.</span>
+                <a
+                  className="button button-wine"
+                  href={customPartWhatsAppLink}
+                  aria-disabled={!whatsappNumber}
+                  onClick={(event) => !whatsappNumber && event.preventDefault()}
+                  target={whatsappNumber ? "_blank" : undefined}
+                  rel={whatsappNumber ? "noreferrer" : undefined}
+                >
+                  Discuss your custom idea <Send aria-hidden="true" />
+                </a>
+              </div>
             </div>
           </article>
         </div>
 
         <div className="pricing-service-notes reveal">
-          <article><CreditCard aria-hidden="true" /><div><strong>Pay after you review your link</strong><p>We send the finished invitation link first. Payment follows after you have reviewed it and are happy with the result.</p></div></article>
-          <article><Clock3 aria-hidden="true" /><div><strong>Usually ready in around 2–5 days</strong><p>Once the invitation details are final, your invitation link will normally be prepared within 2–5 days.</p></div></article>
+          <article className="service-note-card payment-note">
+            <CreditCard aria-hidden="true" />
+            <div>
+              <strong>Pay only after you receive your link</strong>
+              <p>We send you the finished invitation link first so you can review it and make sure you are happy. Payment is then made outside the website by MCB Juice or bank transfer. The payment details will be sent to you.</p>
+            </div>
+          </article>
+
+          <article className="service-note-card delivery-note">
+            <Clock3 aria-hidden="true" />
+            <div>
+              <strong>Ready in around 2–5 days</strong>
+              <p>Once all invitation details are final, your invitation link will normally be ready within 2–5 days. You can review the live invitation before making payment.</p>
+              <span className="delivery-time">Your satisfaction comes first — payment is requested only after you receive the link.</span>
+            </div>
+          </article>
+
+          <article className="service-note-card consultation-note" id="consultation">
+            <Smartphone aria-hidden="true" />
+            <div className="consultation-copy">
+              <div className="consultation-title-row"><strong>Free video consultation</strong><span className="free-consultation-badge">Free</span></div>
+              <p><b>Having trouble designing your invitation?</b> We can assist you through your choices and help you put the invitation together during a free video consultation.</p>
+            </div>
+            <div className="consultation-actions">
+              <a
+                className="button button-wine whatsapp-button"
+                href={consultationWhatsAppLink}
+                aria-disabled={!whatsappNumber}
+                onClick={(event) => !whatsappNumber && event.preventDefault()}
+                target={whatsappNumber ? "_blank" : undefined}
+                rel={whatsappNumber ? "noreferrer" : undefined}
+              >
+                <WhatsAppLogo /> Message us on WhatsApp
+              </a>
+              <div className="consultation-social-row">
+                <span>Or message us on</span>
+                <div className="consultation-socials" aria-label="Contact Paperless Invites on social media">
+                  <SocialIconLink href={socialLinks.instagram} label="Instagram"><InstagramLogo /></SocialIconLink>
+                  <SocialIconLink href={socialLinks.facebook} label="Facebook"><FacebookLogo /></SocialIconLink>
+                  <SocialIconLink href={socialLinks.tiktok} label="TikTok"><TikTokLogo /></SocialIconLink>
+                </div>
+              </div>
+            </div>
+          </article>
         </div>
+
         <div className="pricing-action reveal">
-          <p><strong>Ready to see your price?</strong> Build the invitation you want and watch the total update from your choices.</p>
+          <p><strong>Ready to start?</strong> Choose your options and build the invitation you want.</p>
           <a className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></a>
         </div>
       </section>
@@ -388,7 +461,7 @@ export function LandingExperienceRefresh() {
 
           <div className="footer-column">
             <span className="footer-column-title">Explore</span>
-            <a href="#gallery">Invitation examples</a>
+            <a href="#collection">Invitation examples</a>
             <a href="#customise">Customise yours</a>
             <a href="#process">How it works</a>
             <a href="#compare">Why digital</a>
@@ -424,18 +497,22 @@ function MovingCard({ card, small = false }: { card: { image: string; label: str
   );
 }
 
-function PricingGroup({ number, title, note, children }: { number: string; title: string; note: string; children: React.ReactNode }) {
+function SocialIconLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
+  if (!href) return <span className="social-button" title={label} aria-label={label}>{children}</span>;
+  return <a className="social-button" href={href} title={label} aria-label={label} target="_blank" rel="noreferrer">{children}</a>;
+}
+
+function WhatsAppLogo() {
   return (
-    <div className="extra-group">
-      <div className="extra-group-title"><div><span>{number}</span><strong>{title}</strong></div><small>{note}</small></div>
-      {children}
-    </div>
+    <svg className="whatsapp-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12.03 2a9.73 9.73 0 0 0-8.39 14.65L2.3 21.55l5.02-1.32A9.75 9.75 0 1 0 12.03 2Zm0 17.72a8 8 0 0 1-4.08-1.12l-.29-.17-2.98.78.8-2.91-.19-.3a8.01 8.01 0 1 1 6.74 3.72Zm4.38-5.98c-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.93-1.19-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.47-.39-.4-.54-.41h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.69 2.58 4.09 3.62.57.25 1.02.39 1.37.5.58.18 1.1.16 1.51.1.46-.07 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28Z" />
+    </svg>
   );
 }
 
 function FacebookLogo() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="brand-icon brand-facebook" viewBox="0 0 24 24" aria-hidden="true">
       <path fill="currentColor" d="M13.8 21v-8h2.8l.42-3.15H13.8V7.84c0-.91.26-1.53 1.62-1.53h1.73V3.5c-.3-.04-1.33-.13-2.53-.13-2.5 0-4.22 1.53-4.22 4.34v2.14H7.57V13h2.83v8h3.4Z" />
     </svg>
   );
@@ -443,10 +520,18 @@ function FacebookLogo() {
 
 function InstagramLogo() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="brand-icon brand-instagram" viewBox="0 0 24 24" aria-hidden="true">
       <rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" strokeWidth="1.9" />
       <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" strokeWidth="1.9" />
       <circle cx="17.55" cy="6.65" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+function TikTokLogo() {
+  return (
+    <svg className="brand-icon brand-tiktok" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M14.15 3.1c.18 1.63 1.1 3.03 2.49 3.79a5.7 5.7 0 0 0 2.38.66v3.03a8.47 8.47 0 0 1-4.87-1.55v6.2a5.32 5.32 0 1 1-4.58-5.27v3.08a2.28 2.28 0 1 0 1.55 2.16V3.1h3.03Z" />
     </svg>
   );
 }
