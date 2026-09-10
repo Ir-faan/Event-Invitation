@@ -39,9 +39,15 @@ test("renders the guided invitation designer and mobile preview", async () => {
   assert.match(html, /Add a moment/);
   assert.match(html, /Add another event/);
   assert.match(html, /Date to count down to/);
-  assert.match(html, /Standard parts \+ Rs 150/);
+  assert.match(html, /Choose an additional part/);
+  assert.match(html, /\+ Rs 150/);
   assert.match(html, /video consultation/);
   assert.match(html, /Always visible · updates instantly/);
+  assert.match(html, /Your name/);
+  assert.match(html, /Phone or WhatsApp number/);
+  assert.match(html, /Grand ballroom/);
+  assert.match(html, /Garden ceremony/);
+  assert.match(html, /Islamic elegance/);
 });
 
 test("includes exact palette artwork for the builder", async () => {
@@ -52,8 +58,29 @@ test("includes exact palette artwork for the builder", async () => {
     `builder-envelope-botanical-${palette}.webp`,
     `builder-curtain-classic-${palette}.webp`,
     `builder-curtain-botanical-${palette}.webp`,
+    `builder-hero-ballroom-${palette}.webp`,
+    `builder-hero-garden-${palette}.webp`,
+    `builder-hero-islamic-hall-${palette}.webp`,
   ]);
   await Promise.all(assets.map((asset) => access(new URL(`../public/images/${asset}`, import.meta.url))));
+});
+
+test("protects mobile preview interactions and layout regressions", async () => {
+  const [designer, preview, styles] = await Promise.all([
+    readFile(new URL("../components/invitation-designer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation-phone-preview.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(designer, /function choosePalette\(id: PaletteId\) \{\s*updateConfig\(\(current\) => \(\{ \.\.\.current, palette: id \}\)\);\s*\}/);
+  assert.match(preview, /touchedRef\.current\.size \/ eligibleCells >= \.75/);
+  assert.doesNotMatch(preview, /images\.slice\(0, 6\)/);
+  assert.doesNotMatch(preview, /preview-envelope-seal-blank/);
+  assert.doesNotMatch(preview, /invite-preview-monogram/);
+  assert.match(styles, /\.designer-steps \{\s*position: relative/);
+  assert.match(styles, /\.designer-fixed-price \{ position: sticky/);
+  assert.match(styles, /\.designer-opening-thumb \{ height: auto; aspect-ratio: 2 \/ 3/);
+  assert.match(styles, /@keyframes preview-sparkle-burst/);
 });
 
 test("renders the complete Coastal Reverie invitation", async () => {

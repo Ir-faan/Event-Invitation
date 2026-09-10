@@ -30,6 +30,10 @@ export type InvitationSection = {
 export type InvitationConfig = {
   version: 1;
   palette: PaletteId;
+  contact: {
+    name: string;
+    phone: string;
+  };
   bismillah: {
     enabled: boolean;
   };
@@ -41,7 +45,7 @@ export type InvitationConfig = {
   hero: {
     type: HeroType;
     photoSource: "preset" | "upload";
-    presetIndex: 0 | 1;
+    presetIndex: number;
     uploadedUrl: string;
     firstName: string;
     secondName: string;
@@ -98,10 +102,13 @@ export const paletteOptions = [
 
 type HeroPreset = { id: string; name: string; url: string; objectPosition: string; zoom: number };
 
-function matchedHeroPresets(palette: PaletteId, url: string): HeroPreset[] {
+function matchedHeroPresets(palette: PaletteId, signatureUrl: string): HeroPreset[] {
   return [
-    { id: `${palette}-full`, name: "Signature scene", url, objectPosition: "center center", zoom: 1 },
-    { id: `${palette}-close`, name: "Closer crop", url, objectPosition: "center 68%", zoom: 1.14 },
+    { id: `${palette}-full`, name: "Signature scene", url: signatureUrl, objectPosition: "center center", zoom: 1 },
+    { id: `${palette}-close`, name: "Closer crop", url: signatureUrl, objectPosition: "center 68%", zoom: 1.14 },
+    { id: `${palette}-ballroom`, name: "Grand ballroom", url: `/images/builder-hero-ballroom-${palette}.webp`, objectPosition: "center center", zoom: 1 },
+    { id: `${palette}-garden`, name: "Garden ceremony", url: `/images/builder-hero-garden-${palette}.webp`, objectPosition: "center center", zoom: 1 },
+    { id: `${palette}-islamic-hall`, name: "Islamic elegance", url: `/images/builder-hero-islamic-hall-${palette}.webp`, objectPosition: "center center", zoom: 1 },
   ];
 }
 
@@ -241,6 +248,7 @@ export function createInitialInvitation(): InvitationConfig {
   return {
     version: 1,
     palette: "beige",
+    contact: { name: "", phone: "" },
     bismillah: { enabled: false },
     opening: { type: "none", asset: "classic-envelope", initials: "S ♥ S" },
     hero: {
@@ -313,9 +321,14 @@ export function getSectionItems(section: InvitationSection): InvitationSectionIt
 export function normalizeInvitationConfig(config: InvitationConfig): InvitationConfig {
   const eventDetails = config.sections.find((section) => section.type === "event-details");
   const firstEventDate = eventDetails ? getSectionItems(eventDetails)[0]?.date : "";
+  const presetIndex = Number.isInteger(config.hero.presetIndex)
+    ? Math.min(Math.max(config.hero.presetIndex, 0), heroPresets[config.palette].length - 1)
+    : 0;
   return {
     ...config,
+    contact: config.contact ?? { name: "", phone: "" },
     bismillah: config.bismillah ?? { enabled: false },
+    hero: { ...config.hero, presetIndex },
     sections: config.sections.map((section) => ({
       ...section,
       fields: section.type === "countdown"

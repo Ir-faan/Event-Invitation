@@ -18,12 +18,14 @@ import {
   MoveDown,
   MoveUp,
   Palette,
+  Phone,
   Plus,
   RotateCcw,
   Save,
   Sparkles,
   Trash2,
   Upload,
+  UserRound,
   Users,
   Video,
 } from "lucide-react";
@@ -110,7 +112,6 @@ export function InvitationDesigner() {
 
   function choosePalette(id: PaletteId) {
     updateConfig((current) => ({ ...current, palette: id }));
-    activatePreview(config.bismillah.enabled ? "bismillah" : "hero");
   }
 
   function chooseBismillah(enabled: boolean) {
@@ -130,7 +131,7 @@ export function InvitationDesigner() {
     activatePreview("hero");
   }
 
-  function chooseHeroPreset(index: 0 | 1) {
+  function chooseHeroPreset(index: number) {
     setPendingFiles((current) => {
       const next = { ...current };
       delete next.hero;
@@ -145,6 +146,10 @@ export function InvitationDesigner() {
       ...current,
       hero: { ...current.hero, [field]: value } as InvitationConfig["hero"],
     }));
+  }
+
+  function updateContact(field: keyof InvitationConfig["contact"], value: string) {
+    updateConfig((current) => ({ ...current, contact: { ...current.contact, [field]: value } }));
   }
 
   function updateSection(id: string, updater: (section: InvitationSection) => InvitationSection) {
@@ -330,6 +335,12 @@ export function InvitationDesigner() {
         <button type="button" className={mobileView === "preview" ? "is-active" : ""} onClick={showMobilePreview}>View preview</button>
       </div>
 
+      <div className={`designer-fixed-price is-${saveState}`} role="status" aria-live="polite">
+        <div><small>Total price</small><strong>Rs {price.total.toLocaleString("en-US")}</strong></div>
+        <span>{saveState === "saved" ? `Saved ${lastSaved}` : "Always visible · updates instantly"}</span>
+        <button type="submit" form="invitation-designer-form" disabled={saveState === "saving"}><Save aria-hidden="true" />{saveButtonText}</button>
+      </div>
+
       <div className="designer-workspace">
         <form id="invitation-designer-form" className="designer-form" onSubmit={saveDesign}>
           <div className="designer-welcome">
@@ -416,7 +427,7 @@ export function InvitationDesigner() {
               <div className="designer-subheading"><strong>Choose a photo</strong><span>Each preset keeps the exact same composition when you change colours.</span></div>
               <div className="designer-image-options designer-hero-images">
                 {heroPresets[config.palette].map((asset, index) => (
-                  <button type="button" key={asset.id} className={config.hero.photoSource === "preset" && config.hero.presetIndex === index ? "is-selected" : ""} onClick={() => chooseHeroPreset(index as 0 | 1)}>
+                  <button type="button" key={asset.id} className={config.hero.photoSource === "preset" && config.hero.presetIndex === index ? "is-selected" : ""} onClick={() => chooseHeroPreset(index)}>
                     <span className="designer-hero-thumb"><img src={asset.url} alt={`${asset.name} preset`} style={{ objectPosition: asset.objectPosition, transform: `scale(${asset.zoom})` }} /></span>
                     <strong>{asset.name}</strong>
                     {config.hero.photoSource === "preset" && config.hero.presetIndex === index && <Check aria-hidden="true" />}
@@ -465,14 +476,8 @@ export function InvitationDesigner() {
 
             <div className="designer-add-section">
               <div><Plus aria-hidden="true" /><span><strong>Add another part</strong><small>You can add the same part more than once.</small></span></div>
-              <label>
-                <span>Choose a part <small>Standard parts + Rs 150 · Custom part is designed by video consultation + Rs 500</small></span>
-                <select value={addType} onChange={(event) => setAddType(event.target.value as SectionType)}>
-                  {(Object.entries(sectionDefinitions) as Array<[SectionType, (typeof sectionDefinitions)[SectionType]]>).map(([type, definition]) => <option value={type} key={type}>{definition.name}</option>)}
-                </select>
-                <ChevronDown aria-hidden="true" />
-              </label>
-              <button type="button" onClick={() => addSection()}><Plus aria-hidden="true" /> Add this part · Rs {sectionDefinitions[addType].price}</button>
+              <SectionPicker value={addType} onChange={setAddType} />
+              <button type="button" onClick={() => addSection()}><Plus aria-hidden="true" /> Add this part</button>
             </div>
           </section>
 
@@ -487,6 +492,21 @@ export function InvitationDesigner() {
             <p>The price updates instantly. You will still review the finished invitation before payment.</p>
           </section>
 
+          <section className="designer-contact-card" aria-labelledby="designer-contact-title">
+            <div className="designer-contact-heading">
+              <span><UserRound aria-hidden="true" /></span>
+              <div>
+                <p>Final step</p>
+                <h2 id="designer-contact-title">How can we contact you?</h2>
+                <span>We will contact you to share payment details or arrange a video consultation.</span>
+              </div>
+            </div>
+            <div className="designer-fields-grid">
+              <TextField label="Your name" value={config.contact.name} onChange={(value) => updateContact("name", value)} autoComplete="name" required icon={<UserRound />} />
+              <TextField label="Phone or WhatsApp number" type="tel" value={config.contact.phone} onChange={(value) => updateContact("phone", value)} autoComplete="tel" inputMode="tel" required icon={<Phone />} />
+            </div>
+          </section>
+
           <div className={`designer-save-status is-${saveState}`}>
             <LockKeyhole aria-hidden="true" />
             <span><strong>{saveState === "saved" ? "Draft saved" : "Ready when you are"}</strong><small>{lastSaved ? `Last saved ${lastSaved}` : "Your design and uploaded photos will be saved privately."}</small></span>
@@ -497,11 +517,6 @@ export function InvitationDesigner() {
         <InvitationPhonePreview config={config} replayKey={replayKey} focusTarget={previewFocus.target} focusKey={previewFocus.key} onReplay={() => { setReplayKey((key) => key + 1); activatePreview("opening"); }} />
       </div>
 
-      <div className={`designer-fixed-price is-${saveState}`} role="status" aria-live="polite">
-        <div><small>Total price</small><strong>Rs {price.total.toLocaleString("en-US")}</strong></div>
-        <span>{saveState === "saved" ? `Saved ${lastSaved}` : "Always visible · updates instantly"}</span>
-        <button type="submit" form="invitation-designer-form" disabled={saveState === "saving"}><Save aria-hidden="true" />{saveButtonText}</button>
-      </div>
     </main>
   );
 }
@@ -517,6 +532,44 @@ function ChoiceButton({ selected, title, description, price, onClick, featured =
       <span><strong>{title}</strong><small>{description}</small></span>
       <b>{price ? `+ Rs ${price}` : "Included"}</b>
     </button>
+  );
+}
+
+function SectionPicker({ value, onChange }: { value: SectionType; onChange: (value: SectionType) => void }) {
+  const pickerRef = useRef<HTMLDetailsElement>(null);
+  const selected = sectionDefinitions[value];
+  const options = Object.entries(sectionDefinitions) as Array<[SectionType, (typeof sectionDefinitions)[SectionType]]>;
+
+  return (
+    <div className="designer-part-picker">
+      <span>Choose an additional part</span>
+      <details ref={pickerRef}>
+        <summary>
+          <span><strong>{selected.name}</strong><small>{selected.description}</small></span>
+          <b>+ Rs {selected.price}</b>
+          <ChevronDown aria-hidden="true" />
+        </summary>
+        <div className="designer-part-menu" role="listbox" aria-label="Additional invitation parts">
+          {options.map(([type, definition]) => (
+            <button
+              type="button"
+              role="option"
+              aria-selected={value === type}
+              className={value === type ? "is-selected" : ""}
+              key={type}
+              onClick={() => {
+                onChange(type);
+                if (pickerRef.current) pickerRef.current.open = false;
+              }}
+            >
+              <span><strong>{definition.name}</strong><small>{definition.description}</small></span>
+              <b>+ Rs {definition.price}</b>
+              {value === type && <Check aria-hidden="true" />}
+            </button>
+          ))}
+        </div>
+      </details>
+    </div>
   );
 }
 
@@ -667,8 +720,8 @@ function AddItemButton({ icon, label, onClick }: { icon: ReactNode; label: strin
   return <button type="button" className="designer-add-item" onClick={onClick}>{icon}{label}</button>;
 }
 
-function TextField({ label, hint, value, onChange, full = false, type = "text", maxLength, icon }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; type?: string; maxLength?: number; icon?: ReactNode }) {
-  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{icon}{label}</span><input type={type} value={value ?? ""} maxLength={maxLength} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
+function TextField({ label, hint, value, onChange, full = false, type = "text", maxLength, icon, autoComplete, inputMode, required = false }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; type?: string; maxLength?: number; icon?: ReactNode; autoComplete?: string; inputMode?: "text" | "tel" | "email" | "numeric"; required?: boolean }) {
+  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{icon}{label}</span><input type={type} value={value ?? ""} maxLength={maxLength} autoComplete={autoComplete} inputMode={inputMode} required={required} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
 }
 
 function TextArea({ label, hint, value, onChange, full = false, rows = 3 }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; rows?: number }) {

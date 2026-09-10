@@ -60,7 +60,11 @@ export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKe
     const target = Array.from(screen.querySelectorAll<HTMLElement>("[data-preview-section]"))
       .find((element) => element.dataset.previewSection === focusTarget);
     if (!target) return;
-    const top = Math.max(0, target.offsetTop - 12);
+    const sectionTop = target.offsetTop;
+    const sectionBottom = sectionTop + target.offsetHeight;
+    const viewportMiddle = screen.scrollTop + (screen.clientHeight / 2);
+    if (viewportMiddle >= sectionTop && viewportMiddle <= sectionBottom) return;
+    const top = Math.max(0, sectionTop - 12);
     screen.scrollTo({ top, behavior: "smooth" });
   }, [focusTarget, focusKey]);
 
@@ -112,7 +116,6 @@ function OpeningPreview({ config, replayKey }: { config: InvitationConfig; repla
         <div className="preview-envelope-panel preview-envelope-left"><img src={asset.urls[config.palette]} alt="" /></div>
         <div className="preview-envelope-panel preview-envelope-right"><img src={asset.urls[config.palette]} alt="" /></div>
         <div className="preview-envelope-seam" aria-hidden="true" />
-        <span className="preview-envelope-seal-blank" aria-hidden="true" />
         <span className="preview-opening-label">Tap to open</span>
       </div>
     );
@@ -139,25 +142,7 @@ function HeroPreview({ config, replayKey }: { config: InvitationConfig; replayKe
     : undefined;
 
   if (config.hero.type === "interactive") {
-    return (
-      <section className={`invite-preview-hero is-interactive ${config.bismillah.enabled ? "has-bismillah" : ""}`} data-preview-section="hero">
-        <div className="interactive-hero-glow" aria-hidden="true" />
-        {config.bismillah.enabled && <BismillahArtwork config={config} />}
-        <div className="interactive-hero-heading">
-          <span>{config.hero.eyebrow}</span>
-          <h2>{config.hero.firstName}<i>&amp;</i>{config.hero.secondName}</h2>
-        </div>
-        <div className="interactive-frame-composition">
-          <div className="interactive-photo-viewport">
-            <img src={image} alt="Selected wedding photo" style={imageStyle} />
-            <ScratchPhoto key={`${image}-${config.palette}-${replayKey}`} color={getPalette(config.palette).theme.primary} />
-          </div>
-          <img className="interactive-ornate-frame" src={interactiveFrameAssets[config.palette]} alt="" />
-        </div>
-        <p className="interactive-hero-message">{config.hero.message}</p>
-        <time className="interactive-hero-date">{formattedDate}</time>
-      </section>
-    );
+    return <InteractiveHeroPreview key={`${image}-${config.palette}-${replayKey}`} config={config} image={image} imageStyle={imageStyle} formattedDate={formattedDate} />;
   }
 
   return (
@@ -167,7 +152,6 @@ function HeroPreview({ config, replayKey }: { config: InvitationConfig; replayKe
       {config.bismillah.enabled && <BismillahArtwork config={config} />}
       <div className="invite-preview-hero-copy">
         <span>{config.hero.eyebrow}</span>
-        <div className="invite-preview-monogram">{config.hero.firstName.charAt(0)}<i>&amp;</i>{config.hero.secondName.charAt(0)}</div>
         <h2>{config.hero.firstName}<i>&amp;</i>{config.hero.secondName}</h2>
         <div className="invite-preview-hero-rule"><i /><Heart aria-hidden="true" /><i /></div>
         <p>{config.hero.message}</p>
@@ -186,11 +170,40 @@ function BismillahArtwork({ config }: { config: InvitationConfig }) {
   );
 }
 
-function ScratchPhoto({ color }: { color: string }) {
+function InteractiveHeroPreview({ config, image, imageStyle, formattedDate }: { config: InvitationConfig; image: string; imageStyle?: CSSProperties; formattedDate: string }) {
+  const [revealed, setRevealed] = useState(false);
+  return (
+    <section className={`invite-preview-hero is-interactive ${revealed ? "is-revealed" : ""} ${config.bismillah.enabled ? "has-bismillah" : ""}`} data-preview-section="hero">
+      <div className="interactive-hero-glow" aria-hidden="true" />
+      {config.bismillah.enabled && <BismillahArtwork config={config} />}
+      <div className="interactive-frame-composition">
+        <div className="interactive-photo-viewport">
+          <img src={image} alt="Selected wedding photo" style={imageStyle} />
+          <ScratchPhoto color={getPalette(config.palette).theme.primary} onReveal={() => setRevealed(true)} />
+        </div>
+        <img className="interactive-ornate-frame" src={interactiveFrameAssets[config.palette]} alt="" />
+        {revealed && (
+          <div className="scratch-complete-sparkles" aria-hidden="true">
+            {Array.from({ length: 24 }, (_, index) => (
+              <i key={index} style={{ "--spark-angle": `${index * 15}deg`, "--spark-distance": `${4.5 + (index % 5) * .8}rem`, "--spark-delay": `${(index % 4) * 45}ms` } as CSSProperties}>{index % 3 === 0 ? "✦" : "·"}</i>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="interactive-hero-copy" aria-live="polite">
+        <span>{config.hero.eyebrow}</span>
+        <h2>{config.hero.firstName}<i>&amp;</i>{config.hero.secondName}</h2>
+        <p className="interactive-hero-message">{config.hero.message}</p>
+        <time className="interactive-hero-date">{formattedDate}</time>
+      </div>
+    </section>
+  );
+}
+
+function ScratchPhoto({ color, onReveal }: { color: string; onReveal: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
-  const lastPointRef = useRef<{ x: number; y: number } | null>(null);
-  const moveCountRef = useRef(0);
+  const touchedRef = useRef(new Set<string>());
   const [complete, setComplete] = useState(false);
 
   useEffect(() => {
@@ -199,6 +212,7 @@ function ScratchPhoto({ color }: { color: string }) {
     const drawCover = () => {
       const bounds = canvas.getBoundingClientRect();
       if (bounds.width < 2 || bounds.height < 2) return;
+      touchedRef.current.clear();
       const ratio = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.max(1, Math.round(bounds.width * ratio));
       canvas.height = Math.max(1, Math.round(bounds.height * ratio));
@@ -206,6 +220,7 @@ function ScratchPhoto({ color }: { color: string }) {
       if (!context) return;
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
       context.globalCompositeOperation = "source-over";
+      context.globalAlpha = .78;
       context.fillStyle = color;
       context.fillRect(0, 0, bounds.width, bounds.height);
       const glow = context.createRadialGradient(bounds.width * .5, bounds.height * .42, 8, bounds.width * .5, bounds.height * .42, bounds.width * .72);
@@ -213,6 +228,7 @@ function ScratchPhoto({ color }: { color: string }) {
       glow.addColorStop(1, "rgba(255,255,255,.05)");
       context.fillStyle = glow;
       context.fillRect(0, 0, bounds.width, bounds.height);
+      context.globalAlpha = 1;
       context.strokeStyle = "rgba(255,255,255,.18)";
       context.lineWidth = 1;
       for (let y = 10; y < bounds.height; y += 8) {
@@ -221,7 +237,7 @@ function ScratchPhoto({ color }: { color: string }) {
         context.lineTo(bounds.width, y);
         context.stroke();
       }
-      context.fillStyle = "rgba(255,255,255,.94)";
+      context.fillStyle = "rgba(255,255,255,.96)";
       context.textAlign = "center";
       context.font = '42px "Birthstone", "Segoe Script", cursive';
       context.fillText("Scratch Me", bounds.width / 2, bounds.height / 2 + 2);
@@ -243,55 +259,80 @@ function ScratchPhoto({ color }: { color: string }) {
     if (complete) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     drawingRef.current = true;
-    lastPointRef.current = pointFromEvent(event);
+    scratchAt(event);
   }
 
-  function move(event: React.PointerEvent<HTMLCanvasElement>) {
+  function scratchAt(event: React.PointerEvent<HTMLCanvasElement>) {
     if (!drawingRef.current || complete) return;
     const canvas = event.currentTarget;
     const context = canvas.getContext("2d");
-    const previous = lastPointRef.current;
-    const next = pointFromEvent(event);
-    if (!context || !previous) return;
+    const bounds = canvas.getBoundingClientRect();
+    const point = pointFromEvent(event);
+    if (!context || !bounds.width || !bounds.height) return;
+    const radius = Math.max(22, Math.min(bounds.width, bounds.height) * .115);
     context.save();
     context.globalCompositeOperation = "destination-out";
-    context.lineWidth = 34;
-    context.lineCap = "round";
-    context.lineJoin = "round";
+    const brush = context.createRadialGradient(point.x, point.y, 0, point.x, point.y, radius);
+    brush.addColorStop(0, "rgba(0,0,0,1)");
+    brush.addColorStop(.72, "rgba(0,0,0,.98)");
+    brush.addColorStop(1, "rgba(0,0,0,0)");
+    context.fillStyle = brush;
     context.beginPath();
-    context.moveTo(previous.x, previous.y);
-    context.lineTo(next.x, next.y);
-    context.stroke();
+    context.arc(point.x, point.y, radius, 0, Math.PI * 2);
+    context.fill();
     context.restore();
-    lastPointRef.current = next;
-    moveCountRef.current += 1;
-    if (moveCountRef.current % 8 === 0) checkProgress(canvas);
+
+    const columns = 18;
+    const rows = 24;
+    const cellX = Math.floor((point.x / bounds.width) * columns);
+    const cellY = Math.floor((point.y / bounds.height) * rows);
+    const cellRadiusX = Math.max(1, Math.ceil((radius / bounds.width) * columns));
+    const cellRadiusY = Math.max(1, Math.ceil((radius / bounds.height) * rows));
+    let eligibleCells = 0;
+    for (let gx = 0; gx < columns; gx += 1) {
+      for (let gy = 0; gy < rows; gy += 1) {
+        const normalizedX = ((gx + .5) / columns - .5) * 2;
+        const normalizedY = ((gy + .5) / rows - .5) * 2;
+        if ((normalizedX * normalizedX) + (normalizedY * normalizedY) <= 1) eligibleCells += 1;
+      }
+    }
+    for (let gx = cellX - cellRadiusX; gx <= cellX + cellRadiusX; gx += 1) {
+      for (let gy = cellY - cellRadiusY; gy <= cellY + cellRadiusY; gy += 1) {
+        const normalizedX = ((gx + .5) / columns - .5) * 2;
+        const normalizedY = ((gy + .5) / rows - .5) * 2;
+        const pointX = ((gx + .5) / columns) * bounds.width;
+        const pointY = ((gy + .5) / rows) * bounds.height;
+        const insideBrush = ((pointX - point.x) ** 2) + ((pointY - point.y) ** 2) <= radius ** 2;
+        if (gx >= 0 && gx < columns && gy >= 0 && gy < rows && insideBrush && (normalizedX * normalizedX) + (normalizedY * normalizedY) <= 1) {
+          touchedRef.current.add(`${gx}:${gy}`);
+        }
+      }
+    }
+    if (eligibleCells && touchedRef.current.size / eligibleCells >= .75) finishReveal();
   }
 
   function end(event: React.PointerEvent<HTMLCanvasElement>) {
     drawingRef.current = false;
-    lastPointRef.current = null;
-    checkProgress(event.currentTarget);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
-  function checkProgress(canvas: HTMLCanvasElement) {
-    const context = canvas.getContext("2d", { willReadFrequently: true });
-    if (!context) return;
-    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-    let transparent = 0;
-    let checked = 0;
-    for (let index = 3; index < pixels.length; index += 80) {
-      checked += 1;
-      if (pixels[index] < 30) transparent += 1;
-    }
-    if (checked > 0 && transparent / checked >= .5) setComplete(true);
+  function finishReveal() {
+    if (complete) return;
+    setComplete(true);
+    onReveal();
   }
 
   return (
     <div className={`scratch-preview ${complete ? "is-complete" : ""}`}>
-      <canvas ref={canvasRef} onPointerDown={begin} onPointerMove={move} onPointerUp={end} onPointerCancel={end} aria-label="Scratch the framed photo to preview the interactive reveal" />
-      <button type="button" onClick={() => setComplete(true)}>Reveal</button>
-      {complete && <div className="scratch-complete-sparkles" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <i key={index}>✦</i>)}</div>}
+      <canvas
+        ref={canvasRef}
+        onPointerDown={begin}
+        onPointerMove={scratchAt}
+        onPointerUp={end}
+        onPointerCancel={end}
+        onPointerLeave={() => { drawingRef.current = false; }}
+        aria-label="Scratch at least 75 percent of the framed photo to reveal the couple names"
+      />
     </div>
   );
 }
@@ -385,9 +426,9 @@ function SectionPreview({ section }: { section: InvitationSection }) {
       return (
         <PreviewSection section={section} className="preview-glimpse" eyebrow="A few favourite memories">
           <p>{section.fields.message}</p>
-          <div className="preview-gallery">
+          <div className={`preview-gallery ${section.images.length ? "has-photos" : ""}`}>
             {section.images.length
-              ? section.images.slice(0, 6).map((image, index) => <figure key={`${image}-${index}`}><img src={image} alt={`Uploaded couple memory ${index + 1}`} /></figure>)
+              ? section.images.map((image, index) => <figure key={`${image}-${index}`}><img src={image} alt={`Uploaded couple memory ${index + 1}`} /></figure>)
               : Array.from({ length: 5 }, (_, index) => <span key={index}><ImageIcon aria-hidden="true" /><small>Your photo</small></span>)}
           </div>
         </PreviewSection>

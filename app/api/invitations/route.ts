@@ -20,6 +20,13 @@ function isInvitationConfig(value: unknown): value is InvitationConfig {
     config.version === 1
       && config.palette
       && paletteOptions.some((palette) => palette.id === config.palette)
+      && config.contact
+      && typeof config.contact.name === "string"
+      && config.contact.name.trim().length >= 2
+      && config.contact.name.length <= 120
+      && typeof config.contact.phone === "string"
+      && config.contact.phone.trim().length >= 5
+      && config.contact.phone.length <= 40
       && (config.bismillah === undefined || Boolean(
         config.bismillah
           && typeof config.bismillah.enabled === "boolean"
