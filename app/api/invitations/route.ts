@@ -25,8 +25,7 @@ function isInvitationConfig(value: unknown): value is InvitationConfig {
       && config.contact.name.trim().length >= 2
       && config.contact.name.length <= 120
       && typeof config.contact.phone === "string"
-      && config.contact.phone.trim().length >= 5
-      && config.contact.phone.length <= 40
+      && /^5\d{7}$/.test(config.contact.phone.trim())
       && (config.bismillah === undefined || Boolean(
         config.bismillah
           && typeof config.bismillah.enabled === "boolean"
@@ -36,6 +35,7 @@ function isInvitationConfig(value: unknown): value is InvitationConfig {
       && config.hero
       && ["basic", "interactive"].includes(config.hero.type)
       && ["preset", "upload"].includes(config.hero.photoSource)
+      && (config.hero.type === "interactive" || config.hero.photoSource === "preset")
       && Array.isArray(config.sections)
       && config.sections.length > 0
       && config.sections.length <= 40

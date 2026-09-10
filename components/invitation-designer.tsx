@@ -15,6 +15,7 @@ import {
   Info,
   LockKeyhole,
   MapPin,
+  Monitor,
   MoveDown,
   MoveUp,
   Palette,
@@ -36,8 +37,8 @@ import {
   createInitialInvitation,
   createSection,
   getPalette,
+  getHeroPresets,
   getSectionItems,
-  heroPresets,
   normalizeInvitationConfig,
   openingAssets,
   openingOptions,
@@ -66,14 +67,15 @@ export function InvitationDesigner() {
   const [pendingFiles, setPendingFiles] = useState<Record<string, File[]>>({});
   const [draft, setDraft] = useState<DraftIdentity | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [notice, setNotice] = useState("");
-  const [lastSaved, setLastSaved] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [showDesktopTip, setShowDesktopTip] = useState(true);
   const [replayKey, setReplayKey] = useState(0);
   const [previewFocus, setPreviewFocus] = useState<PreviewFocus>({ target: "hero", key: 0 });
   const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
   const objectUrls = useRef<string[]>([]);
   const price = useMemo(() => calculateInvitationPrice(config), [config]);
   const palette = getPalette(config.palette);
+  const availableHeroPresets = getHeroPresets(config);
   const saveButtonText = saveState === "saving" ? "Saving…" : draft ? "Save changes" : "Save my design";
 
   useEffect(() => {
@@ -90,10 +92,11 @@ export function InvitationDesigner() {
         })
         .then(({ invitation }) => {
           if (invitation.config?.version === 1) setConfig(normalizeInvitationConfig(invitation.config));
-          if (invitation.updated_at) setLastSaved(formatSavedTime(invitation.updated_at));
-          setNotice("Your last saved draft has been restored.");
         })
-        .catch(() => setNotice("Your saved draft could not be restored, so a fresh design is ready for you."));
+        .catch(() => {
+          window.localStorage.removeItem(draftStorageKey);
+          setDraft(null);
+        });
     } catch {
       window.localStorage.removeItem(draftStorageKey);
     }
@@ -101,9 +104,15 @@ export function InvitationDesigner() {
 
   useEffect(() => () => objectUrls.current.forEach((url) => URL.revokeObjectURL(url)), []);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowDesktopTip(false), 7000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   function updateConfig(updater: (current: InvitationConfig) => InvitationConfig) {
     setConfig((current) => updater(current));
     if (saveState === "saved") setSaveState("idle");
+    if (saveError) setSaveError("");
   }
 
   function activatePreview(target: string) {
@@ -127,7 +136,15 @@ export function InvitationDesigner() {
   }
 
   function chooseHero(type: HeroType) {
-    updateConfig((current) => ({ ...current, hero: { ...current.hero, type } }));
+    setPendingFiles((current) => {
+      const next = { ...current };
+      delete next.hero;
+      return next;
+    });
+    updateConfig((current) => ({
+      ...current,
+      hero: { ...current.hero, type, photoSource: "preset", presetIndex: 0, uploadedUrl: "" },
+    }));
     activatePreview("hero");
   }
 
@@ -149,7 +166,8 @@ export function InvitationDesigner() {
   }
 
   function updateContact(field: keyof InvitationConfig["contact"], value: string) {
-    updateConfig((current) => ({ ...current, contact: { ...current.contact, [field]: value } }));
+    const normalized = field === "phone" ? value.replace(/\D/g, "").slice(0, 8) : value;
+    updateConfig((current) => ({ ...current, contact: { ...current.contact, [field]: normalized } }));
   }
 
   function updateSection(id: string, updater: (section: InvitationSection) => InvitationSection) {
@@ -184,7 +202,6 @@ export function InvitationDesigner() {
   function addSection(type = addType) {
     const section = createSection(type, false);
     updateConfig((current) => ({ ...current, sections: [...current.sections, section] }));
-    setNotice(type === "custom" ? "Custom consultation added. We will design this part with you by video." : `${sectionDefinitions[type].name} added. Its example text is ready to edit.`);
     window.setTimeout(() => document.getElementById(`editor-${section.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
   }
 
@@ -203,7 +220,6 @@ export function InvitationDesigner() {
       sections.splice(index + 1, 0, copy);
       return { ...current, sections };
     });
-    setNotice(`Another ${sectionDefinitions[section.type].shortName} part was added.`);
   }
 
   function removeSection(id: string) {
@@ -211,7 +227,6 @@ export function InvitationDesigner() {
     if (!section || section.included) return;
     updateConfig((current) => ({ ...current, sections: current.sections.filter((item) => item.id !== id) }));
     setPendingFiles((current) => Object.fromEntries(Object.entries(current).filter(([key]) => !key.includes(id))));
-    setNotice(`${sectionDefinitions[section.type].shortName} removed.`);
   }
 
   function moveSection(id: string, direction: -1 | 1) {
@@ -236,13 +251,12 @@ export function InvitationDesigner() {
     const file = files?.[0];
     if (!file) return;
     const error = validateFiles([file]);
-    if (error) return setNotice(error);
+    if (error) return;
     const url = URL.createObjectURL(file);
     objectUrls.current.push(url);
     setPendingFiles((current) => ({ ...current, hero: [file] }));
     updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "upload", uploadedUrl: url } }));
     activatePreview("hero");
-    setNotice("Your photo is now shown in the preview. Save the design when you are ready.");
   }
 
   function selectGlimpsePhotos(sectionId: string, list: FileList | null) {
@@ -250,21 +264,20 @@ export function InvitationDesigner() {
     const files = Array.from(list ?? []).slice(0, Math.max(0, 8 - currentCount));
     if (!files.length) return;
     const error = validateFiles(files);
-    if (error) return setNotice(error);
+    if (error) return;
     const urls = files.map((file) => URL.createObjectURL(file));
     objectUrls.current.push(...urls);
     const slot = `section:${sectionId}:images`;
     setPendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), ...files] }));
     updateSection(sectionId, (section) => ({ ...section, images: [...section.images, ...urls].slice(0, 8) }));
     activatePreview(sectionId);
-    setNotice(`${files.length} photo${files.length === 1 ? "" : "s"} added to the live preview.`);
   }
 
   async function saveDesign(event: FormEvent) {
     event.preventDefault();
     if (saveState === "saving") return;
     setSaveState("saving");
-    setNotice("Saving your design and photos…");
+    setSaveError("");
 
     try {
       let workingConfig = removeLocalPhotoUrls(config);
@@ -298,12 +311,10 @@ export function InvitationDesigner() {
       setConfig(workingConfig);
       setPendingFiles({});
       setSaveState("saved");
-      const savedAt = formatSavedTime(new Date().toISOString());
-      setLastSaved(savedAt);
-      setNotice("Your invitation design is safely saved as a draft.");
     } catch (error) {
+      console.error("Unable to save invitation design", error);
       setSaveState("error");
-      setNotice(error instanceof Error ? error.message : "Your design could not be saved. Please try again.");
+      setSaveError("An error happened while saving your design. If it persists, please contact us on WhatsApp or social media.");
     }
   }
 
@@ -335,11 +346,11 @@ export function InvitationDesigner() {
         <button type="button" className={mobileView === "preview" ? "is-active" : ""} onClick={showMobilePreview}>View preview</button>
       </div>
 
-      <div className={`designer-fixed-price is-${saveState}`} role="status" aria-live="polite">
+      <div className="designer-fixed-price" role="status" aria-live="polite">
         <div><small>Total price</small><strong>Rs {price.total.toLocaleString("en-US")}</strong></div>
-        <span>{saveState === "saved" ? `Saved ${lastSaved}` : "Always visible · updates instantly"}</span>
-        <button type="submit" form="invitation-designer-form" disabled={saveState === "saving"}><Save aria-hidden="true" />{saveButtonText}</button>
       </div>
+
+      {showDesktopTip && <div className="designer-device-tip" role="status"><Monitor aria-hidden="true" /><span>For the easiest design experience, use a laptop or desktop computer.</span></div>}
 
       <div className="designer-workspace">
         <form id="invitation-designer-form" className="designer-form" onSubmit={saveDesign}>
@@ -363,16 +374,16 @@ export function InvitationDesigner() {
             <div className="designer-bismillah-picker">
               <div className="designer-subheading">
                 <strong>Add Bismillah at the top?</strong>
-                <span>The artwork automatically matches the colour palette above.</span>
+                <span>The calligraphy is always displayed in white for a clear, elegant finish.</span>
               </div>
               <div className="designer-choice-grid">
                 <ChoiceButton selected={config.bismillah.enabled} title="Show Bismillah" description="Place the calligraphy above the invitation names." price={0} onClick={() => chooseBismillah(true)} />
                 <ChoiceButton selected={!config.bismillah.enabled} title="Without Bismillah" description="Start directly with the main photo area." price={0} onClick={() => chooseBismillah(false)} />
               </div>
               {config.bismillah.enabled && (
-                <div className="designer-bismillah-sample" aria-label={`${palette.name} Bismillah artwork selected`}>
+                <div className="designer-bismillah-sample" aria-label="White Bismillah artwork selected">
                   <img src={bismillahAssets[config.palette]} alt="Bismillah ir-Rahman ir-Rahim" />
-                  <span><strong>{palette.name} artwork</strong><small>It changes automatically when you choose another palette.</small></span>
+                  <span><strong>White calligraphy</strong><small>The same clear artwork is used with every colour palette.</small></span>
                 </div>
               )}
             </div>
@@ -402,16 +413,18 @@ export function InvitationDesigner() {
                     </button>
                   ))}
                 </div>
-                {config.opening.type === "envelope" && (
-                  <TextField
-                    label="Initials for the wax seal"
-                    hint="Your initials will not appear in this preview. They will be added to the finished envelope when your invitation is deployed."
-                    value={config.opening.initials}
-                    maxLength={12}
-                    onChange={(value) => updateConfig((current) => ({ ...current, opening: { ...current.opening, initials: value } }))}
-                  />
-                )}
-                <button className="designer-replay-button" type="button" onClick={() => { setReplayKey((key) => key + 1); activatePreview("opening"); showMobilePreview(); }}><RotateCcw aria-hidden="true" /> Preview this opening again</button>
+                <div className={`designer-opening-actions ${config.opening.type === "curtain" ? "is-curtain" : ""}`}>
+                  {config.opening.type === "envelope" && (
+                    <TextField
+                      label="Initials for the wax seal"
+                      value={config.opening.initials}
+                      maxLength={7}
+                      onChange={(value) => updateConfig((current) => ({ ...current, opening: { ...current.opening, initials: value } }))}
+                    />
+                  )}
+                  <button className="designer-replay-button" type="button" onClick={() => { setReplayKey((key) => key + 1); activatePreview("opening"); showMobilePreview(); }}><RotateCcw aria-hidden="true" /> Preview this opening again</button>
+                  {config.opening.type === "envelope" && <p className="designer-opening-note">Your initials do not appear in the mobile preview. They will be added only to the finished envelope when your invitation is deployed.</p>}
+                </div>
               </div>
             )}
           </section>
@@ -420,24 +433,26 @@ export function InvitationDesigner() {
             <StepHeading number="3" icon={<ImageIcon />} title="Choose the main photo area" description="This is the first part your guests will see after the opening." />
             <div className="designer-choice-grid">
               <ChoiceButton selected={config.hero.type === "basic"} title="Basic hero" description="Your chosen photo appears in the background." price={0} onClick={() => chooseHero("basic")} />
-              <ChoiceButton selected={config.hero.type === "interactive"} title="Interactive hero" description="Guests scratch only the framed photo to reveal it." price={100} onClick={() => chooseHero("interactive")} featured />
+              <ChoiceButton selected={config.hero.type === "interactive"} title="Interactive hero" description="Guests scratch only the framed photo to reveal it." price={200} onClick={() => chooseHero("interactive")} featured />
             </div>
 
             <div className="designer-photo-picker">
-              <div className="designer-subheading"><strong>Choose a photo</strong><span>Each preset keeps the exact same composition when you change colours.</span></div>
+              <div className="designer-subheading"><strong>Choose a photo</strong><span>{config.hero.type === "basic" ? "Each venue keeps the exact same composition when you change colours." : "Choose an intimate couple detail, or upload your own portrait photo."}</span></div>
               <div className="designer-image-options designer-hero-images">
-                {heroPresets[config.palette].map((asset, index) => (
+                {availableHeroPresets.map((asset, index) => (
                   <button type="button" key={asset.id} className={config.hero.photoSource === "preset" && config.hero.presetIndex === index ? "is-selected" : ""} onClick={() => chooseHeroPreset(index)}>
                     <span className="designer-hero-thumb"><img src={asset.url} alt={`${asset.name} preset`} style={{ objectPosition: asset.objectPosition, transform: `scale(${asset.zoom})` }} /></span>
                     <strong>{asset.name}</strong>
                     {config.hero.photoSource === "preset" && config.hero.presetIndex === index && <Check aria-hidden="true" />}
                   </button>
                 ))}
-                <label className={`designer-upload-option ${config.hero.photoSource === "upload" ? "is-selected" : ""}`}>
-                  {config.hero.photoSource === "upload" && config.hero.uploadedUrl ? <img src={config.hero.uploadedUrl} alt="Your uploaded hero preview" /> : <span><Upload aria-hidden="true" /><strong>Upload your photo</strong><small>JPG, PNG or WebP · max 5 MB</small></span>}
-                  <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectHeroPhoto(event.target.files)} />
-                  {config.hero.photoSource === "upload" && <Check aria-hidden="true" />}
-                </label>
+                {config.hero.type === "interactive" && (
+                  <label className={`designer-upload-option ${config.hero.photoSource === "upload" ? "is-selected" : ""}`}>
+                    {config.hero.photoSource === "upload" && config.hero.uploadedUrl ? <img src={config.hero.uploadedUrl} alt="Your uploaded hero preview" /> : <span><Upload aria-hidden="true" /><strong>Upload your photo</strong><small>JPG, PNG or WebP · max 5 MB</small></span>}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectHeroPhoto(event.target.files)} />
+                    {config.hero.photoSource === "upload" && <Check aria-hidden="true" />}
+                  </label>
+                )}
               </div>
             </div>
 
@@ -503,15 +518,12 @@ export function InvitationDesigner() {
             </div>
             <div className="designer-fields-grid">
               <TextField label="Your name" value={config.contact.name} onChange={(value) => updateContact("name", value)} autoComplete="name" required icon={<UserRound />} />
-              <TextField label="Phone or WhatsApp number" type="tel" value={config.contact.phone} onChange={(value) => updateContact("phone", value)} autoComplete="tel" inputMode="tel" required icon={<Phone />} />
+              <TextField label="Mauritian phone or WhatsApp number" hint="Enter exactly 8 digits, starting with 5 (for example: 58749327)." type="tel" value={config.contact.phone} onChange={(value) => updateContact("phone", value)} autoComplete="tel" inputMode="numeric" minLength={8} maxLength={8} pattern="5[0-9]{7}" title="Enter a Mauritian phone number with exactly 8 digits, starting with 5." required icon={<Phone />} />
             </div>
           </section>
 
-          <div className={`designer-save-status is-${saveState}`}>
-            <LockKeyhole aria-hidden="true" />
-            <span><strong>{saveState === "saved" ? "Draft saved" : "Ready when you are"}</strong><small>{lastSaved ? `Last saved ${lastSaved}` : "Your design and uploaded photos will be saved privately."}</small></span>
-          </div>
-          {notice && <div className={`designer-notice ${saveState === "error" ? "is-error" : ""}`} role="status"><Info aria-hidden="true" />{notice}</div>}
+          {saveError && <div className="designer-notice is-error" role="alert"><Info aria-hidden="true" />{saveError}</div>}
+          <button className="designer-final-save" type="submit" disabled={saveState === "saving"}><Save aria-hidden="true" />{saveButtonText}</button>
         </form>
 
         <InvitationPhonePreview config={config} replayKey={replayKey} focusTarget={previewFocus.target} focusKey={previewFocus.key} onReplay={() => { setReplayKey((key) => key + 1); activatePreview("opening"); }} />
@@ -675,8 +687,8 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
             <div className="designer-mini-event designer-table-entry" key={itemIndex}>
               <div className="designer-mini-heading"><span><Users aria-hidden="true" /> Table {itemIndex + 1}</span>{items.length > 1 && <button type="button" onClick={() => onRemoveItem(itemIndex)}><Trash2 aria-hidden="true" /> Remove</button>}</div>
               <div className="designer-fields-grid">
-                <TextField label="Table name" value={item.table ?? ""} onChange={(value) => onItem(itemIndex, "table", value)} full />
-                <TextArea label="Families at this table" hint="Write one family name per line." value={item.families ?? ""} onChange={(value) => onItem(itemIndex, "families", value)} full rows={4} />
+                <TextField label="Table name" value={item.table ?? ""} onChange={(value) => onItem(itemIndex, "table", value)} />
+                <TextArea label="Families at this table" hint="Write one family name per line." value={item.families ?? ""} onChange={(value) => onItem(itemIndex, "families", value)} rows={2} />
               </div>
             </div>
           ))}
@@ -720,8 +732,8 @@ function AddItemButton({ icon, label, onClick }: { icon: ReactNode; label: strin
   return <button type="button" className="designer-add-item" onClick={onClick}>{icon}{label}</button>;
 }
 
-function TextField({ label, hint, value, onChange, full = false, type = "text", maxLength, icon, autoComplete, inputMode, required = false }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; type?: string; maxLength?: number; icon?: ReactNode; autoComplete?: string; inputMode?: "text" | "tel" | "email" | "numeric"; required?: boolean }) {
-  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{icon}{label}</span><input type={type} value={value ?? ""} maxLength={maxLength} autoComplete={autoComplete} inputMode={inputMode} required={required} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
+function TextField({ label, hint, value, onChange, full = false, type = "text", minLength, maxLength, pattern, title, icon, autoComplete, inputMode, required = false }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; type?: string; minLength?: number; maxLength?: number; pattern?: string; title?: string; icon?: ReactNode; autoComplete?: string; inputMode?: "text" | "tel" | "email" | "numeric"; required?: boolean }) {
+  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{icon}{label}</span><input type={type} value={value ?? ""} minLength={minLength} maxLength={maxLength} pattern={pattern} title={title} autoComplete={autoComplete} inputMode={inputMode} required={required} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
 }
 
 function TextArea({ label, hint, value, onChange, full = false, rows = 3 }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; rows?: number }) {
@@ -756,10 +768,4 @@ function applyUploadedUrls(config: InvitationConfig, uploads: Record<string, str
       return urls?.length ? { ...section, images: [...section.images, ...urls].slice(0, 8) } : section;
     }),
   };
-}
-
-function formatSavedTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "recently";
-  return new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(date);
 }

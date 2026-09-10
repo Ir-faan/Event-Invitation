@@ -42,9 +42,9 @@ test("renders the guided invitation designer and mobile preview", async () => {
   assert.match(html, /Choose an additional part/);
   assert.match(html, /\+ Rs 150/);
   assert.match(html, /video consultation/);
-  assert.match(html, /Always visible · updates instantly/);
+  assert.match(html, /For the easiest design experience/);
   assert.match(html, /Your name/);
-  assert.match(html, /Phone or WhatsApp number/);
+  assert.match(html, /Mauritian phone or WhatsApp number/);
   assert.match(html, /Grand ballroom/);
   assert.match(html, /Garden ceremony/);
   assert.match(html, /Islamic elegance/);
@@ -62,7 +62,31 @@ test("includes exact palette artwork for the builder", async () => {
     `builder-hero-garden-${palette}.webp`,
     `builder-hero-islamic-hall-${palette}.webp`,
   ]);
+  assets.push(
+    "builder-interactive-hands.webp",
+    "builder-interactive-bouquet.webp",
+    "builder-interactive-garden-walk.webp",
+  );
   await Promise.all(assets.map((asset) => access(new URL(`../public/images/${asset}`, import.meta.url))));
+});
+
+test("uses the revised hero, photo choices and additional-part prices", async () => {
+  const { calculateInvitationPrice, createInitialInvitation, createSection, heroPresets, interactiveHeroPresets, sectionDefinitions } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
+  const config = createInitialInvitation();
+  config.hero.type = "interactive";
+  config.sections.push(createSection("countdown"), createSection("glimpse"));
+
+  assert.equal(sectionDefinitions.countdown.price, 150);
+  assert.equal(sectionDefinitions.glimpse.price, 200);
+  const basicUrls = new Set(Object.values(heroPresets).flat().map((preset) => preset.url));
+  assert.ok(interactiveHeroPresets.every((preset) => !basicUrls.has(preset.url)));
+  assert.deepEqual(calculateInvitationPrice(config), {
+    base: 1000,
+    opening: 0,
+    hero: 200,
+    sections: 350,
+    total: 1550,
+  });
 });
 
 test("protects mobile preview interactions and layout regressions", async () => {
@@ -80,7 +104,11 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.match(styles, /\.designer-steps \{\s*position: relative/);
   assert.match(styles, /\.designer-fixed-price \{ position: sticky/);
   assert.match(styles, /\.designer-opening-thumb \{ height: auto; aspect-ratio: 2 \/ 3/);
+  assert.match(styles, /\.invite-preview-hero-shade::after \{ content: none/);
+  assert.match(styles, /\.invite-preview-bismillah img \{[^}]*brightness\(0\) invert\(1\)/);
   assert.match(styles, /@keyframes preview-sparkle-burst/);
+  assert.match(designer, /pattern="5\[0-9\]\{7\}"/);
+  assert.doesNotMatch(designer, /setNotice/);
 });
 
 test("renders the complete Coastal Reverie invitation", async () => {

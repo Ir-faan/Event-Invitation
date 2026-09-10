@@ -122,6 +122,13 @@ export const heroPresets: Record<PaletteId, HeroPreset[]> = {
   lilac: matchedHeroPresets("lilac", "/images/builder-hero-lilac.webp"),
 };
 
+/** Intimate portrait photos reserved for the scratch-to-reveal hero. */
+export const interactiveHeroPresets: HeroPreset[] = [
+  { id: "interactive-hands", name: "Hands & rings", url: "/images/builder-interactive-hands.webp", objectPosition: "center center", zoom: 1 },
+  { id: "interactive-bouquet", name: "Shared bouquet", url: "/images/builder-interactive-bouquet.webp", objectPosition: "center center", zoom: 1 },
+  { id: "interactive-garden-walk", name: "Garden walk", url: "/images/builder-interactive-garden-walk.webp", objectPosition: "center center", zoom: 1 },
+];
+
 export const interactiveFrameAssets: Record<PaletteId, string> = {
   beige: "/images/builder-frame-beige.webp",
   olive: "/images/builder-frame-olive.webp",
@@ -131,14 +138,14 @@ export const interactiveFrameAssets: Record<PaletteId, string> = {
   lilac: "/images/builder-frame-lilac.webp",
 };
 
-/** The exact same Bismillah artwork, recoloured for each palette. */
+/** One faithful source is rendered in white for every palette. */
 export const bismillahAssets: Record<PaletteId, string> = {
   beige: "/images/builder-bismillah-beige.webp",
-  olive: "/images/builder-bismillah-olive.webp",
-  "dusty-blue": "/images/builder-bismillah-dusty-blue.webp",
-  burgundy: "/images/builder-bismillah-burgundy.webp",
-  pink: "/images/builder-bismillah-pink.webp",
-  lilac: "/images/builder-bismillah-lilac.webp",
+  olive: "/images/builder-bismillah-beige.webp",
+  "dusty-blue": "/images/builder-bismillah-beige.webp",
+  burgundy: "/images/builder-bismillah-beige.webp",
+  pink: "/images/builder-bismillah-beige.webp",
+  lilac: "/images/builder-bismillah-beige.webp",
 };
 
 export const openingOptions = [
@@ -174,10 +181,10 @@ export const sectionDefinitions: Record<SectionType, { name: string; shortName: 
   journey: { name: "Order of Events (Our Journey)", shortName: "Our Journey", description: "Add as many moments as your story needs.", price: 150 },
   "event-details": { name: "Event Details + Location", shortName: "Event Details", description: "Add every ceremony, venue and map.", price: 150 },
   gift: { name: "Gift Preferences", shortName: "Gift Preferences", description: "A kind note about gifts.", price: 150 },
-  "special-message": { name: "A Special Message", shortName: "Special Message", description: "A dedication, thank-you or loving memory.", price: 150 },
-  seating: { name: "Seating Arrangement", shortName: "Seating", description: "List several families under each table.", price: 150 },
-  "day-programme": { name: "Day Programme", shortName: "Programme", description: "Times, programme details and small notes.", price: 150 },
-  glimpse: { name: "Glimpse Of Us", shortName: "Glimpse Of Us", description: "A scattered gallery of your photos.", price: 150 },
+  "special-message": { name: "A Special Message", shortName: "Special Message", description: "A dedication, thank-you or loving memory.", price: 200 },
+  seating: { name: "Seating Arrangement", shortName: "Seating", description: "List several families under each table.", price: 200 },
+  "day-programme": { name: "Day Programme", shortName: "Programme", description: "Times, programme details and small notes.", price: 200 },
+  glimpse: { name: "Glimpse Of Us", shortName: "Glimpse Of Us", description: "A scattered gallery of your photos.", price: 200 },
   custom: { name: "Custom Part", shortName: "Custom Part", description: "Planned and designed with you by video consultation.", price: 500 },
 };
 
@@ -270,12 +277,18 @@ export function getPalette(id: PaletteId) {
 }
 
 export function getHeroImage(config: InvitationConfig) {
-  if (config.hero.photoSource === "upload" && config.hero.uploadedUrl) return config.hero.uploadedUrl;
-  return heroPresets[config.palette][config.hero.presetIndex]?.url ?? heroPresets[config.palette][0].url;
+  if (config.hero.type === "interactive" && config.hero.photoSource === "upload" && config.hero.uploadedUrl) return config.hero.uploadedUrl;
+  const presets = getHeroPresets(config);
+  return presets[config.hero.presetIndex]?.url ?? presets[0].url;
 }
 
 export function getHeroPreset(config: InvitationConfig) {
-  return heroPresets[config.palette][config.hero.presetIndex] ?? heroPresets[config.palette][0];
+  const presets = getHeroPresets(config);
+  return presets[config.hero.presetIndex] ?? presets[0];
+}
+
+export function getHeroPresets(config: InvitationConfig) {
+  return config.hero.type === "interactive" ? interactiveHeroPresets : heroPresets[config.palette];
 }
 
 export function getEventDetails(config: InvitationConfig) {
@@ -321,14 +334,20 @@ export function getSectionItems(section: InvitationSection): InvitationSectionIt
 export function normalizeInvitationConfig(config: InvitationConfig): InvitationConfig {
   const eventDetails = config.sections.find((section) => section.type === "event-details");
   const firstEventDate = eventDetails ? getSectionItems(eventDetails)[0]?.date : "";
+  const availablePresets = config.hero.type === "interactive" ? interactiveHeroPresets : heroPresets[config.palette];
   const presetIndex = Number.isInteger(config.hero.presetIndex)
-    ? Math.min(Math.max(config.hero.presetIndex, 0), heroPresets[config.palette].length - 1)
+    ? Math.min(Math.max(config.hero.presetIndex, 0), availablePresets.length - 1)
     : 0;
   return {
     ...config,
     contact: config.contact ?? { name: "", phone: "" },
     bismillah: config.bismillah ?? { enabled: false },
-    hero: { ...config.hero, presetIndex },
+    hero: {
+      ...config.hero,
+      photoSource: config.hero.type === "basic" ? "preset" : config.hero.photoSource,
+      uploadedUrl: config.hero.type === "basic" ? "" : config.hero.uploadedUrl,
+      presetIndex,
+    },
     sections: config.sections.map((section) => ({
       ...section,
       fields: section.type === "countdown"
@@ -341,7 +360,7 @@ export function normalizeInvitationConfig(config: InvitationConfig): InvitationC
 
 export function calculateInvitationPrice(config: InvitationConfig) {
   const openingPrice = config.opening.type === "none" ? 0 : 200;
-  const heroPrice = config.hero.type === "interactive" ? 100 : 0;
+  const heroPrice = config.hero.type === "interactive" ? 200 : 0;
   const remainingIncluded = new Set<SectionType>(includedSectionTypes);
   const sectionsPrice = config.sections.reduce((total, section) => {
     if (section.included && remainingIncluded.has(section.type)) {
