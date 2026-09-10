@@ -14,6 +14,7 @@ import "./landing-navbar-cleanup.css";
 import "./footer-contact-cleanup.css";
 import "./landing-palette-compact.css";
 import "./landing-gallery-row-fix.css";
+import "./landing-comparison-paper-text-fix.css";
 import { TemplateCardRouter } from "@/components/template-card-router";
 import { FooterSocialLinkFix } from "@/components/footer-social-link-fix";
 
