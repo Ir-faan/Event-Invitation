@@ -1,0 +1,25 @@
+.refreshed-footer .footer-design-button,
+.refreshed-footer .footer-arrow-link {
+  display: none !important;
+}
+
+.refreshed-footer .footer-socials-new {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.refreshed-footer .footer-socials-new::before {
+  content: "Contact us on";
+  margin-right: .25rem;
+  color: rgba(255, 255, 255, .58);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+
+@media (max-width: 520px) {
+  .refreshed-footer .footer-socials-new::before {
+    flex-basis: 100%;
+    margin: 0 0 .35rem;
+  }
+}
