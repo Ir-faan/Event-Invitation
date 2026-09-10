@@ -16,6 +16,7 @@ import "./landing-palette-compact.css";
 import "./landing-gallery-row-fix.css";
 import "./landing-comparison-paper-text-fix.css";
 import "./landing-marquee-clean.css";
+import "./landing-template-gallery-compact.css";
 import { TemplateCardRouter } from "@/components/template-card-router";
 import { FooterSocialLinkFix } from "@/components/footer-social-link-fix";
 
