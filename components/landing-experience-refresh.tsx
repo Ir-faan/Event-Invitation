@@ -9,8 +9,6 @@ import {
   Clock3,
   CreditCard,
   Eye,
-  Facebook,
-  Instagram,
   Layers3,
   Leaf,
   Menu,
@@ -402,8 +400,8 @@ export function LandingExperienceRefresh() {
             <p>Choose your options and see a live phone preview before sending your design.</p>
             <a href="/design-invitation" className="footer-arrow-link">Open the invitation designer <ArrowRight aria-hidden="true" /></a>
             <div className="footer-socials-new" aria-label="Paperless Invites social media coming soon">
-              <span title="Facebook"><Facebook aria-hidden="true" /></span>
-              <span title="Instagram"><Instagram aria-hidden="true" /></span>
+              <span title="Facebook"><FacebookLogo /></span>
+              <span title="Instagram"><InstagramLogo /></span>
               <span className="tiktok-mark" title="TikTok">♪</span>
             </div>
           </div>
@@ -432,5 +430,23 @@ function PricingGroup({ number, title, note, children }: { number: string; title
       <div className="extra-group-title"><div><span>{number}</span><strong>{title}</strong></div><small>{note}</small></div>
       {children}
     </div>
+  );
+}
+
+function FacebookLogo() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M13.8 21v-8h2.8l.42-3.15H13.8V7.84c0-.91.26-1.53 1.62-1.53h1.73V3.5c-.3-.04-1.33-.13-2.53-.13-2.5 0-4.22 1.53-4.22 4.34v2.14H7.57V13h2.83v8h3.4Z" />
+    </svg>
+  );
+}
+
+function InstagramLogo() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" strokeWidth="1.9" />
+      <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" strokeWidth="1.9" />
+      <circle cx="17.55" cy="6.65" r="1" fill="currentColor" />
+    </svg>
   );
 }
