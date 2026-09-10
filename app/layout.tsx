@@ -15,6 +15,7 @@ import "./footer-contact-cleanup.css";
 import "./landing-palette-compact.css";
 import "./landing-gallery-row-fix.css";
 import { TemplateCardRouter } from "@/components/template-card-router";
+import { FooterSocialLinkFix } from "@/components/footer-social-link-fix";
 
 export const metadata: Metadata = {
   title: "Paperless Invites — The most elegant save the date",
@@ -35,6 +36,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <TemplateCardRouter />
+        <FooterSocialLinkFix />
         {children}
       </body>
     </html>
