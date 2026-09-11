@@ -47,6 +47,10 @@ test("renders the guided invitation designer and mobile preview", async () => {
   assert.match(html, /Mauritian phone or WhatsApp number/);
   assert.match(html, /Wedding date shown on the hero and footer/);
   assert.match(html, /Once your order is ready/);
+  assert.match(html, /For example: Aisha Rahman/);
+  assert.match(html, /For example: 58749327/);
+  assert.doesNotMatch(html, /Closer crop/);
+  assert.doesNotMatch(html, /Initials for the wax seal/);
   assert.doesNotMatch(html, /White calligraphy/);
   assert.match(html, /Grand ballroom/);
   assert.match(html, /Garden ceremony/);
@@ -74,13 +78,15 @@ test("includes exact palette artwork for the builder", async () => {
 });
 
 test("uses the revised hero, photo choices and additional-part prices", async () => {
-  const { calculateInvitationPrice, createInitialInvitation, createSection, heroPresets, interactiveHeroPresets, sectionDefinitions } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
+  const { calculateInvitationPrice, createInitialInvitation, createSection, getCoupleInitials, heroPresets, interactiveHeroPresets, sectionDefinitions } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
   const config = createInitialInvitation();
   config.hero.type = "interactive";
   config.sections.push(createSection("countdown"), createSection("glimpse"));
 
   assert.equal(sectionDefinitions.countdown.price, 150);
   assert.equal(sectionDefinitions.glimpse.price, 200);
+  assert.equal(getCoupleInitials("  Salma", "Sam"), "S ♥ S");
+  assert.equal(getCoupleInitials("123 Aisha", " Noor"), "A ♥ N");
   const basicUrls = new Set(Object.values(heroPresets).flat().map((preset) => preset.url));
   assert.ok(interactiveHeroPresets.every((preset) => !basicUrls.has(preset.url)));
   assert.deepEqual(calculateInvitationPrice(config), {
@@ -106,6 +112,13 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.doesNotMatch(preview, /invite-preview-monogram/);
   assert.match(styles, /\.designer-steps \{\s*position: relative/);
   assert.match(styles, /\.designer-preview-panel \{ position: sticky/);
+  assert.match(styles, /\.designer-page \{[\s\S]*?overflow-x: clip/);
+  assert.match(styles, /\.designer-table-grid \{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.designer-add-item \{ width: 100%/);
+  assert.match(styles, /@keyframes preview-invitation-petal/);
+  assert.match(styles, /@keyframes preview-footer-wave/);
+  assert.match(designer, /activatePreview\(section\.id\)/);
+  assert.match(designer, /function MainStep/);
   assert.match(styles, /\.designer-preview-price \{/);
   assert.match(styles, /\.designer-opening-thumb \{ height: auto; aspect-ratio: 2 \/ 3/);
   assert.match(styles, /\.invite-preview-hero-shade::after \{ content: none/);

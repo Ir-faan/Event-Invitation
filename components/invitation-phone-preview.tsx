@@ -106,6 +106,7 @@ function InvitationPreviewContent({ config, replayKey }: { config: InvitationCon
   return (
     <>
       <OpeningPreview config={config} replayKey={replayKey} />
+      <PreviewAmbience />
       <HeroPreview config={config} replayKey={replayKey} />
       {config.sections.map((section) => <SectionPreview key={section.id} section={section} />)}
       <footer className="invite-preview-footer">
@@ -115,6 +116,22 @@ function InvitationPreviewContent({ config, replayKey }: { config: InvitationCon
         <span>Made with <Heart aria-hidden="true" /> by Paperless Invites</span>
       </footer>
     </>
+  );
+}
+
+function PreviewAmbience() {
+  const petals = [
+    [7, 8.8, -6], [18, 11.4, -2], [31, 9.6, -8], [44, 13.2, -4], [57, 10.8, -10],
+    [68, 12.5, -1], [79, 9.2, -7], [89, 14.1, -5], [25, 15.2, -12], [73, 16.4, -9],
+  ];
+  return (
+    <div className="invite-preview-ambience" aria-hidden="true">
+      {petals.map(([left, duration, delay], index) => (
+        <span key={index} style={{ "--preview-petal-left": `${left}%`, "--preview-petal-duration": `${duration}s`, "--preview-petal-delay": `${delay}s` } as CSSProperties}>
+          {index % 3 === 0 ? "✦" : "❀"}
+        </span>
+      ))}
+    </div>
   );
 }
 

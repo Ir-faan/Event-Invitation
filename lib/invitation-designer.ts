@@ -101,19 +101,21 @@ export const paletteOptions = [
   },
 ] as const;
 
-type HeroPreset = { id: string; name: string; url: string; objectPosition: string; zoom: number };
+type HeroPreset = { id: string; name: string; url: string; objectPosition: string; zoom: number; hidden?: boolean };
 
 function matchedHeroPresets(palette: PaletteId, signatureUrl: string): HeroPreset[] {
   return [
     { id: `${palette}-full`, name: "Signature scene", url: signatureUrl, objectPosition: "center center", zoom: 1 },
-    { id: `${palette}-close`, name: "Closer crop", url: signatureUrl, objectPosition: "center 68%", zoom: 1.14 },
+    // Keep the legacy index so older saved drafts retain the correct following presets.
+    // The close crop is no longer offered in the designer and is normalized to the signature scene.
+    { id: `${palette}-close`, name: "Closer crop", url: signatureUrl, objectPosition: "center 68%", zoom: 1.14, hidden: true },
     { id: `${palette}-ballroom`, name: "Grand ballroom", url: `/images/builder-hero-ballroom-${palette}.webp`, objectPosition: "center center", zoom: 1 },
     { id: `${palette}-garden`, name: "Garden ceremony", url: `/images/builder-hero-garden-${palette}.webp`, objectPosition: "center center", zoom: 1 },
     { id: `${palette}-islamic-hall`, name: "Islamic elegance", url: `/images/builder-hero-islamic-hall-${palette}.webp`, objectPosition: "center center", zoom: 1 },
   ];
 }
 
-/** Both crop choices retain their composition when the palette changes. */
+/** Every selectable scene retains its composition when the palette changes. */
 export const heroPresets: Record<PaletteId, HeroPreset[]> = {
   beige: matchedHeroPresets("beige", "/images/builder-hero-beige.webp"),
   olive: matchedHeroPresets("olive", "/images/builder-hero-olive.webp"),
@@ -270,7 +272,7 @@ export function createInitialInvitation(): InvitationConfig {
     palette: "beige",
     contact: { name: "", phone: "" },
     bismillah: { enabled: false },
-    opening: { type: "none", asset: "classic-envelope", initials: "S ♥ S" },
+    opening: { type: "none", asset: "classic-envelope", initials: getCoupleInitials("Sara", "Sameer") },
     hero: {
       type: "basic",
       photoSource: "preset",
@@ -288,6 +290,11 @@ export function createInitialInvitation(): InvitationConfig {
 
 export function getPalette(id: PaletteId) {
   return paletteOptions.find((palette) => palette.id === id) ?? paletteOptions[0];
+}
+
+export function getCoupleInitials(firstName = "", secondName = "") {
+  const initial = (name: string) => name.trim().match(/\p{L}/u)?.[0]?.toLocaleUpperCase("en") ?? "";
+  return [initial(firstName), initial(secondName)].filter(Boolean).join(" ♥ ");
 }
 
 export function getHeroImage(config: InvitationConfig) {
@@ -349,13 +356,20 @@ export function normalizeInvitationConfig(config: InvitationConfig): InvitationC
   const eventDetails = config.sections.find((section) => section.type === "event-details");
   const firstEventDate = eventDetails ? getSectionItems(eventDetails)[0]?.date : "";
   const availablePresets = config.hero.type === "interactive" ? interactiveHeroPresets : heroPresets[config.palette];
-  const presetIndex = Number.isInteger(config.hero.presetIndex)
+  const requestedPresetIndex = Number.isInteger(config.hero.presetIndex)
     ? Math.min(Math.max(config.hero.presetIndex, 0), availablePresets.length - 1)
     : 0;
+  const presetIndex = config.hero.type === "basic" && availablePresets[requestedPresetIndex]?.hidden
+    ? 0
+    : requestedPresetIndex;
   return {
     ...config,
     contact: config.contact ?? { name: "", phone: "" },
     bismillah: config.bismillah ?? { enabled: false },
+    opening: {
+      ...config.opening,
+      initials: getCoupleInitials(config.hero.firstName, config.hero.secondName),
+    },
     hero: {
       ...config.hero,
       date: config.hero.date || firstEventDate || "2027-05-22",

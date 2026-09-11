@@ -22,7 +22,6 @@ import {
   Palette,
   Phone,
   Plus,
-  RotateCcw,
   Save,
   Sparkles,
   Trash2,
@@ -36,6 +35,7 @@ import {
   calculateInvitationPrice,
   createInitialInvitation,
   createSection,
+  getCoupleInitials,
   getPalette,
   getHeroPresets,
   getSectionItems,
@@ -174,10 +174,16 @@ export function InvitationDesigner() {
   }
 
   function updateHero(field: keyof InvitationConfig["hero"], value: string | number) {
-    updateConfig((current) => ({
-      ...current,
-      hero: { ...current.hero, [field]: value } as InvitationConfig["hero"],
-    }));
+    updateConfig((current) => {
+      const hero = { ...current.hero, [field]: value } as InvitationConfig["hero"];
+      return {
+        ...current,
+        hero,
+        opening: field === "firstName" || field === "secondName"
+          ? { ...current.opening, initials: getCoupleInitials(hero.firstName, hero.secondName) }
+          : current.opening,
+      };
+    });
   }
 
   function updateContact(field: keyof InvitationConfig["contact"], value: string) {
@@ -218,6 +224,7 @@ export function InvitationDesigner() {
   function addSection(type = addType) {
     const section = createSection(type, false);
     updateConfig((current) => ({ ...current, sections: [...current.sections, section] }));
+    activatePreview(section.id);
     window.setTimeout(() => document.getElementById(`editor-${section.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
   }
 
@@ -236,6 +243,8 @@ export function InvitationDesigner() {
       sections.splice(index + 1, 0, copy);
       return { ...current, sections };
     });
+    activatePreview(copy.id);
+    window.setTimeout(() => document.getElementById(`editor-${copy.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
   }
 
   function removeSection(id: string) {
@@ -438,8 +447,7 @@ export function InvitationDesigner() {
             <div><strong>Start with the choices below.</strong><p>Your phone preview changes immediately. When you click into a field, it moves to that same part for you.</p></div>
           </div>
 
-          <section className="designer-step-card" id="designer-colours">
-            <StepHeading number="1" icon={<Palette />} title="Choose your colours" description="The same artwork changes into your selected colour, so the design stays consistent." />
+          <MainStep id="designer-colours" number="1" icon={<Palette />} title="Choose your colours" description="The same artwork changes into your selected colour, so the design stays consistent.">
             <div className="designer-palette-grid">
               {paletteOptions.map((option) => (
                 <button type="button" key={option.id} className={`designer-palette-option ${config.palette === option.id ? "is-selected" : ""}`} onClick={() => choosePalette(option.id)} aria-pressed={config.palette === option.id}>
@@ -449,21 +457,9 @@ export function InvitationDesigner() {
                 </button>
               ))}
             </div>
+          </MainStep>
 
-            <div className="designer-bismillah-picker">
-              <div className="designer-subheading">
-                <strong>Add Bismillah at the top?</strong>
-                <span>Add or remove it with one tap.</span>
-              </div>
-              <div className="designer-choice-grid">
-                <ChoiceButton selected={config.bismillah.enabled} title="Show Bismillah" description="Place the calligraphy above the invitation names." price={0} onClick={() => chooseBismillah(true)} />
-                <ChoiceButton selected={!config.bismillah.enabled} title="Without Bismillah" description="Start directly with the main photo area." price={0} onClick={() => chooseBismillah(false)} />
-              </div>
-            </div>
-          </section>
-
-          <section className="designer-step-card" id="designer-opening" onFocusCapture={() => activatePreview("opening")}>
-            <StepHeading number="2" icon={<Sparkles />} title="Choose how it opens" description="You can replay the opening as many times as you like while designing." />
+          <MainStep id="designer-opening" number="2" icon={<Sparkles />} title="Choose how it opens" description="You can replay the opening above the mobile preview as many times as you like." onActivate={() => activatePreview("opening")}>
             <div className="designer-choice-grid designer-opening-options">
               {openingOptions.map((option) => (
                 <ChoiceButton key={option.id} selected={config.opening.type === option.id} title={option.name} description={option.description} price={option.price} onClick={() => chooseOpening(option.id)} />
@@ -486,33 +482,32 @@ export function InvitationDesigner() {
                     </button>
                   ))}
                 </div>
-                <div className={`designer-opening-actions ${config.opening.type === "curtain" ? "is-curtain" : ""}`}>
-                  {config.opening.type === "envelope" && (
-                    <TextField
-                      label="Initials for the wax seal"
-                      value={config.opening.initials}
-                      maxLength={7}
-                      onChange={(value) => updateConfig((current) => ({ ...current, opening: { ...current.opening, initials: value } }))}
-                    />
-                  )}
-                  <button className="designer-replay-button" type="button" onClick={() => { setReplayKey((key) => key + 1); activatePreview("opening"); showMobilePreview(); }}><RotateCcw aria-hidden="true" /> Preview again</button>
-                  {config.opening.type === "envelope" && <p className="designer-opening-note">Your initials do not appear in the mobile preview. They will be added only to the finished envelope when your invitation is deployed.</p>}
-                </div>
+                {config.opening.type === "envelope" && <p className="designer-opening-note">Wax-seal initials are created automatically from the first letters of the two names in the main photo area.</p>}
               </div>
             )}
-          </section>
+          </MainStep>
 
-          <section className="designer-step-card" id="designer-hero" onFocusCapture={() => activatePreview("hero")}>
-            <StepHeading number="3" icon={<ImageIcon />} title="Choose the main photo area" description="This is the first part your guests will see after the opening." />
+          <MainStep id="designer-hero" number="3" icon={<ImageIcon />} title="Choose the main photo area" description="This is the first part your guests will see after the opening." onActivate={() => activatePreview("hero")}>
             <div className="designer-choice-grid">
               <ChoiceButton selected={config.hero.type === "basic"} title="Basic hero" description="Your chosen photo appears in the background." price={0} onClick={() => chooseHero("basic")} />
               <ChoiceButton selected={config.hero.type === "interactive"} title="Interactive hero" description="Guests scratch only the framed photo to reveal it." price={200} onClick={() => chooseHero("interactive")} featured />
             </div>
 
+            <div className="designer-bismillah-picker">
+              <div className="designer-subheading">
+                <strong>Add Bismillah at the top?</strong>
+                <span>Add or remove it with one tap.</span>
+              </div>
+              <div className="designer-choice-grid">
+                <ChoiceButton selected={config.bismillah.enabled} title="Show Bismillah" description="Place the calligraphy above the invitation names." price={0} onClick={() => chooseBismillah(true)} />
+                <ChoiceButton selected={!config.bismillah.enabled} title="Without Bismillah" description="Start directly with the main photo area." price={0} onClick={() => chooseBismillah(false)} />
+              </div>
+            </div>
+
             <div className="designer-photo-picker">
               <div className="designer-subheading"><strong>Choose a photo</strong><span>{config.hero.type === "basic" ? "Each venue keeps the exact same composition when you change colours." : "Choose an intimate couple detail, or upload your own portrait photo."}</span></div>
               <div className="designer-image-options designer-hero-images">
-                {availableHeroPresets.map((asset, index) => (
+                {availableHeroPresets.map((asset, index) => asset.hidden ? null : (
                   <button type="button" key={asset.id} className={config.hero.photoSource === "preset" && config.hero.presetIndex === index ? "is-selected" : ""} onClick={() => chooseHeroPreset(index)}>
                     <span className="designer-hero-thumb"><img src={asset.url} alt={`${asset.name} preset`} style={{ objectPosition: asset.objectPosition, transform: `scale(${asset.zoom})` }} /></span>
                     <strong>{asset.name}</strong>
@@ -538,10 +533,9 @@ export function InvitationDesigner() {
               <TextArea label="Invitation message" value={config.hero.message} onChange={(value) => updateHero("message", value)} full rows={2} />
               <TextField label="Wedding date shown on the hero and footer" type="date" value={config.hero.date} onChange={(value) => updateHero("date", value)} full />
             </div>
-          </section>
+          </MainStep>
 
-          <section className="designer-step-card designer-sections-step" id="designer-sections">
-            <StepHeading number="4" icon={<Heart />} title="Choose and write your invitation parts" description="The four important parts are included. Add any other part as many times as you need." />
+          <MainStep id="designer-sections" className="designer-sections-step" number="4" icon={<Heart />} title="Choose and write your invitation parts" description="The four important parts are included. Add any other part as many times as you need.">
             <div className="designer-included-note"><LockKeyhole aria-hidden="true" /><span><strong>Already included:</strong> Countdown, Our Journey, Event Details + Location and Gift Preferences.</span></div>
 
             <div className="designer-section-list">
@@ -571,7 +565,7 @@ export function InvitationDesigner() {
               <SectionPicker value={addType} onChange={setAddType} />
               <button type="button" onClick={() => addSection()}><Plus aria-hidden="true" /> Add this part</button>
             </div>
-          </section>
+          </MainStep>
 
           <section className="designer-price-summary" aria-labelledby="designer-price-title">
             <div><CircleDollarSign aria-hidden="true" /><span><small>Your current price</small><strong id="designer-price-title">Rs {price.total.toLocaleString("en-US")}</strong></span></div>
@@ -594,8 +588,8 @@ export function InvitationDesigner() {
               </div>
             </div>
             <div className="designer-fields-grid">
-              <TextField label="Your name" value={config.contact.name} onChange={(value) => updateContact("name", value)} autoComplete="name" required icon={<UserRound />} />
-              <TextField label="Mauritian phone or WhatsApp number" hint="Enter exactly 8 digits, starting with 5 (for example: 58749327)." type="tel" value={config.contact.phone} onChange={(value) => updateContact("phone", value)} autoComplete="tel" inputMode="numeric" minLength={8} maxLength={8} pattern="5[0-9]{7}" title="Enter a Mauritian phone number with exactly 8 digits, starting with 5." required icon={<Phone />} />
+              <TextField label="Your name" placeholder="For example: Aisha Rahman" value={config.contact.name} onChange={(value) => updateContact("name", value)} autoComplete="name" required icon={<UserRound />} />
+              <TextField label="Mauritian phone or WhatsApp number" placeholder="For example: 58749327" hint="Enter exactly 8 digits, starting with 5 (for example: 58749327)." type="tel" value={config.contact.phone} onChange={(value) => updateContact("phone", value)} autoComplete="tel" inputMode="numeric" minLength={8} maxLength={8} pattern="5[0-9]{7}" title="Enter a Mauritian phone number with exactly 8 digits, starting with 5." required icon={<Phone />} />
             </div>
           </section>
 
@@ -622,6 +616,28 @@ export function InvitationDesigner() {
       </div>
 
     </main>
+  );
+}
+
+function MainStep({ id, className = "", number, icon, title, description, onActivate, children }: {
+  id: string;
+  className?: string;
+  number: string;
+  icon: ReactNode;
+  title: string;
+  description: string;
+  onActivate?: () => void;
+  children: ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(true);
+  return (
+    <details className={`designer-step-card designer-main-step ${className}`} id={id} open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)} onFocusCapture={onActivate}>
+      <summary onClick={onActivate}>
+        <StepHeading number={number} icon={icon} title={title} description={description} />
+        <ChevronDown aria-hidden="true" />
+      </summary>
+      <div className="designer-main-step-body">{children}</div>
+    </details>
   );
 }
 
@@ -850,8 +866,8 @@ function AddItemButton({ icon, label, onClick }: { icon: ReactNode; label: strin
   return <button type="button" className="designer-add-item" onClick={onClick}>{icon}{label}</button>;
 }
 
-function TextField({ label, hint, value, onChange, full = false, type = "text", minLength, maxLength, pattern, title, icon, autoComplete, inputMode, required = false }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; type?: string; minLength?: number; maxLength?: number; pattern?: string; title?: string; icon?: ReactNode; autoComplete?: string; inputMode?: "text" | "tel" | "email" | "numeric"; required?: boolean }) {
-  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{icon}{label}</span><input type={type} lang={type === "time" ? "en-GB" : undefined} value={value ?? ""} minLength={minLength} maxLength={maxLength} pattern={pattern} title={title} autoComplete={autoComplete} inputMode={inputMode} required={required} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
+function TextField({ label, hint, placeholder, value, onChange, full = false, type = "text", minLength, maxLength, pattern, title, icon, autoComplete, inputMode, required = false }: { label: string; hint?: string; placeholder?: string; value: string; onChange: (value: string) => void; full?: boolean; type?: string; minLength?: number; maxLength?: number; pattern?: string; title?: string; icon?: ReactNode; autoComplete?: string; inputMode?: "text" | "tel" | "email" | "numeric"; required?: boolean }) {
+  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{icon}{label}</span><input type={type} lang={type === "time" ? "en-GB" : undefined} value={value ?? ""} placeholder={placeholder} minLength={minLength} maxLength={maxLength} pattern={pattern} title={title} autoComplete={autoComplete} inputMode={inputMode} required={required} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
 }
 
 function TextArea({ label, hint, value, onChange, full = false, rows = 3 }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; rows?: number }) {
