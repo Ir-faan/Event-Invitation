@@ -1,15 +1,16 @@
 /* Landing gallery sizing and footer cleanup */
 
-/* Keep both moving rows visually consistent. */
+/* Keep both moving rows visually identical in card size. */
 .landing-refresh .showcase {
   height: 48rem;
 }
 
+.landing-refresh .row-one .showcase-card,
 .landing-refresh .row-two .showcase-card,
 .landing-refresh .row-two .showcase-card.small {
-  width: 15rem;
-  height: 22rem;
-  flex-basis: 15rem;
+  width: 15rem !important;
+  height: 22rem !important;
+  flex: 0 0 15rem !important;
 }
 
 /* Re-center the phone vertically between the two equal-height rows. */
@@ -25,6 +26,14 @@
 @media (max-width: 520px) {
   .landing-refresh .showcase {
     height: 48rem;
+  }
+
+  .landing-refresh .row-one .showcase-card,
+  .landing-refresh .row-two .showcase-card,
+  .landing-refresh .row-two .showcase-card.small {
+    width: 12rem !important;
+    height: 17.6rem !important;
+    flex: 0 0 12rem !important;
   }
 
   .landing-refresh .spotlight-phone {
