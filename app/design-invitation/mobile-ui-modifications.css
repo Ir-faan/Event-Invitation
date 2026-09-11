@@ -2,13 +2,12 @@
    Keep these overrides isolated so desktop layout and designer behaviour stay unchanged. */
 
 @media (max-width: 900px) {
-  /* Keep the running total visible without taking space from the header. */
+  /* Keep the running total visible while editing without taking space from the header. */
   .designer-page {
     padding-bottom: 6.5rem;
   }
 
-  .designer-header-price,
-  .designer-mobile-preview .designer-header-price {
+  .designer-mobile-edit .designer-header-price {
     position: fixed;
     z-index: 120;
     left: 50%;
@@ -60,36 +59,67 @@
     max-width: 7.35rem;
   }
 
-  /* The add-table action should be a compact action, not another full table card. */
+  /* Match the seating add-table action to the existing Add a moment button. */
   .designer-add-table {
-    width: fit-content;
+    width: 100%;
     min-width: 0;
-    min-height: 2.75rem;
+    min-height: 2.55rem;
     aspect-ratio: auto;
-    justify-self: center;
+    justify-self: stretch;
     flex-direction: row;
-    gap: .5rem;
-    padding: .42rem .85rem .42rem .45rem;
-    border-radius: 999px;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    padding: 0 .85rem;
+    border: 1px dashed color-mix(in srgb,var(--builder-accent) 48%,transparent);
+    border-radius: .75rem;
+    color: var(--builder-accent);
+    background: color-mix(in srgb,var(--builder-soft) 38%,#fff);
   }
 
   .designer-add-table > span {
-    width: 1.8rem;
-    height: 1.8rem;
+    width: auto;
+    height: auto;
+    display: inline-flex;
+    place-items: unset;
     margin: 0;
+    border-radius: 0;
+    color: inherit;
+    background: transparent;
+    box-shadow: none;
   }
 
   .designer-add-table svg {
-    width: .82rem;
+    width: .9rem;
   }
 
   .designer-add-table strong {
-    font-size: .68rem;
+    font-size: .7rem;
+    font-weight: 800;
     white-space: nowrap;
   }
 
   .designer-add-table small {
     display: none;
+  }
+
+  /* Make the included-parts notice lighter and more compact on phones. */
+  .designer-included-note {
+    gap: .45rem;
+    margin-bottom: .85rem;
+    padding: .62rem .72rem;
+    border-radius: .72rem;
+    font-size: .68rem;
+    line-height: 1.4;
+  }
+
+  .designer-included-note svg {
+    width: .78rem;
+    height: .78rem;
+  }
+
+  .designer-included-note strong {
+    font-size: .68rem;
   }
 
   /* Compress the custom-part consultation notice while preserving its content. */
