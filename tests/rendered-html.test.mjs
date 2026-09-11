@@ -124,6 +124,7 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.doesNotMatch(preview, /preview-envelope-seal-blank/);
   assert.doesNotMatch(preview, /invite-preview-monogram/);
   assert.match(styles, /\.designer-steps \{\s*position: relative;[\s\S]*?width: 100%/);
+  assert.doesNotMatch(styles, /\.designer-header \{[^}]*border-bottom/);
   assert.match(styles, /\.designer-preview-panel \{ position: sticky; top: clamp\(2\.5rem,calc\(\(100vh - 50rem\) \/ 2\),6rem\)/);
   assert.match(styles, /\.designer-step-card\.designer-main-step \{[^}]*overflow: visible/);
   assert.match(styles, /\.designer-page \{[\s\S]*?overflow-x: clip/);

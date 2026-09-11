@@ -32,7 +32,6 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 1.5rem;
-  border-bottom: 1px solid rgba(63,33,38,.11);
 }
 
 .designer-back { display: inline-flex; align-items: center; gap: .55rem; width: fit-content; color: #705c60; font-size: .78rem; font-weight: 700; }
