@@ -1,8 +1,9 @@
 /* Landing gallery sizing and footer cleanup */
 
-/* Keep both moving rows visually identical in card size. */
+/* Keep both moving rows visually identical in card size, with a clearer gap
+   between the two tracks. */
 .landing-refresh .showcase {
-  height: 48rem;
+  height: 50rem;
 }
 
 .landing-refresh .row-one .showcase-card,
@@ -13,9 +14,18 @@
   flex: 0 0 15rem !important;
 }
 
-/* Re-center the phone vertically between the two equal-height rows. */
+.landing-refresh .row-two {
+  top: 26.5rem;
+}
+
+/* Re-center the phone between the two rows after increasing their spacing. */
 .landing-refresh .spotlight-phone {
-  top: 6.5rem;
+  top: 7.25rem;
+}
+
+/* Bring the examples section closer to the moving gallery. */
+.landing-refresh .collection {
+  padding-top: clamp(3.5rem, 5vw, 5rem);
 }
 
 /* Remove the Why digital link from the footer while keeping the comparison section itself. */
@@ -25,7 +35,7 @@
 
 @media (max-width: 520px) {
   .landing-refresh .showcase {
-    height: 48rem;
+    height: 40rem;
   }
 
   .landing-refresh .row-one .showcase-card,
@@ -36,7 +46,15 @@
     flex: 0 0 12rem !important;
   }
 
+  .landing-refresh .row-two {
+    top: 20.5rem;
+  }
+
   .landing-refresh .spotlight-phone {
-    top: 6.5rem;
+    top: 4.5rem;
+  }
+
+  .landing-refresh .collection {
+    padding-top: 3.25rem;
   }
 }
