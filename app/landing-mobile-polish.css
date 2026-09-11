@@ -1,0 +1,229 @@
+/* Final mobile-focused landing page polish. */
+
+.mobile-customizer-cta {
+  display: none;
+}
+
+/* Keep the custom-part surcharge pinned to the top-right of its card. */
+.landing-refresh .custom-part-group {
+  position: relative;
+}
+
+.landing-refresh .custom-part-group .extra-group-title {
+  position: static;
+  padding-right: 5.25rem;
+}
+
+.landing-refresh .custom-part-group .extra-group-title > b {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.35rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* Contact actions use the same compact icon language everywhere. */
+.landing-refresh .custom-part-consultation {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.landing-refresh .compact-contact-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .7rem;
+}
+
+.landing-refresh .compact-contact-row > span,
+.landing-refresh .consultation-social-row > span {
+  color: var(--muted);
+  font-size: .64rem;
+  font-weight: 600;
+}
+
+.landing-refresh .consultation-actions {
+  min-width: 0;
+}
+
+.landing-refresh .consultation-social-row {
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.landing-refresh .consultation-socials .social-button {
+  text-decoration: none;
+}
+
+.landing-refresh .consultation-socials .whatsapp-icon {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
+/* Footer icons are now real anchors, including WhatsApp. */
+.landing-refresh .footer-socials-new > a {
+  width: 2.55rem;
+  height: 2.55rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(232,194,112,.17);
+  border-radius: 50%;
+  color: #e7c57d;
+  background: rgba(232,194,112,.04);
+  transition: transform .2s ease, color .2s ease, background .2s ease;
+}
+
+.landing-refresh .footer-socials-new > a:hover {
+  transform: translateY(-2px);
+  color: #1a080c;
+  background: #e7c57d;
+}
+
+.landing-refresh .footer-socials-new > a svg,
+.landing-refresh .footer-socials-new > a .whatsapp-icon {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
+/* Preserve the wide desktop designer composition inside the mobile preview.
+   The iframe viewport is deliberately much wider, then scaled down, so it does
+   not switch to the designer's mobile layout and look zoomed-in. */
+@media (max-width: 760px) {
+  .landing-refresh .customizer-copy > .button {
+    display: none;
+  }
+
+  .landing-refresh .mobile-customizer-cta {
+    display: inline-flex;
+    justify-self: center;
+    margin: .25rem auto 0;
+  }
+
+  .landing-refresh .customizer-frame {
+    aspect-ratio: 1.36 / 1 !important;
+  }
+
+  .landing-refresh .customizer-frame iframe {
+    width: 280% !important;
+    height: 280% !important;
+    transform: scale(.3571429) !important;
+    transform-origin: top left !important;
+  }
+
+  .landing-refresh .consultation-social-row {
+    align-items: center;
+    flex-direction: row;
+  }
+}
+
+@media (max-width: 520px) {
+  /* Two compact invitation cards remain visible side-by-side on phones. */
+  .landing-refresh .collection-grid {
+    width: 100% !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: .55rem !important;
+    margin: 0 !important;
+  }
+
+  .landing-refresh .collection-card {
+    width: 100% !important;
+    border-radius: .8rem;
+  }
+
+  .landing-refresh .collection-number {
+    top: .55rem;
+    left: .55rem;
+    width: 1.55rem;
+    height: 1.55rem;
+    font-size: .42rem;
+  }
+
+  .landing-refresh .collection-content {
+    left: .65rem;
+    right: 2.3rem;
+    bottom: .7rem;
+  }
+
+  .landing-refresh .collection-content > span {
+    font-size: .31rem;
+    letter-spacing: .12em;
+  }
+
+  .landing-refresh .collection-content h3 {
+    margin: .28rem 0 .15rem;
+    font-size: 1.02rem;
+  }
+
+  .landing-refresh .collection-content p {
+    font-size: .52rem;
+  }
+
+  .landing-refresh .collection-card > a {
+    right: .55rem;
+    bottom: .58rem;
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+
+  .landing-refresh .collection-card > a svg {
+    width: .66rem;
+  }
+
+  .landing-refresh .palette-showcase-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .landing-refresh .customizer-frame {
+    aspect-ratio: 1.34 / 1 !important;
+  }
+
+  .landing-refresh .customizer-frame iframe {
+    width: 340% !important;
+    height: 340% !important;
+    transform: scale(.2941176) !important;
+  }
+
+  .landing-refresh .customizer-demo > p {
+    font-size: .58rem;
+  }
+
+  .landing-refresh .mobile-customizer-cta {
+    width: max-content;
+    min-height: 3.05rem;
+    padding: 0 1.2rem;
+  }
+
+  .landing-refresh .custom-part-group .extra-group-title {
+    padding-right: 4.5rem;
+  }
+
+  .landing-refresh .custom-part-group .extra-group-title > b {
+    top: 1.05rem;
+    right: 1.05rem;
+    font-size: .72rem;
+  }
+
+  .landing-refresh .compact-contact-row,
+  .landing-refresh .consultation-social-row {
+    align-items: center;
+    flex-direction: row;
+    gap: .55rem;
+  }
+
+  .landing-refresh .compact-contact-row > span,
+  .landing-refresh .consultation-social-row > span {
+    flex: 0 0 auto;
+  }
+
+  .landing-refresh .consultation-socials {
+    gap: .38rem;
+  }
+
+  .landing-refresh .consultation-socials .social-button {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+}
