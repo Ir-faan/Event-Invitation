@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { InvitationDesigner } from "@/components/invitation-designer";
+import { DesignerMobileEnhancements } from "@/components/designer-mobile-enhancements";
 import "./design-invitation.css";
+import "./mobile-ui-modifications.css";
 
 export const metadata: Metadata = {
   title: "Design your invitation — Paperless Invites",
@@ -8,5 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default function DesignInvitationPage() {
-  return <InvitationDesigner />;
+  return (
+    <>
+      <DesignerMobileEnhancements />
+      <InvitationDesigner />
+    </>
+  );
 }
