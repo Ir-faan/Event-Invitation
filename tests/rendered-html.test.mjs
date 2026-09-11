@@ -111,12 +111,13 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.doesNotMatch(preview, /preview-envelope-seal-blank/);
   assert.doesNotMatch(preview, /invite-preview-monogram/);
   assert.match(styles, /\.designer-steps \{\s*position: relative/);
-  assert.match(styles, /\.designer-preview-panel \{ position: sticky/);
+  assert.match(styles, /\.designer-preview-panel \{ position: sticky; top: 50%/);
+  assert.match(styles, /\.designer-step-card\.designer-main-step \{[^}]*overflow: visible/);
   assert.match(styles, /\.designer-page \{[\s\S]*?overflow-x: clip/);
   assert.match(styles, /\.designer-table-grid \{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(styles, /\.designer-add-item \{ width: 100%/);
   assert.match(styles, /@keyframes preview-invitation-petal/);
-  assert.match(styles, /@keyframes preview-footer-wave/);
+  assert.doesNotMatch(styles, /@keyframes preview-footer-wave/);
   assert.match(designer, /activatePreview\(section\.id\)/);
   assert.match(designer, /function MainStep/);
   assert.match(styles, /\.designer-preview-price \{/);
