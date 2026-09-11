@@ -579,7 +579,6 @@ export function InvitationDesigner() {
               {price.hero > 0 && <div><dt>Interactive hero</dt><dd>+ Rs {price.hero}</dd></div>}
               {price.sections > 0 && <div><dt>Extra invitation parts</dt><dd>+ Rs {price.sections.toLocaleString("en-US")}</dd></div>}
             </dl>
-            <p>The price updates instantly. You will still review the finished invitation before payment.</p>
           </section>
 
           <section className="designer-contact-card" aria-labelledby="designer-contact-title">
@@ -869,7 +868,7 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
         </div>
       );
     case "custom":
-      return <div className="designer-custom-consultation"><Video aria-hidden="true" /><div><strong>Your custom part will be designed with you.</strong><p>We will discuss the idea, wording, visuals and interaction during a video consultation or by message. There is nothing to edit here yet.</p><span>Video consultation or message</span></div></div>;
+      return <div className="designer-custom-consultation"><Video aria-hidden="true" /><div><strong>Your custom part will be designed with you.</strong><p>We will discuss the custom part during a video consultation or by message. You do not have to edit anything here.</p></div></div>;
   }
 }
 
