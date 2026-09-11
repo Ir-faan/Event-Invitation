@@ -18,6 +18,7 @@ import "./landing-comparison-paper-text-fix.css";
 import "./landing-marquee-clean.css";
 import "./landing-template-gallery-compact.css";
 import "./landing-mobile-polish.css";
+import "./landing-template-palette-polish.css";
 import { TemplateCardRouter } from "@/components/template-card-router";
 import { FooterSocialLinkFix } from "@/components/footer-social-link-fix";
 import { LandingMainPolish } from "@/components/landing-main-polish";
