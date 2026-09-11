@@ -4,19 +4,20 @@
 .landing-refresh .collection {
   display: grid;
   grid-template-columns: 1fr;
-  row-gap: 1rem;
+  row-gap: .52rem;
 }
 
 .landing-refresh .collection > .section-heading {
   grid-column: 1;
   grid-row: 1;
+  margin-bottom: .12rem !important;
 }
 
 .landing-refresh .palette-showcase {
   grid-column: 1;
   grid-row: 2;
-  width: min(64rem, 92%);
-  margin: 0 auto .35rem;
+  width: min(72rem, 96%);
+  margin: 0 auto .3rem;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -27,7 +28,7 @@
 .landing-refresh .palette-showcase-label {
   display: block;
   width: max-content;
-  margin: 0 auto .7rem;
+  margin: 0 auto .62rem;
   color: #8a6f74;
   text-align: center;
   text-transform: uppercase;
@@ -40,18 +41,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: nowrap;
-  gap: .45rem;
+  flex-wrap: wrap;
+  gap: .5rem;
 }
 
 .landing-refresh .palette-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: .42rem;
-  min-width: 0;
+  gap: .5rem;
+  min-width: 8.4rem;
   min-height: 2.15rem;
-  padding: .3rem .62rem;
+  padding: .3rem .85rem;
   border: 1px solid rgba(74, 25, 34, .1);
   border-radius: 999px;
   background: rgba(255, 253, 250, .58);
@@ -92,51 +93,66 @@
   font-weight: 700;
 }
 
+/* Use a centred wrapping row so incomplete card rows are centred too. */
 .landing-refresh .collection-grid {
   grid-column: 1;
   grid-row: 3;
-  width: 100%;
-  margin-top: .15rem;
+  width: min(82rem, 100%);
+  margin: .1rem auto 0;
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: .7rem;
+}
+
+.landing-refresh .collection-card {
+  flex: 0 1 clamp(8.6rem, 11vw, 10.4rem);
+  width: auto;
 }
 
 @media (max-width: 1120px) {
   .landing-refresh .palette-showcase {
-    width: min(48rem, 94%);
+    width: min(54rem, 96%);
   }
 
-  .landing-refresh .palette-showcase-grid {
-    flex-wrap: wrap;
-    max-width: 42rem;
-    margin: 0 auto;
+  .landing-refresh .palette-pill {
+    min-width: 7.9rem;
   }
 }
 
 @media (max-width: 620px) {
   .landing-refresh .collection {
-    row-gap: .8rem;
+    row-gap: .42rem;
+  }
+
+  .landing-refresh .collection > .section-heading {
+    margin-bottom: .05rem !important;
   }
 
   .landing-refresh .palette-showcase {
     width: 100%;
-    margin-bottom: .2rem;
+    margin-bottom: .16rem;
   }
 
   .landing-refresh .palette-showcase-label {
-    margin-bottom: .55rem;
+    margin-bottom: .5rem;
     font-size: .43rem;
   }
 
   .landing-refresh .palette-showcase-grid {
     display: grid;
-    grid-template-columns: repeat(3, max-content) !important;
+    grid-template-columns: repeat(2, minmax(0, 8.25rem)) !important;
     justify-content: center;
-    gap: .35rem;
+    gap: .36rem .45rem;
   }
 
   .landing-refresh .palette-pill {
-    min-height: 1.9rem;
-    gap: .32rem;
-    padding: .24rem .42rem;
+    width: 100%;
+    min-width: 0;
+    min-height: 1.95rem;
+    gap: .36rem;
+    padding: .24rem .58rem;
   }
 
   .landing-refresh .palette-dots i {
@@ -147,10 +163,20 @@
   .landing-refresh .palette-pill strong {
     font-size: .49rem;
   }
+
+  .landing-refresh .collection-grid {
+    width: 100%;
+    gap: .45rem;
+  }
+
+  .landing-refresh .collection-card {
+    flex: 0 0 calc((100% - .9rem) / 3);
+    max-width: calc((100% - .9rem) / 3);
+  }
 }
 
 @media (max-width: 390px) {
   .landing-refresh .palette-showcase-grid {
-    grid-template-columns: repeat(2, max-content) !important;
+    grid-template-columns: repeat(2, minmax(0, 7.65rem)) !important;
   }
 }
