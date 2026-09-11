@@ -28,11 +28,13 @@ test("renders the guided invitation designer and mobile preview", async () => {
   const html = renderToStaticMarkup(React.createElement(Designer));
   assert.match(html, /Create your invitation/);
   assert.match(html, /Choose your colours/);
-  assert.match(html, /Add Bismillah at the top/);
-  assert.match(html, /Show Bismillah/);
+  assert.match(html, /Add arabic calligraphy at the top/);
+  assert.match(html, /Show Arabic Calligraphy/);
   assert.match(html, /Envelope &amp; wax seal/);
-  assert.match(html, /Interactive hero/);
+  assert.match(html, /Interactive/);
   assert.match(html, /A Special Message/);
+  assert.match(html, /Our Timeline/);
+  assert.match(html, /Important Notes/);
   assert.match(html, /Live mobile preview/);
   assert.match(html, /Save my design/);
   assert.match(html, /Rs 1,000/);
@@ -41,7 +43,7 @@ test("renders the guided invitation designer and mobile preview", async () => {
   assert.match(html, /Date to count down to/);
   assert.match(html, /Choose an additional part/);
   assert.match(html, /\+ Rs 150/);
-  assert.match(html, /video consultation/);
+  assert.match(html, /video consultation or by message/);
   assert.match(html, /For the easiest design experience/);
   assert.match(html, /Your name/);
   assert.match(html, /Mauritian phone or WhatsApp number/);
@@ -54,7 +56,18 @@ test("renders the guided invitation designer and mobile preview", async () => {
   assert.doesNotMatch(html, /White calligraphy/);
   assert.match(html, /Grand ballroom/);
   assert.match(html, /Garden ceremony/);
-  assert.match(html, /Islamic elegance/);
+  assert.match(html, /Pure elegance/);
+
+  const countdownEyebrow = html.indexOf("Small text above the countdown");
+  const countdownHeading = html.indexOf("Section heading", countdownEyebrow);
+  const countdownMessage = html.indexOf("Text below the countdown title", countdownHeading);
+  const countdownDate = html.indexOf("Date to count down to", countdownMessage);
+  assert.ok(countdownEyebrow >= 0 && countdownEyebrow < countdownHeading && countdownHeading < countdownMessage && countdownMessage < countdownDate);
+
+  const timelineIntroduction = html.indexOf("Small introduction", countdownDate);
+  const timelineHeading = html.indexOf("Section heading", timelineIntroduction);
+  assert.ok(timelineIntroduction >= 0 && timelineIntroduction < timelineHeading);
+
 });
 
 test("includes exact palette artwork for the builder", async () => {
@@ -110,8 +123,8 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.doesNotMatch(preview, /images\.slice\(0, 6\)/);
   assert.doesNotMatch(preview, /preview-envelope-seal-blank/);
   assert.doesNotMatch(preview, /invite-preview-monogram/);
-  assert.match(styles, /\.designer-steps \{\s*position: relative/);
-  assert.match(styles, /\.designer-preview-panel \{ position: sticky; top: clamp\(2\.25rem,calc\(\(100vh - 50rem\) \/ 2\),8rem\)/);
+  assert.match(styles, /\.designer-steps \{\s*position: relative;[\s\S]*?width: 100%/);
+  assert.match(styles, /\.designer-preview-panel \{ position: sticky; top: clamp\(2\.5rem,calc\(\(100vh - 50rem\) \/ 2\),6rem\)/);
   assert.match(styles, /\.designer-step-card\.designer-main-step \{[^}]*overflow: visible/);
   assert.match(styles, /\.designer-page \{[\s\S]*?overflow-x: clip/);
   assert.match(styles, /\.designer-table-grid \{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\)/);
@@ -120,6 +133,10 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.doesNotMatch(styles, /@keyframes preview-footer-wave/);
   assert.match(designer, /activatePreview\(section\.id\)/);
   assert.match(designer, /function MainStep/);
+  assert.match(designer, /step\.open = true/);
+  assert.match(designer, /case "special-message":[\s\S]*?Small text above the heading[\s\S]*?\{headingField\}[\s\S]*?Your main message/);
+  assert.doesNotMatch(styles, /designer-choice\.is-featured/);
+  assert.match(styles, /\.preview-event-card \{ width: min\(16\.5rem,100%\)/);
   assert.match(styles, /\.designer-preview-price \{/);
   assert.match(styles, /\.designer-opening-thumb \{ height: auto; aspect-ratio: 2 \/ 3/);
   assert.match(styles, /\.invite-preview-hero-shade::after \{ content: none/);

@@ -181,9 +181,9 @@ export const openingAssets = {
 
 export const sectionDefinitions: Record<SectionType, { name: string; shortName: string; description: string; price: number }> = {
   countdown: { name: "Countdown", shortName: "Countdown", description: "Count down to the celebration date.", price: 150 },
-  journey: { name: "Order of Events (Our Journey)", shortName: "Our Journey", description: "Add as many moments as your story needs.", price: 150 },
+  journey: { name: "Our Timeline", shortName: "Our Timeline", description: "Add as many moments as your story needs.", price: 150 },
   "event-details": { name: "Event Details + Location", shortName: "Event Details", description: "Add every ceremony, venue and map.", price: 150 },
-  gift: { name: "Gift Preferences", shortName: "Gift Preferences", description: "A kind note (could be about gifts, parking areas, etc..).", price: 150 },
+  gift: { name: "Important Notes", shortName: "Important Notes", description: "Share helpful details about gifts, parking or anything else guests should know.", price: 150 },
   "special-message": { name: "A Special Message", shortName: "Special Message", description: "A dedication, thank-you or loving memory to your closed ones.", price: 200 },
   seating: { name: "Seating Arrangement", shortName: "Seating", description: "List several families under each table.", price: 200 },
   "day-programme": { name: "Day Programme", shortName: "Programme", description: "Times, programme details and small notes.", price: 200 },
@@ -204,7 +204,7 @@ export function createSection(type: SectionType, included = false): InvitationSe
     case "journey":
       return {
         ...common,
-        title: "Our Journey",
+        title: "Our Timeline",
         fields: { introduction: "The moments that brought us here" },
         items: [
           { title: "Our Nikah", date: "16 May 2027", description: "A quiet promise made with our closest family." },
@@ -221,7 +221,7 @@ export function createSection(type: SectionType, included = false): InvitationSe
         ],
       };
     case "gift":
-      return { ...common, title: "Gift Preferences", fields: { message: "Your presence and prayers are the greatest gifts. If you wish, a contribution towards our new chapter would be warmly appreciated." }, items: [] };
+      return { ...common, title: "Important Notes", fields: { message: "Your presence and prayers are the greatest gifts. If you wish, a contribution towards our new chapter would be warmly appreciated." }, items: [] };
     case "special-message":
       return {
         ...common,
@@ -379,8 +379,14 @@ export function normalizeInvitationConfig(config: InvitationConfig): InvitationC
     },
     sections: config.sections.map((section) => {
       const defaults = createSection(section.type, section.included).fields;
+      const title = section.type === "journey" && (section.title === "Our Journey" || section.title === "Order of Events (Our Journey)")
+        ? "Our Timeline"
+        : section.type === "gift" && section.title === "Gift Preferences"
+          ? "Important Notes"
+          : section.title;
       return {
         ...section,
+        title,
         fields: section.type === "countdown"
           ? { ...defaults, date: firstEventDate || "2027-05-22", ...section.fields }
           : { ...defaults, ...section.fields },

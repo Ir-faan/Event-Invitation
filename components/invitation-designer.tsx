@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -410,6 +410,15 @@ export function InvitationDesigner() {
     setPreviewFocus((current) => ({ ...current, key: current.key + 1 }));
   }
 
+  function openDesignerStep(event: ReactMouseEvent<HTMLAnchorElement>, targetId: string) {
+    event.preventDefault();
+    const step = document.getElementById(targetId);
+    if (!(step instanceof HTMLDetailsElement)) return;
+    step.open = true;
+    window.history.replaceState(null, "", `#${targetId}`);
+    window.setTimeout(() => step.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  }
+
   return (
     <main className={`designer-page designer-mobile-${mobileView}`} style={{ "--builder-accent": palette.theme.primary, "--builder-soft": palette.theme.background } as CSSProperties}>
       <div className="designer-page-petals" aria-hidden="true">
@@ -426,13 +435,6 @@ export function InvitationDesigner() {
         <div className="designer-header-price"><span>Your price</span><strong>Rs {price.total.toLocaleString("en-US")}</strong></div>
       </header>
 
-      <nav className="designer-steps" aria-label="Invitation design steps">
-        <a href="#designer-colours"><span>1</span>Colours</a>
-        <a href="#designer-opening"><span>2</span>Opening</a>
-        <a href="#designer-hero"><span>3</span>Main Area</a>
-        <a href="#designer-sections"><span>4</span>Parts</a>
-      </nav>
-
       <div className="designer-mobile-switch" aria-label="Choose editor or preview">
         <button type="button" className={mobileView === "edit" ? "is-active" : ""} onClick={() => setMobileView("edit")}>Edit invitation</button>
         <button type="button" className={mobileView === "preview" ? "is-active" : ""} onClick={showMobilePreview}>View preview</button>
@@ -442,7 +444,12 @@ export function InvitationDesigner() {
 
       <div className="designer-workspace">
         <form id="invitation-designer-form" className="designer-form" onSubmit={saveDesign} noValidate>
-          
+          <nav className="designer-steps" aria-label="Invitation design steps">
+            <a href="#designer-colours" onClick={(event) => openDesignerStep(event, "designer-colours")}><span>1</span>Colours</a>
+            <a href="#designer-opening" onClick={(event) => openDesignerStep(event, "designer-opening")}><span>2</span>Opening</a>
+            <a href="#designer-hero" onClick={(event) => openDesignerStep(event, "designer-hero")}><span>3</span>Main Area</a>
+            <a href="#designer-sections" onClick={(event) => openDesignerStep(event, "designer-sections")}><span>4</span>Parts</a>
+          </nav>
 
           <MainStep id="designer-colours" number="1" icon={<Palette />} title="Choose your colours" description="The same artwork changes into your selected colour, so the design stays consistent.">
             <div className="designer-palette-grid">
@@ -487,7 +494,7 @@ export function InvitationDesigner() {
           <MainStep id="designer-hero" number="3" icon={<ImageIcon />} title="Choose the main area" description="This is the first part your guests will see after the opening." onActivate={() => activatePreview("hero")}>
             <div className="designer-choice-grid">
               <ChoiceButton selected={config.hero.type === "basic"} title="Basic" description="Your chosen photo appears in the background." price={0} onClick={() => chooseHero("basic")} />
-              <ChoiceButton selected={config.hero.type === "interactive"} title="Interactive" description="Guests scratch only the framed photo to reveal it." price={200} onClick={() => chooseHero("interactive")} featured />
+              <ChoiceButton selected={config.hero.type === "interactive"} title="Interactive" description="Guests scratch only the framed photo to reveal it." price={200} onClick={() => chooseHero("interactive")} />
             </div>
 
             <div className="designer-bismillah-picker">
@@ -533,7 +540,7 @@ export function InvitationDesigner() {
           </MainStep>
 
           <MainStep id="designer-sections" className="designer-sections-step" number="4" icon={<Heart />} title="Choose and write your invitation parts" description="The four important parts are included. Add any other part as many times as you need.">
-            <div className="designer-included-note"><LockKeyhole aria-hidden="true" /><span><strong>Already included:</strong> Countdown, Our Journey, Event Details + Location and Gift Preferences.</span></div>
+            <div className="designer-included-note"><LockKeyhole aria-hidden="true" /><span><strong>Already included:</strong> Countdown, Our Timeline, Event Details + Location and Important Notes.</span></div>
 
             <div className="designer-section-list">
               {config.sections.map((section, index) => (
@@ -605,7 +612,7 @@ export function InvitationDesigner() {
           )}
           <div className="designer-submit-panel">
             <button className="designer-final-save" type="submit" disabled={saveState === "saving"}><Save aria-hidden="true" />{saveButtonText}</button>
-            <p>{hasCustomPart ? "We will contact you for your custom part, then share payment details with you when your order is ready." : "Once your order is ready, we will contact you with the payment details."}</p>
+            <p>{hasCustomPart ? "We will contact you to discuss your custom part during a video consultation or by message, then share payment details when your order is ready." : "Once your order is ready, we will contact you with the payment details."}</p>
           </div>
         </form>
 
@@ -642,9 +649,9 @@ function StepHeading({ number, icon, title, description }: { number: string; ico
   return <div className="designer-step-heading"><span className="designer-step-number">{number}</span><span className="designer-step-icon" aria-hidden="true">{icon}</span><div><h2>{title}</h2><p>{description}</p></div></div>;
 }
 
-function ChoiceButton({ selected, title, description, price, onClick, featured = false }: { selected: boolean; title: string; description: string; price: number; onClick: () => void; featured?: boolean }) {
+function ChoiceButton({ selected, title, description, price, onClick }: { selected: boolean; title: string; description: string; price: number; onClick: () => void }) {
   return (
-    <button type="button" className={`designer-choice ${selected ? "is-selected" : ""} ${featured ? "is-featured" : ""}`} onClick={onClick} aria-pressed={selected}>
+    <button type="button" className={`designer-choice ${selected ? "is-selected" : ""}`} onClick={onClick} aria-pressed={selected}>
       <span className="designer-radio">{selected && <Check aria-hidden="true" />}</span>
       <span><strong>{title}</strong><small>{description}</small></span>
       <b>{price ? `+ Rs ${price}` : "Included"}</b>
@@ -719,8 +726,7 @@ function SectionEditor({ section, index, total, onActivate, onField, onItem, onA
         <ChevronDown aria-hidden="true" />
       </summary>
       <div className="designer-section-body">
-        {section.type !== "custom" && <TextField label="Section heading" value={section.title} onChange={onTitle} full />}
-        <SectionFields section={section} onField={onField} onItem={onItem} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onPhotos={onPhotos} onRemovePhoto={onRemovePhoto} />
+        <SectionFields section={section} onTitle={onTitle} onField={onField} onItem={onItem} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onPhotos={onPhotos} onRemovePhoto={onRemovePhoto} />
         <div className="designer-section-actions">
           <button type="button" onClick={() => onMove(-1)} disabled={index === 0}><MoveUp aria-hidden="true" /> Move up</button>
           <button type="button" onClick={() => onMove(1)} disabled={index === total - 1}><MoveDown aria-hidden="true" /> Move down</button>
@@ -732,8 +738,9 @@ function SectionEditor({ section, index, total, onActivate, onField, onItem, onA
   );
 }
 
-function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPhotos, onRemovePhoto }: {
+function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveItem, onPhotos, onRemovePhoto }: {
   section: InvitationSection;
+  onTitle: (value: string) => void;
   onField: (field: string, value: string) => void;
   onItem: (itemIndex: number, field: string, value: string) => void;
   onAddItem: (item: InvitationSectionItem) => void;
@@ -742,13 +749,15 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
   onRemovePhoto: (imageIndex: number) => void;
 }) {
   const items = getSectionItems(section);
+  const headingField = <TextField label="Section heading" value={section.title} onChange={onTitle} full />;
   switch (section.type) {
     case "countdown":
-      return <div className="designer-fields-grid"><TextField label="Date to count down to" hint="The live countdown will count to this date." type="date" value={section.fields.date ?? ""} onChange={(value) => onField("date", value)} full /><TextField label="Small text above the countdown" value={section.fields.eyebrow ?? ""} onChange={(value) => onField("eyebrow", value)} full /><TextArea label="Text below the countdown title" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} /></div>;
+      return <div className="designer-fields-grid"><TextField label="Small text above the countdown" value={section.fields.eyebrow ?? ""} onChange={(value) => onField("eyebrow", value)} full />{headingField}<TextArea label="Text below the countdown title" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} /><TextField label="Date to count down to" hint="The live countdown will count to this date." type="date" value={section.fields.date ?? ""} onChange={(value) => onField("date", value)} full /></div>;
     case "journey":
       return (
         <div className="designer-repeatable-fields">
           <TextField label="Small introduction" value={section.fields.introduction ?? ""} onChange={(value) => onField("introduction", value)} full />
+          {headingField}
           {items.map((item, itemIndex) => (
             <div className="designer-mini-event" key={itemIndex}>
               <div className="designer-mini-heading"><span>Moment {itemIndex + 1}</span>{items.length > 1 && <button type="button" onClick={() => onRemoveItem(itemIndex)}><Trash2 aria-hidden="true" /> Remove</button>}</div>
@@ -765,6 +774,7 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
     case "event-details":
       return (
         <div className="designer-repeatable-fields">
+          {headingField}
           <TextArea label="Introduction above the event cards" value={section.fields.introduction ?? ""} onChange={(value) => onField("introduction", value)} full rows={2} />
           {items.map((item, itemIndex) => (
             <div className="designer-mini-event designer-event-entry" key={itemIndex}>
@@ -783,11 +793,12 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
         </div>
       );
     case "gift":
-      return <TextArea label="Gift message" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={4} />;
+      return <div className="designer-fields-grid">{headingField}<TextArea label="Important note" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={4} /></div>;
     case "special-message":
       return (
         <div className="designer-fields-grid">
           <TextField label="Small text above the heading" value={section.fields.eyebrow ?? ""} onChange={(value) => onField("eyebrow", value)} full />
+          {headingField}
           <TextArea label="Your main message" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={3} />
           <TextField label="Small dedication label" value={section.fields.dedicationLabel ?? ""} onChange={(value) => onField("dedicationLabel", value)} full />
           <TextField label="Who is this message for?" hint="For example: Our grandparents, our parents or our family" value={section.fields.recipient ?? ""} onChange={(value) => onField("recipient", value)} full />
@@ -798,6 +809,7 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
     case "seating":
       return (
         <div className="designer-repeatable-fields">
+          {headingField}
           <TextField label="Small introduction" value={section.fields.introduction ?? ""} onChange={(value) => onField("introduction", value)} full />
           <div className="designer-table-grid">
             {items.map((item, itemIndex) => (
@@ -820,6 +832,7 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
     case "day-programme":
       return (
         <div className="designer-repeatable-fields">
+          {headingField}
           <TextField label="Small introduction" value={section.fields.introduction ?? ""} onChange={(value) => onField("introduction", value)} full />
           {items.map((item, itemIndex) => (
             <div className="designer-mini-event designer-programme-entry" key={itemIndex}>
@@ -837,6 +850,7 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
     case "glimpse":
       return (
         <div className="designer-fields-grid">
+          {headingField}
           <TextArea label="Gallery introduction" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} />
           <label className="designer-inline-upload">
             <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG or WebP photos. Each photo can be up to 5 MB.</small></span>
@@ -855,7 +869,7 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
         </div>
       );
     case "custom":
-      return <div className="designer-custom-consultation"><Video aria-hidden="true" /><div><strong>Your custom part will be designed with you.</strong><p>We will discuss the idea, wording, visuals and interaction during a video consultation or via message. There is nothing to edit here yet.</p></div></div>;
+      return <div className="designer-custom-consultation"><Video aria-hidden="true" /><div><strong>Your custom part will be designed with you.</strong><p>We will discuss the idea, wording, visuals and interaction during a video consultation or by message. There is nothing to edit here yet.</p><span>Video consultation or message</span></div></div>;
   }
 }
 
