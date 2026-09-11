@@ -1,0 +1,120 @@
+/* Mobile-only refinements for the invitation designer.
+   Keep these overrides isolated so desktop layout and designer behaviour stay unchanged. */
+
+@media (max-width: 900px) {
+  /* Keep the running total visible without taking space from the header. */
+  .designer-page {
+    padding-bottom: 6.5rem;
+  }
+
+  .designer-header-price,
+  .designer-mobile-preview .designer-header-price {
+    position: fixed;
+    z-index: 120;
+    left: 50%;
+    right: auto;
+    bottom: calc(.85rem + env(safe-area-inset-bottom));
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    min-width: 10.75rem;
+    padding: .65rem 1.05rem;
+    transform: translateX(-50%);
+    border: 1px solid color-mix(in srgb, var(--builder-accent) 82%, #fff);
+    border-radius: 999px;
+    color: #fff;
+    background: color-mix(in srgb, var(--builder-accent) 92%, #28171b);
+    box-shadow: 0 .8rem 2rem rgba(48, 24, 29, .22);
+    backdrop-filter: blur(12px);
+  }
+
+  .designer-header-price span {
+    color: rgba(255, 255, 255, .72);
+    font-size: .58rem;
+    line-height: 1;
+  }
+
+  .designer-header-price strong {
+    color: #fff;
+    font: 600 1.15rem/1 var(--serif);
+  }
+
+  /* Centre the selectable hero photos instead of leaving unused room on one side. */
+  .designer-hero-images {
+    grid-template-columns: repeat(auto-fit, minmax(7.25rem, 8.25rem));
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .designer-hero-images {
+    grid-template-columns: repeat(2, minmax(0, 7.35rem));
+    justify-content: center;
+    gap: .7rem;
+  }
+
+  .designer-hero-images > button,
+  .designer-hero-images > .designer-upload-card {
+    width: 100%;
+    max-width: 7.35rem;
+  }
+
+  /* The add-table action should be a compact action, not another full table card. */
+  .designer-add-table {
+    width: fit-content;
+    min-width: 0;
+    min-height: 2.75rem;
+    aspect-ratio: auto;
+    justify-self: center;
+    flex-direction: row;
+    gap: .5rem;
+    padding: .42rem .85rem .42rem .45rem;
+    border-radius: 999px;
+  }
+
+  .designer-add-table > span {
+    width: 1.8rem;
+    height: 1.8rem;
+    margin: 0;
+  }
+
+  .designer-add-table svg {
+    width: .82rem;
+  }
+
+  .designer-add-table strong {
+    font-size: .68rem;
+    white-space: nowrap;
+  }
+
+  .designer-add-table small {
+    display: none;
+  }
+
+  /* Compress the custom-part consultation notice while preserving its content. */
+  .designer-custom-consultation {
+    gap: .6rem;
+    padding: .7rem .75rem;
+    border-radius: .8rem;
+  }
+
+  .designer-custom-consultation > svg {
+    width: 1rem;
+    margin-top: .08rem;
+  }
+
+  .designer-custom-consultation div {
+    gap: .2rem;
+  }
+
+  .designer-custom-consultation strong {
+    font-size: .92rem;
+    line-height: 1.08;
+  }
+
+  .designer-custom-consultation p {
+    font-size: .7rem;
+    line-height: 1.4;
+  }
+}
