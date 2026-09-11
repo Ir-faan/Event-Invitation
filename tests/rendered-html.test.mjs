@@ -91,7 +91,7 @@ test("includes exact palette artwork for the builder", async () => {
 });
 
 test("uses the revised hero, photo choices and additional-part prices", async () => {
-  const { calculateInvitationPrice, createInitialInvitation, createSection, getCoupleInitials, heroPresets, interactiveHeroPresets, sectionDefinitions } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
+  const { bismillahAssets, builderAssetVersion, calculateInvitationPrice, createInitialInvitation, createSection, getCoupleInitials, heroPresets, interactiveFrameAssets, interactiveHeroPresets, openingAssets, sectionDefinitions } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
   const config = createInitialInvitation();
   config.hero.type = "interactive";
   config.sections.push(createSection("countdown"), createSection("glimpse"));
@@ -102,6 +102,14 @@ test("uses the revised hero, photo choices and additional-part prices", async ()
   assert.equal(getCoupleInitials("123 Aisha", " Noor"), "A ♥ N");
   const basicUrls = new Set(Object.values(heroPresets).flat().map((preset) => preset.url));
   assert.ok(interactiveHeroPresets.every((preset) => !basicUrls.has(preset.url)));
+  const versionedAssetUrls = [
+    ...basicUrls,
+    ...interactiveHeroPresets.map((preset) => preset.url),
+    ...Object.values(interactiveFrameAssets),
+    ...Object.values(bismillahAssets),
+    ...Object.values(openingAssets).flatMap((assets) => assets.flatMap((asset) => Object.values(asset.urls))),
+  ];
+  assert.ok(versionedAssetUrls.every((url) => url.endsWith(`?v=${builderAssetVersion}`)));
   assert.deepEqual(calculateInvitationPrice(config), {
     base: 1000,
     opening: 0,

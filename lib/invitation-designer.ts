@@ -103,52 +103,59 @@ export const paletteOptions = [
 
 type HeroPreset = { id: string; name: string; url: string; objectPosition: string; zoom: number; hidden?: boolean };
 
+/** Bump this value whenever the generated designer artwork changes. */
+export const builderAssetVersion = "20260911-1";
+
+function builderAssetUrl(fileName: string) {
+  return `/images/${fileName}?v=${builderAssetVersion}`;
+}
+
 function matchedHeroPresets(palette: PaletteId, signatureUrl: string): HeroPreset[] {
   return [
     { id: `${palette}-full`, name: "Signature scene", url: signatureUrl, objectPosition: "center center", zoom: 1 },
     // Keep the legacy index so older saved drafts retain the correct following presets.
     // The close crop is no longer offered in the designer and is normalized to the signature scene.
     { id: `${palette}-close`, name: "Closer crop", url: signatureUrl, objectPosition: "center 68%", zoom: 1.14, hidden: true },
-    { id: `${palette}-ballroom`, name: "Grand ballroom", url: `/images/builder-hero-ballroom-${palette}.webp`, objectPosition: "center center", zoom: 1 },
-    { id: `${palette}-garden`, name: "Garden ceremony", url: `/images/builder-hero-garden-${palette}.webp`, objectPosition: "center center", zoom: 1 },
-    { id: `${palette}-islamic-hall`, name: "Pure elegance", url: `/images/builder-hero-islamic-hall-${palette}.webp`, objectPosition: "center center", zoom: 1 },
+    { id: `${palette}-ballroom`, name: "Grand ballroom", url: builderAssetUrl(`builder-hero-ballroom-${palette}.webp`), objectPosition: "center center", zoom: 1 },
+    { id: `${palette}-garden`, name: "Garden ceremony", url: builderAssetUrl(`builder-hero-garden-${palette}.webp`), objectPosition: "center center", zoom: 1 },
+    { id: `${palette}-islamic-hall`, name: "Pure elegance", url: builderAssetUrl(`builder-hero-islamic-hall-${palette}.webp`), objectPosition: "center center", zoom: 1 },
   ];
 }
 
 /** Every selectable scene retains its composition when the palette changes. */
 export const heroPresets: Record<PaletteId, HeroPreset[]> = {
-  beige: matchedHeroPresets("beige", "/images/builder-hero-beige.webp"),
-  olive: matchedHeroPresets("olive", "/images/builder-hero-olive.webp"),
-  "dusty-blue": matchedHeroPresets("dusty-blue", "/images/builder-hero-dusty-blue.webp"),
-  burgundy: matchedHeroPresets("burgundy", "/images/builder-hero-burgundy.webp"),
-  pink: matchedHeroPresets("pink", "/images/builder-hero-pink.webp"),
-  lilac: matchedHeroPresets("lilac", "/images/builder-hero-lilac.webp"),
+  beige: matchedHeroPresets("beige", builderAssetUrl("builder-hero-beige.webp")),
+  olive: matchedHeroPresets("olive", builderAssetUrl("builder-hero-olive.webp")),
+  "dusty-blue": matchedHeroPresets("dusty-blue", builderAssetUrl("builder-hero-dusty-blue.webp")),
+  burgundy: matchedHeroPresets("burgundy", builderAssetUrl("builder-hero-burgundy.webp")),
+  pink: matchedHeroPresets("pink", builderAssetUrl("builder-hero-pink.webp")),
+  lilac: matchedHeroPresets("lilac", builderAssetUrl("builder-hero-lilac.webp")),
 };
 
 /** Intimate portrait photos reserved for the scratch-to-reveal hero. */
 export const interactiveHeroPresets: HeroPreset[] = [
-  { id: "interactive-henna-hands", name: "Henna promise", url: "/images/builder-interactive-henna-hands.webp", objectPosition: "center center", zoom: 1 },
-  { id: "interactive-orchid-bouquet", name: "Orchid exchange", url: "/images/builder-interactive-orchid-bouquet.webp", objectPosition: "center center", zoom: 1 },
-  { id: "interactive-island-walk", name: "Island sunrise", url: "/images/builder-interactive-island-walk.webp", objectPosition: "center center", zoom: 1 },
+  { id: "interactive-henna-hands", name: "Henna promise", url: builderAssetUrl("builder-interactive-henna-hands.webp"), objectPosition: "center center", zoom: 1 },
+  { id: "interactive-orchid-bouquet", name: "Orchid exchange", url: builderAssetUrl("builder-interactive-orchid-bouquet.webp"), objectPosition: "center center", zoom: 1 },
+  { id: "interactive-island-walk", name: "Island sunrise", url: builderAssetUrl("builder-interactive-island-walk.webp"), objectPosition: "center center", zoom: 1 },
 ];
 
 export const interactiveFrameAssets: Record<PaletteId, string> = {
-  beige: "/images/builder-frame-beige.webp",
-  olive: "/images/builder-frame-olive.webp",
-  "dusty-blue": "/images/builder-frame-dusty-blue.webp",
-  burgundy: "/images/builder-frame-burgundy.webp",
-  pink: "/images/builder-frame-pink.webp",
-  lilac: "/images/builder-frame-lilac.webp",
+  beige: builderAssetUrl("builder-frame-beige.webp"),
+  olive: builderAssetUrl("builder-frame-olive.webp"),
+  "dusty-blue": builderAssetUrl("builder-frame-dusty-blue.webp"),
+  burgundy: builderAssetUrl("builder-frame-burgundy.webp"),
+  pink: builderAssetUrl("builder-frame-pink.webp"),
+  lilac: builderAssetUrl("builder-frame-lilac.webp"),
 };
 
 /** One faithful source is rendered in white for every palette. */
 export const bismillahAssets: Record<PaletteId, string> = {
-  beige: "/images/builder-bismillah-beige.webp",
-  olive: "/images/builder-bismillah-beige.webp",
-  "dusty-blue": "/images/builder-bismillah-beige.webp",
-  burgundy: "/images/builder-bismillah-beige.webp",
-  pink: "/images/builder-bismillah-beige.webp",
-  lilac: "/images/builder-bismillah-beige.webp",
+  beige: builderAssetUrl("builder-bismillah-beige.webp"),
+  olive: builderAssetUrl("builder-bismillah-beige.webp"),
+  "dusty-blue": builderAssetUrl("builder-bismillah-beige.webp"),
+  burgundy: builderAssetUrl("builder-bismillah-beige.webp"),
+  pink: builderAssetUrl("builder-bismillah-beige.webp"),
+  lilac: builderAssetUrl("builder-bismillah-beige.webp"),
 };
 
 export const openingOptions = [
@@ -159,12 +166,12 @@ export const openingOptions = [
 
 function paletteAssetUrls(prefix: string): Record<PaletteId, string> {
   return {
-    beige: `/images/${prefix}-beige.webp`,
-    olive: `/images/${prefix}-olive.webp`,
-    "dusty-blue": `/images/${prefix}-dusty-blue.webp`,
-    burgundy: `/images/${prefix}-burgundy.webp`,
-    pink: `/images/${prefix}-pink.webp`,
-    lilac: `/images/${prefix}-lilac.webp`,
+    beige: builderAssetUrl(`${prefix}-beige.webp`),
+    olive: builderAssetUrl(`${prefix}-olive.webp`),
+    "dusty-blue": builderAssetUrl(`${prefix}-dusty-blue.webp`),
+    burgundy: builderAssetUrl(`${prefix}-burgundy.webp`),
+    pink: builderAssetUrl(`${prefix}-pink.webp`),
+    lilac: builderAssetUrl(`${prefix}-lilac.webp`),
   };
 }
 
