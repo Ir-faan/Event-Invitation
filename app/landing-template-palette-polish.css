@@ -4,20 +4,20 @@
 .landing-refresh .collection {
   display: grid;
   grid-template-columns: 1fr;
-  row-gap: .52rem;
+  row-gap: .74rem;
 }
 
 .landing-refresh .collection > .section-heading {
   grid-column: 1;
   grid-row: 1;
-  margin-bottom: .12rem !important;
+  margin-bottom: .22rem !important;
 }
 
 .landing-refresh .palette-showcase {
   grid-column: 1;
   grid-row: 2;
   width: min(72rem, 96%);
-  margin: 0 auto .3rem;
+  margin: 0 auto .42rem;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -28,7 +28,7 @@
 .landing-refresh .palette-showcase-label {
   display: block;
   width: max-content;
-  margin: 0 auto .62rem;
+  margin: 0 auto .7rem;
   color: #8a6f74;
   text-align: center;
   text-transform: uppercase;
@@ -98,7 +98,7 @@
   grid-column: 1;
   grid-row: 3;
   width: min(82rem, 100%);
-  margin: .1rem auto 0;
+  margin: .18rem auto 0;
   display: flex !important;
   flex-wrap: wrap;
   justify-content: center;
@@ -123,20 +123,20 @@
 
 @media (max-width: 620px) {
   .landing-refresh .collection {
-    row-gap: .42rem;
+    row-gap: .58rem;
   }
 
   .landing-refresh .collection > .section-heading {
-    margin-bottom: .05rem !important;
+    margin-bottom: .12rem !important;
   }
 
   .landing-refresh .palette-showcase {
     width: 100%;
-    margin-bottom: .16rem;
+    margin-bottom: .27rem;
   }
 
   .landing-refresh .palette-showcase-label {
-    margin-bottom: .5rem;
+    margin-bottom: .58rem;
     font-size: .43rem;
   }
 
@@ -166,6 +166,7 @@
 
   .landing-refresh .collection-grid {
     width: 100%;
+    margin-top: .12rem;
     gap: .45rem;
   }
 
