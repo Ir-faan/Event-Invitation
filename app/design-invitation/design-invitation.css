@@ -302,7 +302,7 @@
 .designer-final-save svg { width: 1rem; }
 
 /* Phone frame and live invitation */
-.designer-preview-panel { position: sticky; top: 50%; align-self: start; display: grid; justify-items: center; transform: translateY(-50%); }
+.designer-preview-panel { position: sticky; top: clamp(2.25rem,calc((100vh - 50rem) / 2),8rem); align-self: start; display: grid; justify-items: center; transform: none; }
 .designer-preview-price { min-width: 9.2rem; margin-bottom: .65rem; padding: .48rem 1.15rem .52rem; display: grid; justify-items: center; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: #fff; background: rgba(38,24,28,.95); box-shadow: 0 .85rem 2rem rgba(33,15,20,.2); backdrop-filter: blur(16px); }
 .designer-preview-price small { color: rgba(255,255,255,.65); font-size: .58rem; }
 .designer-preview-price strong { font: 600 1.25rem var(--serif); }
