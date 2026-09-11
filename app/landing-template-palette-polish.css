@@ -4,20 +4,20 @@
 .landing-refresh .collection {
   display: grid;
   grid-template-columns: 1fr;
-  row-gap: .74rem;
+  row-gap: 1.02rem;
 }
 
 .landing-refresh .collection > .section-heading {
   grid-column: 1;
   grid-row: 1;
-  margin-bottom: .22rem !important;
+  margin-bottom: .38rem !important;
 }
 
 .landing-refresh .palette-showcase {
   grid-column: 1;
   grid-row: 2;
   width: min(72rem, 96%);
-  margin: 0 auto .42rem;
+  margin: .08rem auto .72rem;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -28,7 +28,7 @@
 .landing-refresh .palette-showcase-label {
   display: block;
   width: max-content;
-  margin: 0 auto .7rem;
+  margin: 0 auto .82rem;
   color: #8a6f74;
   text-align: center;
   text-transform: uppercase;
@@ -42,7 +42,7 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: .5rem;
+  gap: .58rem;
 }
 
 .landing-refresh .palette-pill {
@@ -98,12 +98,12 @@
   grid-column: 1;
   grid-row: 3;
   width: min(82rem, 100%);
-  margin: .18rem auto 0;
+  margin: .32rem auto 0;
   display: flex !important;
   flex-wrap: wrap;
   justify-content: center;
   align-items: stretch;
-  gap: .7rem;
+  gap: .86rem;
 }
 
 .landing-refresh .collection-card {
@@ -123,20 +123,20 @@
 
 @media (max-width: 620px) {
   .landing-refresh .collection {
-    row-gap: .58rem;
+    row-gap: .82rem;
   }
 
   .landing-refresh .collection > .section-heading {
-    margin-bottom: .12rem !important;
+    margin-bottom: .22rem !important;
   }
 
   .landing-refresh .palette-showcase {
     width: 100%;
-    margin-bottom: .27rem;
+    margin: .05rem auto .42rem;
   }
 
   .landing-refresh .palette-showcase-label {
-    margin-bottom: .58rem;
+    margin-bottom: .68rem;
     font-size: .43rem;
   }
 
@@ -144,7 +144,7 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 8.25rem)) !important;
     justify-content: center;
-    gap: .36rem .45rem;
+    gap: .42rem .5rem;
   }
 
   .landing-refresh .palette-pill {
@@ -166,13 +166,13 @@
 
   .landing-refresh .collection-grid {
     width: 100%;
-    margin-top: .12rem;
-    gap: .45rem;
+    margin-top: .22rem;
+    gap: .54rem;
   }
 
   .landing-refresh .collection-card {
-    flex: 0 0 calc((100% - .9rem) / 3);
-    max-width: calc((100% - .9rem) / 3);
+    flex: 0 0 calc((100% - 1.08rem) / 3);
+    max-width: calc((100% - 1.08rem) / 3);
   }
 }
 
