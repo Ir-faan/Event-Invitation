@@ -12,20 +12,32 @@
 .landing-refresh .custom-part-group .extra-group-title {
   position: static;
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  width: 100%;
   padding-right: 0;
 }
 
 .landing-refresh .custom-part-group .extra-group-title > div {
+  display: flex;
+  flex: 1 1 auto;
   min-width: 0;
+  align-items: center;
+  gap: .7rem;
+}
+
+.landing-refresh .custom-part-group .extra-group-title > div > strong {
+  margin: 0;
+  line-height: 1.25;
 }
 
 .landing-refresh .custom-part-group .extra-group-title > b {
   position: static;
   flex: 0 0 auto;
   margin: 0 0 0 auto;
+  align-self: center;
   white-space: nowrap;
 }
 
@@ -99,6 +111,36 @@
    The iframe viewport is deliberately much wider, then scaled down, so it does
    not switch to the designer's mobile layout and look zoomed-in. */
 @media (max-width: 760px) {
+  /* Keep a strong CTA in the visual centre of the mobile navbar. */
+  .landing-refresh .site-nav {
+    position: fixed;
+  }
+
+  .landing-refresh .site-nav > .nav-action {
+    display: inline-flex !important;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 3;
+    transform: translate(-50%, -50%);
+    min-height: 2.55rem;
+    padding: 0 .95rem;
+    border-radius: 999px;
+    color: #fff;
+    background: var(--wine);
+    box-shadow: 0 .55rem 1.25rem rgba(74,25,34,.16);
+    font-size: .66rem;
+    white-space: nowrap;
+  }
+
+  .landing-refresh .site-nav > .nav-action:hover {
+    transform: translate(-50%, -50%);
+  }
+
+  .landing-refresh .site-nav > .nav-action svg {
+    width: .8rem;
+  }
+
   /* Tighten the customise section so the designer preview sits directly below
      the choice cards instead of feeling detached from them. */
   .landing-refresh .customizer-section {
@@ -297,11 +339,25 @@
   }
 
   .landing-refresh .custom-part-group .extra-group-title {
-    gap: .55rem;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: .5rem;
+    margin-bottom: .9rem;
+  }
+
+  .landing-refresh .custom-part-group .extra-group-title > div {
+    flex: 1 1 auto;
+    align-items: center;
+    gap: .6rem;
+  }
+
+  .landing-refresh .custom-part-group .extra-group-title > div > strong {
+    font-size: .72rem;
   }
 
   .landing-refresh .custom-part-group .extra-group-title > b {
-    font-size: .7rem;
+    align-self: center;
+    font-size: .66rem;
   }
 
   .landing-refresh .compact-contact-row,
