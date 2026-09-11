@@ -449,7 +449,7 @@ export function InvitationDesigner() {
         ))}
       </div>
       <header className="designer-header">
-        <Link href="/" className="designer-back"><ArrowLeft aria-hidden="true" /> Back to Paperless Invites</Link>
+        <Link href="/" className="designer-back"><ArrowLeft aria-hidden="true" /> Back to Home</Link>
         <div className="designer-title">
           <span className="designer-brand-mark">PI</span>
           <div><p>Invitation designer</p><h1>Create your invitation</h1></div>
@@ -485,7 +485,7 @@ export function InvitationDesigner() {
             </div>
           </MainStep>
 
-          <MainStep id="designer-opening" number="2" icon={<Sparkles />} title="Choose how it opens" description="You can replay the opening above the mobile preview as many times as you like." onActivate={() => activatePreview("opening")}>
+          <MainStep id="designer-opening" number="2" icon={<Sparkles />} title="Choose how it opens" description="You can replay the opening as many times as you like." onActivate={() => activatePreview("opening")}>
             <div className="designer-choice-grid designer-opening-options">
               {openingOptions.map((option) => (
                 <ChoiceButton key={option.id} selected={config.opening.type === option.id} title={option.name} description={option.description} price={option.price} onClick={() => chooseOpening(option.id)} />
@@ -773,7 +773,7 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
   const headingField = <TextField label="Section heading" value={section.title} onChange={onTitle} full />;
   switch (section.type) {
     case "countdown":
-      return <div className="designer-fields-grid"><TextField label="Small text above the countdown" value={section.fields.eyebrow ?? ""} onChange={(value) => onField("eyebrow", value)} full />{headingField}<TextArea label="Text below the countdown title" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} /><TextField label="Date to count down to" hint="Choose the celebration date." type="date" value={section.fields.date ?? ""} onChange={(value) => onField("date", value)} /><TextField label="Time to count down to" hint="Use 24-hour time." type="time" value={section.fields.time ?? ""} onChange={(value) => onField("time", value)} /></div>;
+      return <div className="designer-fields-grid"><TextField label="Small text above the countdown" value={section.fields.eyebrow ?? ""} onChange={(value) => onField("eyebrow", value)} full />{headingField}<TextArea label="Text below the countdown title" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} /><TextField label="Date to count down to" hint="Choose the celebration date (mm/dd/yyyy)." type="date" value={section.fields.date ?? ""} onChange={(value) => onField("date", value)} /><TextField label="Time to count down to" type="time" value={section.fields.time ?? ""} onChange={(value) => onField("time", value)} /></div>;
     case "journey":
       return (
         <div className="designer-repeatable-fields">
