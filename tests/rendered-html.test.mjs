@@ -45,7 +45,7 @@ test("renders the guided invitation designer and mobile preview", async () => {
   assert.match(html, /For the easiest design experience/);
   assert.match(html, /Your name/);
   assert.match(html, /Mauritian phone or WhatsApp number/);
-  assert.match(html, /Wedding date shown on the hero and footer/);
+  assert.match(html, /Wedding date/);
   assert.match(html, /Once your order is ready/);
   assert.match(html, /For example: Aisha Rahman/);
   assert.match(html, /For example: 58749327/);

@@ -71,7 +71,6 @@ export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKe
         <div>
           <span className="designer-live-dot" />
           <strong>Live mobile preview</strong>
-          <small>Moves to the part you edit</small>
         </div>
         <button type="button" onClick={onReplay} disabled={config.opening.type === "none"}>
           <RotateCcw aria-hidden="true" /> Preview opening

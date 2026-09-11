@@ -429,7 +429,7 @@ export function InvitationDesigner() {
       <nav className="designer-steps" aria-label="Invitation design steps">
         <a href="#designer-colours"><span>1</span>Colours</a>
         <a href="#designer-opening"><span>2</span>Opening</a>
-        <a href="#designer-hero"><span>3</span>Main photo</a>
+        <a href="#designer-hero"><span>3</span>Main Area</a>
         <a href="#designer-sections"><span>4</span>Parts</a>
       </nav>
 
@@ -442,10 +442,7 @@ export function InvitationDesigner() {
 
       <div className="designer-workspace">
         <form id="invitation-designer-form" className="designer-form" onSubmit={saveDesign} noValidate>
-          <div className="designer-welcome">
-            <Sparkles aria-hidden="true" />
-            <div><strong>Start with the choices below.</strong><p>Your phone preview changes immediately. When you click into a field, it moves to that same part for you.</p></div>
-          </div>
+          
 
           <MainStep id="designer-colours" number="1" icon={<Palette />} title="Choose your colours" description="The same artwork changes into your selected colour, so the design stays consistent.">
             <div className="designer-palette-grid">
@@ -468,7 +465,7 @@ export function InvitationDesigner() {
 
             {config.opening.type !== "none" && (
               <div className="designer-conditional-panel">
-                <div className="designer-subheading"><strong>Choose the {config.opening.type === "envelope" ? "envelope" : "curtain"} style</strong><span>It will open full-screen in your guest&apos;s invitation.</span></div>
+                <div className="designer-subheading"><strong>Choose the {config.opening.type === "envelope" ? "envelope" : "curtain"} style</strong></div>
                 <div className="designer-image-options designer-opening-images">
                   {(config.opening.type === "envelope" ? openingAssets.envelope : openingAssets.curtain).map((asset) => (
                     <button type="button" key={asset.id} className={config.opening.asset === asset.id ? "is-selected" : ""} onClick={() => {
@@ -482,30 +479,30 @@ export function InvitationDesigner() {
                     </button>
                   ))}
                 </div>
-                {config.opening.type === "envelope" && <p className="designer-opening-note">Wax-seal initials are created automatically from the first letters of the two names in the main photo area.</p>}
+                {config.opening.type === "envelope" && <p className="designer-opening-note">Your initials will not be visible in the mobile preview, but they will appear on the wax seal when we process your invitation.</p>}
               </div>
             )}
           </MainStep>
 
-          <MainStep id="designer-hero" number="3" icon={<ImageIcon />} title="Choose the main photo area" description="This is the first part your guests will see after the opening." onActivate={() => activatePreview("hero")}>
+          <MainStep id="designer-hero" number="3" icon={<ImageIcon />} title="Choose the main area" description="This is the first part your guests will see after the opening." onActivate={() => activatePreview("hero")}>
             <div className="designer-choice-grid">
-              <ChoiceButton selected={config.hero.type === "basic"} title="Basic hero" description="Your chosen photo appears in the background." price={0} onClick={() => chooseHero("basic")} />
-              <ChoiceButton selected={config.hero.type === "interactive"} title="Interactive hero" description="Guests scratch only the framed photo to reveal it." price={200} onClick={() => chooseHero("interactive")} featured />
+              <ChoiceButton selected={config.hero.type === "basic"} title="Basic" description="Your chosen photo appears in the background." price={0} onClick={() => chooseHero("basic")} />
+              <ChoiceButton selected={config.hero.type === "interactive"} title="Interactive" description="Guests scratch only the framed photo to reveal it." price={200} onClick={() => chooseHero("interactive")} featured />
             </div>
 
             <div className="designer-bismillah-picker">
               <div className="designer-subheading">
-                <strong>Add Bismillah at the top?</strong>
+                <strong>Add arabic calligraphy at the top?</strong>
                 <span>Add or remove it with one tap.</span>
               </div>
               <div className="designer-choice-grid">
-                <ChoiceButton selected={config.bismillah.enabled} title="Show Bismillah" description="Place the calligraphy above the invitation names." price={0} onClick={() => chooseBismillah(true)} />
-                <ChoiceButton selected={!config.bismillah.enabled} title="Without Bismillah" description="Start directly with the main photo area." price={0} onClick={() => chooseBismillah(false)} />
+                <ChoiceButton selected={config.bismillah.enabled} title="Show Arabic Calligraphy" description="Place the calligraphy above the invitation names." price={0} onClick={() => chooseBismillah(true)} />
+                <ChoiceButton selected={!config.bismillah.enabled} title="Without Arabic Calligraphy" description="Start directly with the main area." price={0} onClick={() => chooseBismillah(false)} />
               </div>
             </div>
 
             <div className="designer-photo-picker">
-              <div className="designer-subheading"><strong>Choose a photo</strong><span>{config.hero.type === "basic" ? "Each venue keeps the exact same composition when you change colours." : "Choose an intimate couple detail, or upload your own portrait photo."}</span></div>
+              <div className="designer-subheading"><strong>Choose a photo</strong><span>{config.hero.type === "basic" ? "Each photo keeps the exact same composition when you change colours." : "Choose an intimate couple detail, or upload your own portrait photo."}</span></div>
               <div className="designer-image-options designer-hero-images">
                 {availableHeroPresets.map((asset, index) => asset.hidden ? null : (
                   <button type="button" key={asset.id} className={config.hero.photoSource === "preset" && config.hero.presetIndex === index ? "is-selected" : ""} onClick={() => chooseHeroPreset(index)}>
@@ -531,7 +528,7 @@ export function InvitationDesigner() {
               <TextField label="First name" value={config.hero.firstName} onChange={(value) => updateHero("firstName", value)} />
               <TextField label="Second name" value={config.hero.secondName} onChange={(value) => updateHero("secondName", value)} />
               <TextArea label="Invitation message" value={config.hero.message} onChange={(value) => updateHero("message", value)} full rows={2} />
-              <TextField label="Wedding date shown on the hero and footer" type="date" value={config.hero.date} onChange={(value) => updateHero("date", value)} full />
+              <TextField label="Wedding date" type="date" value={config.hero.date} onChange={(value) => updateHero("date", value)} full />
             </div>
           </MainStep>
 
@@ -608,7 +605,7 @@ export function InvitationDesigner() {
           )}
           <div className="designer-submit-panel">
             <button className="designer-final-save" type="submit" disabled={saveState === "saving"}><Save aria-hidden="true" />{saveButtonText}</button>
-            <p>{hasCustomPart ? "We will contact you to arrange the video consultation for your custom part, then share payment details when your order is ready." : "Once your order is ready, we will contact you with the payment details."}</p>
+            <p>{hasCustomPart ? "We will contact you for your custom part, then share payment details with you when your order is ready." : "Once your order is ready, we will contact you with the payment details."}</p>
           </div>
         </form>
 
@@ -747,7 +744,7 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
   const items = getSectionItems(section);
   switch (section.type) {
     case "countdown":
-      return <div className="designer-fields-grid"><TextField label="Date to count down to" hint="The live countdown uses this date, independently from your event cards." type="date" value={section.fields.date ?? ""} onChange={(value) => onField("date", value)} full /><TextField label="Small text above the countdown" value={section.fields.eyebrow ?? ""} onChange={(value) => onField("eyebrow", value)} full /><TextArea label="Text below the countdown title" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} /></div>;
+      return <div className="designer-fields-grid"><TextField label="Date to count down to" hint="The live countdown will count to this date." type="date" value={section.fields.date ?? ""} onChange={(value) => onField("date", value)} full /><TextField label="Small text above the countdown" value={section.fields.eyebrow ?? ""} onChange={(value) => onField("eyebrow", value)} full /><TextArea label="Text below the countdown title" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} /></div>;
     case "journey":
       return (
         <div className="designer-repeatable-fields">
@@ -778,7 +775,7 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
                 <TextField label="Start time" type="time" value={item.time ?? ""} onChange={(value) => onItem(itemIndex, "time", value)} icon={<Clock3 />} />
                 <TextField label="Venue name" value={item.venue ?? ""} onChange={(value) => onItem(itemIndex, "venue", value)} />
                 <TextField label="Town or full address" value={item.address ?? ""} onChange={(value) => onItem(itemIndex, "address", value)} />
-                <TextField label="Google Maps link (optional)" type="url" hint="If empty, the map searches for the venue and address." value={item.mapUrl ?? ""} onChange={(value) => onItem(itemIndex, "mapUrl", value)} full icon={<MapPin />} />
+                <TextField label="Google Maps link (optional)" type="url" hint="If empty, the map searches for the venue and address but it may not find the exact location if the venue and address is not recognised." value={item.mapUrl ?? ""} onChange={(value) => onItem(itemIndex, "mapUrl", value)} full icon={<MapPin />} />
               </div>
             </div>
           ))}
@@ -858,7 +855,7 @@ function SectionFields({ section, onField, onItem, onAddItem, onRemoveItem, onPh
         </div>
       );
     case "custom":
-      return <div className="designer-custom-consultation"><Video aria-hidden="true" /><div><strong>Your custom part will be designed with you.</strong><p>We will discuss the idea, wording, visuals and interaction during a video consultation. There is nothing to edit here yet.</p><span>Custom design consultation · + Rs 500</span></div></div>;
+      return <div className="designer-custom-consultation"><Video aria-hidden="true" /><div><strong>Your custom part will be designed with you.</strong><p>We will discuss the idea, wording, visuals and interaction during a video consultation or via message. There is nothing to edit here yet.</p></div></div>;
   }
 }
 

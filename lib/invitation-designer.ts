@@ -111,7 +111,7 @@ function matchedHeroPresets(palette: PaletteId, signatureUrl: string): HeroPrese
     { id: `${palette}-close`, name: "Closer crop", url: signatureUrl, objectPosition: "center 68%", zoom: 1.14, hidden: true },
     { id: `${palette}-ballroom`, name: "Grand ballroom", url: `/images/builder-hero-ballroom-${palette}.webp`, objectPosition: "center center", zoom: 1 },
     { id: `${palette}-garden`, name: "Garden ceremony", url: `/images/builder-hero-garden-${palette}.webp`, objectPosition: "center center", zoom: 1 },
-    { id: `${palette}-islamic-hall`, name: "Islamic elegance", url: `/images/builder-hero-islamic-hall-${palette}.webp`, objectPosition: "center center", zoom: 1 },
+    { id: `${palette}-islamic-hall`, name: "Pure elegance", url: `/images/builder-hero-islamic-hall-${palette}.webp`, objectPosition: "center center", zoom: 1 },
   ];
 }
 
@@ -183,12 +183,12 @@ export const sectionDefinitions: Record<SectionType, { name: string; shortName: 
   countdown: { name: "Countdown", shortName: "Countdown", description: "Count down to the celebration date.", price: 150 },
   journey: { name: "Order of Events (Our Journey)", shortName: "Our Journey", description: "Add as many moments as your story needs.", price: 150 },
   "event-details": { name: "Event Details + Location", shortName: "Event Details", description: "Add every ceremony, venue and map.", price: 150 },
-  gift: { name: "Gift Preferences", shortName: "Gift Preferences", description: "A kind note about gifts.", price: 150 },
-  "special-message": { name: "A Special Message", shortName: "Special Message", description: "A dedication, thank-you or loving memory.", price: 200 },
+  gift: { name: "Gift Preferences", shortName: "Gift Preferences", description: "A kind note (could be about gifts, parking areas, etc..).", price: 150 },
+  "special-message": { name: "A Special Message", shortName: "Special Message", description: "A dedication, thank-you or loving memory to your closed ones.", price: 200 },
   seating: { name: "Seating Arrangement", shortName: "Seating", description: "List several families under each table.", price: 200 },
   "day-programme": { name: "Day Programme", shortName: "Programme", description: "Times, programme details and small notes.", price: 200 },
   glimpse: { name: "Glimpse Of Us", shortName: "Glimpse Of Us", description: "A scattered gallery of your photos.", price: 200 },
-  custom: { name: "Custom Part", shortName: "Custom Part", description: "Planned and designed with you by video consultation.", price: 500 },
+  custom: { name: "Custom Part", shortName: "Custom Part", description: "Planned and designed with you by video consultation or by message.", price: 500 },
 };
 
 function makeId(type: SectionType) {
