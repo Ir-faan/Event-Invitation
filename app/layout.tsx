@@ -19,6 +19,7 @@ import "./landing-marquee-clean.css";
 import "./landing-template-gallery-compact.css";
 import { TemplateCardRouter } from "@/components/template-card-router";
 import { FooterSocialLinkFix } from "@/components/footer-social-link-fix";
+import { LandingMainPolish } from "@/components/landing-main-polish";
 
 export const metadata: Metadata = {
   title: "Paperless Invites — The most elegant save the date",
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body>
         <TemplateCardRouter />
         <FooterSocialLinkFix />
+        <LandingMainPolish />
         {children}
       </body>
     </html>
