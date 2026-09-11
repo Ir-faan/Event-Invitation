@@ -4,21 +4,28 @@
   display: none;
 }
 
-/* Keep the custom-part surcharge pinned to the top-right of its card. */
+/* Keep the custom-part surcharge on the same line as its heading. */
 .landing-refresh .custom-part-group {
   position: relative;
 }
 
 .landing-refresh .custom-part-group .extra-group-title {
   position: static;
-  padding-right: 5.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-right: 0;
+}
+
+.landing-refresh .custom-part-group .extra-group-title > div {
+  min-width: 0;
 }
 
 .landing-refresh .custom-part-group .extra-group-title > b {
-  position: absolute;
-  top: 1.25rem;
-  right: 1.35rem;
-  margin: 0;
+  position: static;
+  flex: 0 0 auto;
+  margin: 0 0 0 auto;
   white-space: nowrap;
 }
 
@@ -92,6 +99,16 @@
    The iframe viewport is deliberately much wider, then scaled down, so it does
    not switch to the designer's mobile layout and look zoomed-in. */
 @media (max-width: 760px) {
+  /* Tighten the customise section so the designer preview sits directly below
+     the choice cards instead of feeling detached from them. */
+  .landing-refresh .customizer-section {
+    gap: 1.15rem !important;
+  }
+
+  .landing-refresh .customizer-demo {
+    margin-top: -.25rem !important;
+  }
+
   .landing-refresh .customizer-copy > .button {
     display: none;
   }
@@ -116,6 +133,88 @@
   .landing-refresh .consultation-social-row {
     align-items: center;
     flex-direction: row;
+  }
+
+  /* Mobile opening section: heading first, smaller floating envelope in the
+     middle, then the explanatory text and feature pills underneath. */
+  .landing-refresh .envelope-section {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: auto;
+    padding: 4rem 1.25rem 4.5rem !important;
+  }
+
+  .landing-refresh .envelope-copy {
+    display: contents;
+  }
+
+  .landing-refresh .envelope-copy.reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  .landing-refresh .envelope-copy .eyebrow {
+    order: 1;
+    justify-content: center;
+    margin: 0 0 .8rem;
+    text-align: center;
+  }
+
+  .landing-refresh .envelope-copy h2 {
+    order: 2;
+    width: min(34rem, 100%);
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .landing-refresh .envelope-visual {
+    order: 3;
+    width: 100%;
+    min-height: 15rem !important;
+    margin: .65rem auto .45rem;
+  }
+
+  .landing-refresh .envelope-visual img {
+    width: min(17rem, 72vw) !important;
+  }
+
+  .landing-refresh .envelope-halo {
+    width: 14rem !important;
+    height: 14rem !important;
+  }
+
+  .landing-refresh .floating-note {
+    padding: .42rem .62rem;
+    font-size: .5rem !important;
+  }
+
+  .landing-refresh .note-one {
+    left: 7% !important;
+    top: 18% !important;
+  }
+
+  .landing-refresh .note-two {
+    right: 6% !important;
+    top: 42% !important;
+  }
+
+  .landing-refresh .note-three {
+    left: 12% !important;
+    bottom: 12% !important;
+  }
+
+  .landing-refresh .envelope-copy > p:not(.eyebrow) {
+    order: 4;
+    width: min(34rem, 100%);
+    margin: .4rem auto 0 !important;
+    text-align: center;
+  }
+
+  .landing-refresh .mini-features {
+    order: 5;
+    justify-content: center;
+    margin-top: 1.2rem !important;
   }
 }
 
@@ -198,13 +297,11 @@
   }
 
   .landing-refresh .custom-part-group .extra-group-title {
-    padding-right: 4.5rem;
+    gap: .55rem;
   }
 
   .landing-refresh .custom-part-group .extra-group-title > b {
-    top: 1.05rem;
-    right: 1.05rem;
-    font-size: .72rem;
+    font-size: .7rem;
   }
 
   .landing-refresh .compact-contact-row,
@@ -226,5 +323,28 @@
   .landing-refresh .consultation-socials .social-button {
     width: 2.2rem;
     height: 2.2rem;
+  }
+
+  .landing-refresh .envelope-section {
+    padding-top: 3.5rem !important;
+    padding-bottom: 3.75rem !important;
+  }
+
+  .landing-refresh .envelope-copy h2 {
+    font-size: clamp(2.75rem, 13vw, 4.25rem) !important;
+  }
+
+  .landing-refresh .envelope-visual {
+    min-height: 13.25rem !important;
+    margin-top: .4rem;
+  }
+
+  .landing-refresh .envelope-visual img {
+    width: min(15rem, 68vw) !important;
+  }
+
+  .landing-refresh .envelope-halo {
+    width: 12rem !important;
+    height: 12rem !important;
   }
 }
