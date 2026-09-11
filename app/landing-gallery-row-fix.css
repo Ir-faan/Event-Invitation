@@ -1,0 +1,33 @@
+/* Landing gallery sizing and footer cleanup */
+
+/* Keep both moving rows visually consistent. */
+.landing-refresh .showcase {
+  height: 48rem;
+}
+
+.landing-refresh .row-two .showcase-card,
+.landing-refresh .row-two .showcase-card.small {
+  width: 15rem;
+  height: 22rem;
+  flex-basis: 15rem;
+}
+
+/* Re-center the phone vertically between the two equal-height rows. */
+.landing-refresh .spotlight-phone {
+  top: 6.5rem;
+}
+
+/* Remove the Why digital link from the footer while keeping the comparison section itself. */
+.landing-refresh .refreshed-footer a[href="#compare"] {
+  display: none !important;
+}
+
+@media (max-width: 520px) {
+  .landing-refresh .showcase {
+    height: 48rem;
+  }
+
+  .landing-refresh .spotlight-phone {
+    top: 6.5rem;
+  }
+}

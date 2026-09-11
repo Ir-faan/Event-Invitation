@@ -8,7 +8,17 @@ import "./traditional-card-fixes.css";
 import "./coastal-programme-gift-polish.css";
 import "./rose-scratch-sparkles.css";
 import "./footer-redesign.css";
+import "./landing-refresh.css";
+import "./landing-preview-fix.css";
+import "./landing-navbar-cleanup.css";
+import "./footer-contact-cleanup.css";
+import "./landing-palette-compact.css";
+import "./landing-gallery-row-fix.css";
+import "./landing-comparison-paper-text-fix.css";
+import "./landing-marquee-clean.css";
+import "./landing-template-gallery-compact.css";
 import { TemplateCardRouter } from "@/components/template-card-router";
+import { FooterSocialLinkFix } from "@/components/footer-social-link-fix";
 
 export const metadata: Metadata = {
   title: "Paperless Invites — The most elegant save the date",
@@ -29,6 +39,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <TemplateCardRouter />
+        <FooterSocialLinkFix />
         {children}
       </body>
     </html>

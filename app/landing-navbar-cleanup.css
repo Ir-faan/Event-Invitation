@@ -1,0 +1,4 @@
+.landing-refresh .site-nav nav a[href="#compare"],
+.landing-refresh .mobile-menu a[href="#compare"] {
+  display: none;
+}

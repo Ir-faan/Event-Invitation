@@ -1,0 +1,9 @@
+.landing-refresh .landing-comparison .paper-card {
+  color: var(--ink);
+  transform: none;
+}
+
+.landing-refresh .landing-comparison .paper-card .paper-title span,
+.landing-refresh .landing-comparison .paper-card .paper-total strong {
+  color: var(--ink);
+}

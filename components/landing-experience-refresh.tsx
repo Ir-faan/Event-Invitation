@@ -8,8 +8,10 @@ import {
   ChevronDown,
   Clock3,
   CreditCard,
+  Eye,
   Gem,
   Heart,
+  Layers3,
   Leaf,
   Menu,
   Palette,
@@ -18,12 +20,6 @@ import {
   Smartphone,
   Sparkles,
 } from "lucide-react";
-
-const collection = [
-  { name: "Soft & Timeless", mood: "Beige, ivory & warm colours", image: "/images/coastal-reverie.webp", tone: "light" },
-  { name: "Olive Romance", mood: "Olive green & soft flowers", image: "/images/rose-scratch-hero-olive.webp", tone: "dark" },
-  { name: "Evening Elegance", mood: "Deep colours & an elegant look", image: "/images/moonlit-bloom.webp", tone: "dark" },
-];
 
 const palettes = [
   { name: "Beige", colours: ["#e8ddcf", "#f8f2ea", "#b89d7f"] },
@@ -34,46 +30,63 @@ const palettes = [
   { name: "Purple / Lilac", colours: ["#75617f", "#b8a2c1", "#f1eaf3"] },
 ];
 
+const examples = [
+  { name: "Soft & Timeless", mood: "Beige, ivory & warm colours", image: "/images/coastal-reverie.webp" },
+  { name: "Olive Romance", mood: "Olive green & soft flowers", image: "/images/rose-scratch-hero-olive.webp" },
+  { name: "Evening Elegance", mood: "Deep colours & an elegant look", image: "/images/moonlit-bloom.webp" },
+  { name: "Warm Garden", mood: "Soft beige & garden romance", image: "/images/builder-hero-beige.webp" },
+  { name: "Dusty Blue Ballroom", mood: "Dusty blue & refined details", image: "/images/builder-hero-ballroom-dusty-blue.webp" },
+  { name: "Burgundy Evening", mood: "Burgundy, warmth & candlelight", image: "/images/builder-hero-burgundy.webp" },
+  { name: "Lilac Hall", mood: "Lilac tones & elegant arches", image: "/images/builder-hero-islamic-hall-lilac.webp" },
+  { name: "Blush Ballroom", mood: "Soft pink & romantic light", image: "/images/builder-hero-ballroom-pink.webp" },
+];
+
+// Each marquee row has its own images. Six photo cards + two opening cards keeps openings at 25%.
+const movingShowcase = [
+  { image: "/images/builder-hero-beige.webp", label: "Warm beige hero", type: "photo" },
+  { image: "/images/builder-interactive-henna-hands.webp", label: "Scratch reveal — henna hands", type: "photo" },
+  { image: "/images/builder-hero-garden-olive.webp", label: "Olive garden hero", type: "photo" },
+  { image: "/images/builder-interactive-orchid-bouquet.webp", label: "Scratch reveal — orchid bouquet", type: "photo" },
+  { image: "/images/builder-hero-ballroom-dusty-blue.webp", label: "Dusty blue ballroom hero", type: "photo" },
+  { image: "/images/builder-interactive-island-walk.webp", label: "Scratch reveal — island walk", type: "photo" },
+  { image: "/images/builder-envelope-botanical-beige.webp", label: "Botanical envelope opening", type: "opening" },
+  { image: "/images/builder-curtain-classic-burgundy.webp", label: "Burgundy curtain reveal", type: "opening" },
+];
+
+const movingShowcaseSecondRow = [
+  { image: "/images/builder-hero-burgundy.webp", label: "Burgundy wedding hero", type: "photo" },
+  { image: "/images/builder-interactive-bouquet.webp", label: "Scratch reveal — bridal bouquet", type: "photo" },
+  { image: "/images/builder-hero-islamic-hall-lilac.webp", label: "Lilac wedding hall hero", type: "photo" },
+  { image: "/images/builder-interactive-garden-walk.webp", label: "Scratch reveal — garden walk", type: "photo" },
+  { image: "/images/builder-hero-ballroom-pink.webp", label: "Pink ballroom hero", type: "photo" },
+  { image: "/images/builder-interactive-hands.webp", label: "Scratch reveal — couple hands", type: "photo" },
+  { image: "/images/builder-envelope-classic-olive.webp", label: "Olive envelope opening", type: "opening" },
+  { image: "/images/builder-curtain-botanical-dusty-blue.webp", label: "Dusty blue curtain reveal", type: "opening" },
+];
+
 const designProcess = [
-  { icon: Palette, number: "01", title: "You design it", copy: "Choose your colours, opening, photos and the invitation parts you want." },
-  { icon: Sparkles, number: "02", title: "We make it", copy: "We build your invitation, put it online and send you the link so you can review the finished result." },
-  { icon: CreditCard, number: "03", title: "Payment", copy: "Pay only after you receive the link and are happy with your invitation." },
-  { icon: Send, number: "04", title: "Share in a tap", copy: "Once payment is confirmed, your invitation link is ready to share with family and guests." },
+  { icon: Palette, number: "01", title: "Design the invitation", copy: "Choose your colours, opening, main photo and the invitation parts you want." },
+  { icon: Eye, number: "02", title: "Review the design", copy: "See your choices in the live mobile preview, then review the finished invitation link." },
+  { icon: CreditCard, number: "03", title: "Payment", copy: "Pay after you receive your invitation link and are happy with the result." },
+  { icon: Send, number: "04", title: "Share in a tap", copy: "Send one elegant link to family and guests on the apps you already use." },
 ];
 
 const includedParts = [
   "Countdown to the big day",
-  "Order of Events",
+  "Order of Events / Our Journey",
   "Event Details & Location",
   "Gift Preferences",
 ];
 
-const optionalParts = [
+const extraParts = [
   "A Special Message",
   "Seating Arrangement",
   "Day Programme",
-  "Glimpse Of You",
+  "Glimpse Of Us",
 ];
 
-const heroCards = [
-  { kind: "image", image: collection[0].image, label: "coastal" },
-  { kind: "paper", label: "THE MOST ELEGANT\nSAVE THE DATE" },
-  { kind: "image", image: collection[1].image, label: "garden" },
-  { kind: "seal", label: "You are invited" },
-  { kind: "image", image: collection[2].image, label: "moonlit" },
-];
-
-const ribbonMessage = "LOVE STORIES IN MOTION ✦ WEDDINGS WITH SOUL ✦ ENGAGEMENTS TO REMEMBER ✦ SAVE THE DATES, BEAUTIFULLY MADE ✦ YOUR MOMENT, YOUR STORY ✦ WHERE FOREVER BEGINS ✦";
-
-// Add the WhatsApp number with country code and social links here when they are ready.
-// Example WhatsApp format for Mauritius: 2305XXXXXXX (numbers only, no + or spaces).
 const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
-const socialLinks = {
-  facebook: "",
-  instagram: "",
-  tiktok: "",
-};
-
+const socialLinks = { facebook: "", instagram: "", tiktok: "" };
 const consultationMessage = "Hi, I would like some help designing my invitation and would like to arrange a free video consultation.";
 const customPartMessage = "Hi, I would like to add a custom part to my invitation and discuss it during the free video consultation.";
 
@@ -81,12 +94,12 @@ function getWhatsAppLink(message: string) {
   return whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}` : "#";
 }
 
-export function LandingExperience() {
+export function LandingExperienceRefresh() {
   useEffect(() => {
-    const reveals = document.querySelectorAll<HTMLElement>(".reveal");
+    const reveals = document.querySelectorAll<HTMLElement>(".landing-refresh .reveal");
     const observer = new IntersectionObserver(
       (entries) => entries.forEach((entry) => entry.isIntersecting && entry.target.classList.add("is-visible")),
-      { threshold: 0.14 },
+      { threshold: 0.12 },
     );
     reveals.forEach((element) => observer.observe(element));
 
@@ -97,34 +110,9 @@ export function LandingExperience() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
 
-    const tiltCards = document.querySelectorAll<HTMLElement>(".tilt-card");
-    const cleanups: Array<() => void> = [];
-    tiltCards.forEach((card) => {
-      const move = (event: PointerEvent) => {
-        const bounds = card.getBoundingClientRect();
-        const x = (event.clientX - bounds.left) / bounds.width - 0.5;
-        const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-        card.style.setProperty("--rotate-x", `${-y * 8}deg`);
-        card.style.setProperty("--rotate-y", `${x * 10}deg`);
-        card.style.setProperty("--spot-x", `${(x + 0.5) * 100}%`);
-        card.style.setProperty("--spot-y", `${(y + 0.5) * 100}%`);
-      };
-      const leave = () => {
-        card.style.setProperty("--rotate-x", "0deg");
-        card.style.setProperty("--rotate-y", "0deg");
-      };
-      card.addEventListener("pointermove", move);
-      card.addEventListener("pointerleave", leave);
-      cleanups.push(() => {
-        card.removeEventListener("pointermove", move);
-        card.removeEventListener("pointerleave", leave);
-      });
-    });
-
     return () => {
       observer.disconnect();
       window.removeEventListener("scroll", handleScroll);
-      cleanups.forEach((cleanup) => cleanup());
     };
   }, []);
 
@@ -132,17 +120,17 @@ export function LandingExperience() {
   const customPartWhatsAppLink = getWhatsAppLink(customPartMessage);
 
   return (
-    <main id="top">
+    <main id="top" className="landing-refresh">
       <div className="scroll-progress" aria-hidden="true" />
       <div className="ambient-glow" aria-hidden="true" />
       <div className="falling-sparkles" aria-hidden="true">
-        {Array.from({ length: 18 }, (_, index) => (
+        {Array.from({ length: 16 }, (_, index) => (
           <span
             key={index}
             style={{
               "--spark-x": `${(index * 37) % 100}%`,
-              "--spark-delay": `${-(index % 9) * 1.8}s`,
-              "--spark-duration": `${12 + (index % 6) * 2}s`,
+              "--spark-delay": `${-(index % 8) * 1.9}s`,
+              "--spark-duration": `${13 + (index % 5) * 2}s`,
             } as React.CSSProperties}
           >
             {index % 3 === 0 ? "✦" : "·"}
@@ -157,6 +145,7 @@ export function LandingExperience() {
         </a>
         <nav aria-label="Main navigation">
           <a href="#collection">Examples</a>
+          <a href="#customise">Customise</a>
           <a href="#process">How it works</a>
           <a href="#compare">Why digital</a>
           <a href="#pricing">Pricing</a>
@@ -165,82 +154,135 @@ export function LandingExperience() {
         <details className="mobile-menu">
           <summary aria-label="Open navigation"><Menu aria-hidden="true" /></summary>
           <div>
-            <a href="#collection">Examples</a><a href="#process">How it works</a><a href="#compare">Why digital</a><a href="#pricing">Pricing</a><a href="/design-invitation">Design yours</a>
+            <a href="#collection">Examples</a>
+            <a href="#customise">Customise</a>
+            <a href="#process">How it works</a>
+            <a href="#compare">Why digital</a>
+            <a href="#pricing">Pricing</a>
+            <a href="/design-invitation">Design yours</a>
           </div>
         </details>
       </header>
 
-      <section className="hero" aria-labelledby="hero-title">
+      <section className="hero landing-hero" aria-labelledby="hero-title">
         <div className="hero-orbit orbit-one" aria-hidden="true" />
         <div className="hero-orbit orbit-two" aria-hidden="true" />
         <div className="hero-copy">
           <p className="eyebrow hero-kicker"><Sparkles aria-hidden="true" /> Welcome to Paperless Invites</p>
           <h1 id="hero-title">The most elegant <em>save the date.</em></h1>
-          <p>Beautiful digital invitations for weddings and special days. Easy to open, easy to share and made to feel personal.</p>
+          <p>Beautiful digital invitations for weddings and special days. Choose the details you love, preview them live and share your finished invitation in a tap.</p>
           <div className="hero-actions">
             <a className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></a>
-            <a className="text-link" href="#collection">See invitation examples <ArrowDownRight aria-hidden="true" /></a>
+            <a className="text-link" href="#collection">See what you can create <ArrowDownRight aria-hidden="true" /></a>
           </div>
         </div>
-        <div className="showcase" aria-label="A moving preview of invitation styles">
+
+        <div className="showcase landing-showcase" id="gallery" aria-label="Moving examples of invitation photos, envelopes and curtains">
           <div className="marquee-row row-one">
             <div className="marquee-track">
-              {[...heroCards, ...heroCards].map((card, index) => <ShowcaseCard key={`one-${index}`} card={card} />)}
+              {[...movingShowcase, ...movingShowcase].map((card, index) => <MovingCard key={`a-${index}`} card={card} />)}
             </div>
           </div>
           <div className="marquee-row row-two" aria-hidden="true">
             <div className="marquee-track reverse">
-              {[...heroCards.slice().reverse(), ...heroCards.slice().reverse()].map((card, index) => <ShowcaseCard key={`two-${index}`} card={card} small />)}
+              {[...movingShowcaseSecondRow, ...movingShowcaseSecondRow].map((card, index) => <MovingCard key={`b-${index}`} card={card} small />)}
             </div>
           </div>
           <div className="spotlight-phone" aria-hidden="true">
             <div className="phone-speaker" />
-            <img src="/images/coastal-reverie.webp" alt="" />
+            <img src="/images/builder-hero-beige.webp" alt="" />
             <div className="phone-copy"><span>PAPERLESS INVITES</span><strong>Your story<br />begins here</strong><i>Save the date</i></div>
           </div>
         </div>
-        <a href="#collection" className="scroll-cue"><span>Scroll to explore</span><ChevronDown aria-hidden="true" /></a>
+        <a href="#collection" className="scroll-cue"><span>Browse invitations</span><ChevronDown aria-hidden="true" /></a>
       </section>
 
       <section className="collection section" id="collection" aria-labelledby="collection-title">
         <div className="section-heading centered reveal">
-          <p className="eyebrow">✦ Invitation examples</p>
-          <h2 id="collection-title">See what your invitation<br /><em>can look like.</em></h2>
-          <p>Have a look at some ready-made invitation examples. Use them for ideas, then choose the colours and features you want for your own invitation.</p>
+          <p className="eyebrow">✦ Invitation inspiration</p>
+          <h2 id="collection-title">Start with an idea.<br /><em>Then make it your own.</em></h2>
+          <p>These examples show a few moods you can create. Your final invitation can mix the colours, opening, photos and parts that suit you.</p>
         </div>
         <div className="collection-grid">
-          {collection.map((item, index) => (
-            <article className={`collection-card tilt-card reveal ${item.tone}`} key={item.name} style={{ "--reveal-delay": `${index * 120}ms` } as React.CSSProperties}>
-              <img src={item.image} alt={`${item.name} invitation example`} />
-              <div className="card-shine" aria-hidden="true" />
+          {examples.map((item, index) => (
+            <article className="collection-card reveal" key={item.name} style={{ "--reveal-delay": `${index * 110}ms` } as React.CSSProperties}>
+              <img src={item.image} alt={`${item.name} digital invitation example`} />
               <div className="collection-number">0{index + 1}</div>
               <div className="collection-content">
                 <span>{item.mood}</span>
                 <h3>{item.name}</h3>
-                <p>Invitation example</p>
+                <p>Invitation inspiration</p>
               </div>
-              <a href="#pricing" aria-label={`See how to create an invitation inspired by ${item.name}`}><ArrowDownRight aria-hidden="true" /></a>
+              <a href="/design-invitation" aria-label={`Design an invitation inspired by ${item.name}`}><ArrowDownRight aria-hidden="true" /></a>
             </article>
           ))}
         </div>
         <div className="palette-showcase reveal" aria-label="Available colour choices">
-          <span className="palette-showcase-label">Choose from these colours</span>
+          <span className="palette-showcase-label">Choose from these colour palettes</span>
           <div className="palette-showcase-grid">
             {palettes.map((palette) => (
               <div className="palette-pill" key={palette.name}>
-                <span className="palette-dots" aria-hidden="true">
-                  {palette.colours.map((colour) => <i key={colour} style={{ background: colour }} />)}
-                </span>
+                <span className="palette-dots" aria-hidden="true">{palette.colours.map((colour) => <i key={colour} style={{ background: colour }} />)}</span>
                 <strong>{palette.name}</strong>
               </div>
             ))}
           </div>
         </div>
-        <div className="collection-cta reveal">
-          <a className="button button-wine" href="/design-invitation">Design your own invitation <ArrowRight aria-hidden="true" /></a>
+      </section>
+
+      <section className="comparison section landing-comparison" id="compare" aria-labelledby="comparison-title">
+        <div className="comparison-orbit comparison-orbit-a" aria-hidden="true" />
+        <div className="comparison-orbit comparison-orbit-b" aria-hidden="true" />
+        <div className="section-heading centered reveal">
+          <p className="eyebrow">Paper or digital?</p>
+          <h2 id="comparison-title">Beautiful to receive.<br /><em>Effortless to share.</em></h2>
+          <p>Keep the elegance of a traditional invitation, while giving your guests every detail in one easy link.</p>
         </div>
-        <div className="ticker" aria-hidden="true">
-          <div>{Array.from({ length: 4 }, (_, index) => <span key={index}>{ribbonMessage}</span>)}</div>
+        <div className="comparison-grid">
+          <article className="paper-card reveal">
+            <div className="paper-title"><span>Traditional paper</span><Clock3 aria-hidden="true" /></div>
+            <div className="receipt-line"><span>Design changes</span><strong>More steps</strong></div>
+            <div className="receipt-line"><span>Printing & envelopes</span><strong>Extra cost</strong></div>
+            <div className="receipt-line"><span>Delivery</span><strong>Can take days</strong></div>
+            <div className="receipt-line"><span>Last-minute change</span><strong>Print again</strong></div>
+            <div className="paper-total"><span>WHAT IT CAN ADD</span><strong>More time and cost</strong></div>
+          </article>
+          <article className="digital-card reveal">
+            <div className="digital-label">Paperless invitation</div>
+            <h3>One link.<br />Everything they need.</h3>
+            <ul>
+              <li><Smartphone aria-hidden="true" /><span><strong>Made for phones</strong>Simple for guests to open and read.</span><Check aria-hidden="true" /></li>
+              <li><Send aria-hidden="true" /><span><strong>Share instantly</strong>Send it in WhatsApp or any messaging app.</span><Check aria-hidden="true" /></li>
+              <li><Leaf aria-hidden="true" /><span><strong>No printing</strong>No paper, envelopes or delivery needed.</span><Check aria-hidden="true" /></li>
+            </ul>
+            <div className="digital-foot"><span>Elegant, personal and easy to share</span><Sparkles aria-hidden="true" /></div>
+          </article>
+        </div>
+      </section>
+
+      <section className="customizer-section section" id="customise" aria-labelledby="customizer-title">
+        <div className="customizer-copy reveal">
+          <p className="eyebrow"><Palette aria-hidden="true" /> Designed around your taste</p>
+          <h2 id="customizer-title">Make the invitation<br /><em>feel completely yours.</em></h2>
+          <p>Choose your colour palette, opening style, photos and invitation parts yourself. You are not locked into one fixed template — build the combination that feels right for your event.</p>
+          <div className="customizer-points">
+            <span><Eye aria-hidden="true" /><b>Live mobile preview</b><small>See your invitation change as you make each choice.</small></span>
+            <span><Layers3 aria-hidden="true" /><b>Choose your parts</b><small>Add only the sections and interactive moments you want.</small></span>
+            <span><Palette aria-hidden="true" /><b>Your colours & photos</b><small>Shape the look around your own event and style.</small></span>
+          </div>
+          <a className="button button-wine" href="/design-invitation">Start designing yours <ArrowRight aria-hidden="true" /></a>
+        </div>
+
+        <div className="customizer-demo reveal" aria-label="Preview of the invitation creation page">
+          <div className="customizer-browser-bar" aria-hidden="true">
+            <span /><span /><span />
+            <strong>Paperless Invites · Invitation Designer</strong>
+          </div>
+          <div className="customizer-live-badge"><span className="live-dot" /> Live preview while you design</div>
+          <div className="customizer-frame">
+            <iframe src="/design-invitation" title="Paperless Invites invitation designer preview" loading="lazy" tabIndex={-1} />
+          </div>
+          <p>This is the same creation page you will use to design your invitation.</p>
         </div>
       </section>
 
@@ -277,34 +319,6 @@ export function LandingExperience() {
         </div>
       </section>
 
-      <section className="comparison section" id="compare" aria-labelledby="comparison-title">
-        <div className="section-heading centered reveal">
-          <p className="eyebrow">Paper or digital?</p>
-          <h2 id="comparison-title">Beautiful to receive.<br /><em>Easy to share.</em></h2>
-          <p>A digital invitation gives your guests all the important details in one place, without printing or delivery.</p>
-        </div>
-        <div className="comparison-grid">
-          <article className="paper-card reveal">
-            <div className="paper-title"><span>Traditional paper</span><Clock3 aria-hidden="true" /></div>
-            <div className="receipt-line"><span>Design changes</span><strong>More steps</strong></div>
-            <div className="receipt-line"><span>Printing & envelopes</span><strong>Extra cost</strong></div>
-            <div className="receipt-line"><span>Delivery</span><strong>Can take days</strong></div>
-            <div className="receipt-line"><span>Last-minute change</span><strong>Print again</strong></div>
-            <div className="paper-total"><span>WHAT IT CAN ADD</span><strong>More time and cost</strong></div>
-          </article>
-          <article className="digital-card reveal">
-            <div className="digital-label">Digital invitation</div>
-            <h3>One link.<br />All your details.</h3>
-            <ul>
-              <li><Smartphone aria-hidden="true" /><span><strong>Made for phones</strong>Easy for guests to open and read.</span><Check aria-hidden="true" /></li>
-              <li><Send aria-hidden="true" /><span><strong>Easy to share</strong>Send it in a few taps.</span><Check aria-hidden="true" /></li>
-              <li><Leaf aria-hidden="true" /><span><strong>Less paper</strong>No printing or envelopes needed.</span><Check aria-hidden="true" /></li>
-            </ul>
-            <div className="digital-foot"><span>Simple, personal and easy to share</span><Sparkles aria-hidden="true" /></div>
-          </article>
-        </div>
-      </section>
-
       <section className="pricing section" id="pricing" aria-labelledby="pricing-title">
         <div className="pricing-heading centered reveal">
           <p className="eyebrow">Simple pricing</p>
@@ -324,10 +338,7 @@ export function LandingExperience() {
           <article className="base-invite-card reveal">
             <div className="simple-price-badge">Step 1 · Start here</div>
             <div className="base-price-row">
-              <div>
-                <span>Basic invitation</span>
-                <strong>Rs 1,000</strong>
-              </div>
+              <div><span>Basic invitation</span><strong>Rs 1,000</strong></div>
               <Check aria-hidden="true" />
             </div>
             <p>This gives you a complete invitation with the important parts already included.</p>
@@ -347,9 +358,8 @@ export function LandingExperience() {
             <div className="included-parts">
               <strong>These parts are included</strong>
               <span className="parts-help">A “part” is one block of the invitation, such as the countdown or event details.</span>
-              <ul>
-                {includedParts.map((part) => <li key={part}><Check aria-hidden="true" />{part}</li>)}
-              </ul>
+              <ul>{includedParts.map((part) => <li key={part}><Check aria-hidden="true" />{part}</li>)}</ul>
+              <span className="parts-help">Want another copy of one of these included parts? Add it for Rs 150 each.</span>
             </div>
           </article>
 
@@ -359,10 +369,7 @@ export function LandingExperience() {
             <p>You do not need to add anything. Choose only the extras that matter to you.</p>
 
             <div className="extra-group">
-              <div className="extra-group-title">
-                <div><span>1</span><strong>How should the invitation open?</strong></div>
-                <small>Opening effect</small>
-              </div>
+              <div className="extra-group-title"><div><span>1</span><strong>How should the invitation open?</strong></div><small>Opening effect</small></div>
               <div className="extra-options">
                 <div><span>No special opening</span><b>Included</b></div>
                 <div><span>Envelope opening with initials on wax seal</span><b>+ Rs 200</b></div>
@@ -371,10 +378,7 @@ export function LandingExperience() {
             </div>
 
             <div className="extra-group">
-              <div className="extra-group-title">
-                <div><span>2</span><strong>Choose the main photo area</strong></div>
-                <small>The first big area guests see</small>
-              </div>
+              <div className="extra-group-title"><div><span>2</span><strong>Choose the main photo area</strong></div><small>The first big area guests see</small></div>
               <div className="extra-options">
                 <div><span>Normal photo in the background</span><b>Included</b></div>
                 <div><span>Photo guests can interact with, such as scratch to reveal</span><b>+ Rs 200</b></div>
@@ -382,23 +386,15 @@ export function LandingExperience() {
             </div>
 
             <div className="extra-group">
-              <div className="extra-group-title">
-                <div><span>3</span><strong>Add more invitation parts</strong></div>
-                <small>Rs 150 each</small>
-              </div>
+              <div className="extra-group-title"><div><span>3</span><strong>Add more invitation parts</strong></div><small>Rs 200 each</small></div>
               <div className="optional-parts-grid">
-                {optionalParts.map((part) => (
-                  <span key={part}><Sparkles aria-hidden="true" /><span>{part}</span><b>+ Rs 150</b></span>
-                ))}
+                {extraParts.map((part) => <span key={part}><Sparkles aria-hidden="true" /><span>{part}</span><b>+ Rs 200</b></span>)}
               </div>
-              <p className="extra-note">Each extra invitation part costs Rs 150. Choose as many as you would like and the total price will be shown.</p>
+              <p className="extra-note">Each extra invitation part costs Rs 200. Choose as many as you would like and the total price will be shown.</p>
             </div>
 
             <div className="extra-group custom-part-group">
-              <div className="extra-group-title">
-                <div><span>4</span><strong>Need something that is not listed?</strong></div>
-                <b>+ Rs 500</b>
-              </div>
+              <div className="extra-group-title"><div><span>4</span><strong>Need something that is not listed?</strong></div><b>+ Rs 500</b></div>
               <p>We can add one custom part made specially for your invitation. This is for something that is not already available in the choices above.</p>
               <div className="custom-part-consultation">
                 <span>Your custom part will be planned with you during a free video consultation. If you already have something in mind or a design readily available, share it with us.</span>
@@ -438,10 +434,7 @@ export function LandingExperience() {
           <article className="service-note-card consultation-note" id="consultation">
             <Smartphone aria-hidden="true" />
             <div className="consultation-copy">
-              <div className="consultation-title-row">
-                <strong>Free video consultation</strong>
-                <span className="free-consultation-badge">Free</span>
-              </div>
+              <div className="consultation-title-row"><strong>Free video consultation</strong><span className="free-consultation-badge">Free</span></div>
               <p><b>Having trouble designing your invitation?</b> We can assist you through your choices and help you put the invitation together during a free video consultation.</p>
             </div>
             <div className="consultation-actions">
@@ -473,57 +466,56 @@ export function LandingExperience() {
         </div>
       </section>
 
-      <section className="contact" id="contact" aria-labelledby="contact-title">
-        <div className="contact-orb orb-a" aria-hidden="true" /><div className="contact-orb orb-b" aria-hidden="true" />
-        <div className="contact-inner reveal">
-          <p className="eyebrow">Let&apos;s create something beautiful</p>
-          <h2 id="contact-title">Your date deserves<br /><em>a beautiful beginning.</em></h2>
-          <p>Tell us about the celebration you are imagining and the components you would like to include.</p>
-          <div className="contact-actions">
-            <span className="coming-soon"><span className="live-dot" /> Enquiries welcome</span>
-            <a className="button button-ivory" href="#pricing">Explore your options <ArrowRight aria-hidden="true" /></a>
+      <footer className="site-footer refreshed-footer">
+        <div className="footer-shell">
+          <div className="footer-brand-block">
+            <a href="#top" className="footer-logo"><span className="brand-seal">PI</span><span>Paperless Invites</span></a>
+            <h2>Your celebration.<br /><em>Your invitation.</em></h2>
+            <p>Elegant digital invitations you can shape around your own colours, photos and story.</p>
+            <a className="footer-design-button" href="/design-invitation">Design yours <ArrowRight aria-hidden="true" /></a>
           </div>
-        </div>
-      </section>
 
-      <footer className="site-footer">
-        <div className="footer-brand"><span className="brand-seal">PI</span><h2>Paperless Invites</h2><p>Beautiful digital invitations, made easy.</p></div>
-        <div className="footer-links"><strong>Explore</strong><a href="#collection">Examples</a><a href="#process">How it works</a><a href="#compare">Why digital</a><a href="#pricing">Pricing</a></div>
-        <div className="footer-note">
-          <Sparkles aria-hidden="true" />
-          <p>Made with care for life&apos;s most beautiful gatherings.</p>
-          <div className="footer-socials" aria-label="Paperless Invites social media">
-            <SocialIconLink href={socialLinks.facebook} label="Facebook"><FacebookLogo /></SocialIconLink>
-            <SocialIconLink href={socialLinks.instagram} label="Instagram"><InstagramLogo /></SocialIconLink>
-            <SocialIconLink href={socialLinks.tiktok} label="TikTok"><TikTokLogo /></SocialIconLink>
+          <div className="footer-column">
+            <span className="footer-column-title">Explore</span>
+            <a href="#collection">Invitation examples</a>
+            <a href="#customise">Customise yours</a>
+            <a href="#process">How it works</a>
+            <a href="#compare">Why digital</a>
+            <a href="#pricing">Pricing</a>
+          </div>
+
+          <div className="footer-column footer-start-column">
+            <span className="footer-column-title">Start creating</span>
+            <p>Choose your options and see a live phone preview before sending your design.</p>
+            <a href="/design-invitation" className="footer-arrow-link">Open the invitation designer <ArrowRight aria-hidden="true" /></a>
+            <div className="footer-socials-new" aria-label="Paperless Invites social media coming soon">
+              <span title="Facebook"><FacebookLogo /></span>
+              <span title="Instagram"><InstagramLogo /></span>
+              <span className="tiktok-mark" title="TikTok">♪</span>
+            </div>
           </div>
         </div>
-        <div className="footer-bottom"><span>© {new Date().getFullYear()} Paperless Invites</span><a href="#top">Back to top ↑</a></div>
+        <div className="footer-bottom-new">
+          <span>© {new Date().getFullYear()} Paperless Invites · Mauritius</span>
+          <a href="#top">Back to top ↑</a>
+        </div>
       </footer>
     </main>
   );
 }
 
-function ShowcaseCard({ card, small = false }: { card: { kind: string; image?: string; label: string }; small?: boolean }) {
+function MovingCard({ card, small = false }: { card: { image: string; label: string; type: string }; small?: boolean }) {
   return (
-    <div className={`showcase-card ${card.kind} ${small ? "small" : ""}`}>
-      {card.image && <img src={card.image} alt="" />}
-      {card.kind === "paper" && <><span>PAPERLESS INVITES</span><strong>{card.label.split("\n").map((line) => <i key={line}>{line}</i>)}</strong><em>✦</em></>}
-      {card.kind === "seal" && <><div className="mini-seal">PI</div><strong>{card.label}</strong><span>OPEN TO BEGIN</span></>}
-    </div>
+    <figure className={`showcase-card moving-image-card ${card.type === "opening" ? "opening-card" : ""} ${small ? "small" : ""}`}>
+      <img src={card.image} alt="" />
+      <figcaption>{card.type === "opening" ? "OPENING STYLE" : card.label.includes("Scratch") ? "SCRATCH TO REVEAL" : "HERO PHOTO"}</figcaption>
+    </figure>
   );
 }
 
 function SocialIconLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
-  if (!href) {
-    return <span className="social-button" title={label} aria-label={label}>{children}</span>;
-  }
-
-  return (
-    <a className="social-button" href={href} title={label} aria-label={label} target="_blank" rel="noreferrer">
-      {children}
-    </a>
-  );
+  if (!href) return <span className="social-button" title={label} aria-label={label}>{children}</span>;
+  return <a className="social-button" href={href} title={label} aria-label={label} target="_blank" rel="noreferrer">{children}</a>;
 }
 
 function WhatsAppLogo() {
@@ -537,7 +529,7 @@ function WhatsAppLogo() {
 function FacebookLogo() {
   return (
     <svg className="brand-icon brand-facebook" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M13.8 21v-8h2.8l.42-3.15H13.8V7.84c0-.91.26-1.53 1.62-1.53h1.73V3.5c-.3-.04-1.33-.13-2.53-.13-2.5 0-4.22 1.53-4.22 4.34v2.14H7.57V13h2.83v8h3.4Z" />
+      <path fill="currentColor" d="M13.8 21v-8h2.8l.42-3.15H13.8V7.84c0-.91.26-1.53 1.62-1.53h1.73V3.5c-.3-.04-1.33-.13-2.53-.13-2.5 0-4.22 1.53-4.22 4.34v2.14H7.57V13h2.83v8h3.4Z" />
     </svg>
   );
 }
@@ -545,9 +537,9 @@ function FacebookLogo() {
 function InstagramLogo() {
   return (
     <svg className="brand-icon brand-instagram" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
-      <circle cx="12" cy="12" r="4.1" />
-      <circle cx="17.55" cy="6.65" r="1" className="social-dot" />
+      <rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" strokeWidth="1.9" />
+      <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" strokeWidth="1.9" />
+      <circle cx="17.55" cy="6.65" r="1" fill="currentColor" />
     </svg>
   );
 }
@@ -555,7 +547,7 @@ function InstagramLogo() {
 function TikTokLogo() {
   return (
     <svg className="brand-icon brand-tiktok" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M14.15 3.1c.18 1.63 1.1 3.03 2.49 3.79a5.7 5.7 0 0 0 2.38.66v3.03a8.47 8.47 0 0 1-4.87-1.55v6.2a5.32 5.32 0 1 1-4.58-5.27v3.08a2.28 2.28 0 1 0 1.55 2.16V3.1h3.03Z" />
+      <path fill="currentColor" d="M14.15 3.1c.18 1.63 1.1 3.03 2.49 3.79a5.7 5.7 0 0 0 2.38.66v3.03a8.47 8.47 0 0 1-4.87-1.55v6.2a5.32 5.32 0 1 1-4.58-5.27v3.08a2.28 2.28 0 1 0 1.55 2.16V3.1h3.03Z" />
     </svg>
   );
 }
