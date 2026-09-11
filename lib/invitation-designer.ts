@@ -207,7 +207,7 @@ export function createSection(type: SectionType, included = false): InvitationSe
 
   switch (type) {
     case "countdown":
-      return { ...common, title: "Counting the days", fields: { date: "2027-05-22", eyebrow: "You are invited to our big day", message: "to the most special day of our lives" }, items: [] };
+      return { ...common, title: "Counting the days", fields: { date: "2027-05-22", time: "18:30", eyebrow: "You are invited to our big day", message: "to the most special day of our lives" }, items: [] };
     case "journey":
       return {
         ...common,

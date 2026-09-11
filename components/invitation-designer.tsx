@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -76,6 +76,7 @@ export function InvitationDesigner() {
   const [previewFocus, setPreviewFocus] = useState<PreviewFocus>({ target: "hero", key: 0 });
   const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
   const objectUrls = useRef<string[]>([]);
+  const sectionMoveAnchor = useRef<{ id: string; top: number; focusedControl: HTMLElement | null } | null>(null);
   const price = useMemo(() => calculateInvitationPrice(config), [config]);
   const palette = getPalette(config.palette);
   const availableHeroPresets = getHeroPresets(config);
@@ -110,6 +111,19 @@ export function InvitationDesigner() {
   }, []);
 
   useEffect(() => () => objectUrls.current.forEach((url) => URL.revokeObjectURL(url)), []);
+
+  useLayoutEffect(() => {
+    const anchor = sectionMoveAnchor.current;
+    if (!anchor) return;
+    sectionMoveAnchor.current = null;
+    const editor = document.getElementById(`editor-${anchor.id}`);
+    if (!editor) return;
+    const topDifference = editor.getBoundingClientRect().top - anchor.top;
+    if (Math.abs(topDifference) > 0.5) {
+      window.scrollBy({ top: topDifference, left: 0, behavior: "instant" });
+    }
+    if (anchor.focusedControl?.isConnected) anchor.focusedControl.focus({ preventScroll: true });
+  }, [config.sections]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setShowDesktopTip(false), 7000);
@@ -255,6 +269,14 @@ export function InvitationDesigner() {
   }
 
   function moveSection(id: string, direction: -1 | 1) {
+    const editor = document.getElementById(`editor-${id}`);
+    sectionMoveAnchor.current = editor
+      ? {
+          id,
+          top: editor.getBoundingClientRect().top,
+          focusedControl: document.activeElement instanceof HTMLElement ? document.activeElement : null,
+        }
+      : null;
     updateConfig((current) => {
       const index = current.sections.findIndex((section) => section.id === id);
       const nextIndex = index + direction;
@@ -751,7 +773,7 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
   const headingField = <TextField label="Section heading" value={section.title} onChange={onTitle} full />;
   switch (section.type) {
     case "countdown":
-      return <div className="designer-fields-grid"><TextField label="Small text above the countdown" value={section.fields.eyebrow ?? ""} onChange={(value) => onField("eyebrow", value)} full />{headingField}<TextArea label="Text below the countdown title" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} /><TextField label="Date to count down to" hint="The live countdown will count to this date." type="date" value={section.fields.date ?? ""} onChange={(value) => onField("date", value)} full /></div>;
+      return <div className="designer-fields-grid"><TextField label="Small text above the countdown" value={section.fields.eyebrow ?? ""} onChange={(value) => onField("eyebrow", value)} full />{headingField}<TextArea label="Text below the countdown title" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} /><TextField label="Date to count down to" hint="Choose the celebration date." type="date" value={section.fields.date ?? ""} onChange={(value) => onField("date", value)} /><TextField label="Time to count down to" hint="Use 24-hour time." type="time" value={section.fields.time ?? ""} onChange={(value) => onField("time", value)} /></div>;
     case "journey":
       return (
         <div className="designer-repeatable-fields">

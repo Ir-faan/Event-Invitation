@@ -41,6 +41,8 @@ test("renders the guided invitation designer and mobile preview", async () => {
   assert.match(html, /Add a moment/);
   assert.match(html, /Add another event/);
   assert.match(html, /Date to count down to/);
+  assert.match(html, /Time to count down to/);
+  assert.match(html, /Use 24-hour time/);
   assert.match(html, /Choose an additional part/);
   assert.match(html, /\+ Rs 150/);
   assert.match(html, /video consultation or by message/);
@@ -62,7 +64,8 @@ test("renders the guided invitation designer and mobile preview", async () => {
   const countdownHeading = html.indexOf("Section heading", countdownEyebrow);
   const countdownMessage = html.indexOf("Text below the countdown title", countdownHeading);
   const countdownDate = html.indexOf("Date to count down to", countdownMessage);
-  assert.ok(countdownEyebrow >= 0 && countdownEyebrow < countdownHeading && countdownHeading < countdownMessage && countdownMessage < countdownDate);
+  const countdownTime = html.indexOf("Time to count down to", countdownDate);
+  assert.ok(countdownEyebrow >= 0 && countdownEyebrow < countdownHeading && countdownHeading < countdownMessage && countdownMessage < countdownDate && countdownDate < countdownTime);
 
   const timelineIntroduction = html.indexOf("Small introduction", countdownDate);
   const timelineHeading = html.indexOf("Section heading", timelineIntroduction);
@@ -95,6 +98,7 @@ test("uses the revised hero, photo choices and additional-part prices", async ()
   const config = createInitialInvitation();
   config.hero.type = "interactive";
   config.sections.push(createSection("countdown"), createSection("glimpse"));
+  assert.equal(createSection("countdown").fields.time, "18:30");
 
   assert.equal(sectionDefinitions.countdown.price, 150);
   assert.equal(sectionDefinitions.glimpse.price, 200);
@@ -141,6 +145,10 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.match(styles, /@keyframes preview-invitation-petal/);
   assert.doesNotMatch(styles, /@keyframes preview-footer-wave/);
   assert.match(designer, /activatePreview\(section\.id\)/);
+  assert.match(designer, /sectionMoveAnchor/);
+  assert.match(designer, /window\.scrollBy\(\{ top: topDifference, left: 0, behavior: "instant" \}\)/);
+  assert.match(designer, /focus\(\{ preventScroll: true \}\)/);
+  assert.match(preview, /getCountdownParts\(section\.fields\.date, section\.fields\.time\)/);
   assert.match(designer, /function MainStep/);
   assert.match(designer, /step\.open = true/);
   assert.match(designer, /case "special-message":[\s\S]*?Small text above the heading[\s\S]*?\{headingField\}[\s\S]*?Your main message/);

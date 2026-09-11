@@ -524,11 +524,11 @@ function CountdownPreview({ section }: { section: InvitationSection }) {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    const update = () => setCountdown(getCountdownParts(section.fields.date));
+    const update = () => setCountdown(getCountdownParts(section.fields.date, section.fields.time));
     update();
     const timer = window.setInterval(update, 1000);
     return () => window.clearInterval(timer);
-  }, [section.fields.date]);
+  }, [section.fields.date, section.fields.time]);
 
   return (
     <section className="invite-preview-section preview-countdown" data-preview-section={section.id}>
