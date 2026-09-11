@@ -1,0 +1,26 @@
+/* Repeating palette-aware background accents for the invitation designer.
+   This only changes the page backdrop; cards, forms and interactions stay untouched. */
+
+.designer-page {
+  background:
+    radial-gradient(circle at 6% 7%, color-mix(in srgb, var(--builder-soft) 88%, transparent), transparent 22rem),
+    radial-gradient(circle at 94% 18%, color-mix(in srgb, var(--builder-accent) 14%, transparent), transparent 20rem),
+    radial-gradient(circle at 8% 36%, color-mix(in srgb, var(--builder-soft) 76%, transparent), transparent 21rem),
+    radial-gradient(circle at 93% 52%, color-mix(in srgb, var(--builder-accent) 12%, transparent), transparent 22rem),
+    radial-gradient(circle at 10% 70%, color-mix(in srgb, var(--builder-soft) 80%, transparent), transparent 23rem),
+    radial-gradient(circle at 90% 86%, color-mix(in srgb, var(--builder-accent) 13%, transparent), transparent 21rem),
+    linear-gradient(145deg, #f8f4f0 0%, #f2ece7 58%, #eee7e2 100%);
+}
+
+@media (max-width: 900px) {
+  .designer-page {
+    background:
+      radial-gradient(circle at 0% 7%, color-mix(in srgb, var(--builder-soft) 92%, transparent), transparent 15rem),
+      radial-gradient(circle at 100% 22%, color-mix(in srgb, var(--builder-accent) 14%, transparent), transparent 14rem),
+      radial-gradient(circle at 0% 40%, color-mix(in srgb, var(--builder-soft) 82%, transparent), transparent 15rem),
+      radial-gradient(circle at 100% 58%, color-mix(in srgb, var(--builder-accent) 12%, transparent), transparent 15rem),
+      radial-gradient(circle at 0% 76%, color-mix(in srgb, var(--builder-soft) 84%, transparent), transparent 15rem),
+      radial-gradient(circle at 100% 92%, color-mix(in srgb, var(--builder-accent) 13%, transparent), transparent 14rem),
+      linear-gradient(145deg, #f8f4f0 0%, #f2ece7 58%, #eee7e2 100%);
+  }
+}
