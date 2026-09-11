@@ -1,0 +1,311 @@
+name: Polish landing main UI
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    if: github.event.head_commit.message == 'Apply landing main UI polish'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Update landing content and layout
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          component = Path('components/landing-experience-refresh.tsx')
+          text = component.read_text()
+
+          examples = '''const examples = [
+  { name: "Soft & Timeless", mood: "Beige, ivory & warm colours", image: "/images/coastal-reverie.webp" },
+  { name: "Olive Romance", mood: "Olive green & soft flowers", image: "/images/rose-scratch-hero-olive.webp" },
+  { name: "Evening Elegance", mood: "Deep colours & an elegant look", image: "/images/moonlit-bloom.webp" },
+  { name: "Warm Garden", mood: "Soft beige & garden romance", image: "/images/builder-hero-beige.webp" },
+  { name: "Dusty Blue Ballroom", mood: "Dusty blue & refined details", image: "/images/builder-hero-ballroom-dusty-blue.webp" },
+  { name: "Burgundy Evening", mood: "Burgundy, warmth & candlelight", image: "/images/builder-hero-burgundy.webp" },
+  { name: "Lilac Hall", mood: "Lilac tones & elegant arches", image: "/images/builder-hero-islamic-hall-lilac.webp" },
+  { name: "Blush Ballroom", mood: "Soft pink & romantic light", image: "/images/builder-hero-ballroom-pink.webp" },
+  { name: "Olive Garden", mood: "Olive greens & garden serenity", image: "/images/builder-hero-garden-olive.webp" },
+  { name: "Pure Elegance", mood: "Dusty blue & graceful arches", image: "/images/builder-hero-islamic-hall-dusty-blue.webp" },
+];'''
+          text, count = re.subn(r'const examples = \[.*?\n\];', examples, text, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit('Could not replace examples array')
+
+          moving_one = '''const movingShowcase = [
+  { image: "/images/builder-hero-beige.webp", label: "Warm beige hero", type: "photo" },
+  { image: "/images/builder-hero-olive.webp", label: "Olive hero", type: "photo" },
+  { image: "/images/builder-hero-dusty-blue.webp", label: "Dusty blue hero", type: "photo" },
+  { image: "/images/builder-hero-burgundy.webp", label: "Burgundy hero", type: "photo" },
+  { image: "/images/builder-hero-pink.webp", label: "Pink hero", type: "photo" },
+  { image: "/images/builder-hero-lilac.webp", label: "Lilac hero", type: "photo" },
+  { image: "/images/builder-interactive-henna-hands.webp", label: "Scratch reveal — henna hands", type: "photo" },
+  { image: "/images/builder-interactive-orchid-bouquet.webp", label: "Scratch reveal — orchid bouquet", type: "photo" },
+  { image: "/images/builder-interactive-island-walk.webp", label: "Scratch reveal — island walk", type: "photo" },
+  { image: "/images/builder-hero-ballroom-beige.webp", label: "Beige ballroom hero", type: "photo" },
+  { image: "/images/builder-hero-ballroom-olive.webp", label: "Olive ballroom hero", type: "photo" },
+  { image: "/images/builder-hero-ballroom-dusty-blue.webp", label: "Dusty blue ballroom hero", type: "photo" },
+  { image: "/images/builder-envelope-botanical-beige.webp", label: "Botanical envelope opening", type: "opening" },
+  { image: "/images/builder-envelope-classic-olive.webp", label: "Olive envelope opening", type: "opening" },
+  { image: "/images/builder-curtain-classic-burgundy.webp", label: "Burgundy curtain reveal", type: "opening" },
+  { image: "/images/builder-curtain-botanical-dusty-blue.webp", label: "Dusty blue curtain reveal", type: "opening" },
+];'''
+          text, count = re.subn(r'const movingShowcase = \[.*?\n\];', moving_one, text, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit('Could not replace first moving showcase')
+
+          moving_two = '''const movingShowcaseSecondRow = [
+  { image: "/images/builder-hero-ballroom-burgundy.webp", label: "Burgundy ballroom hero", type: "photo" },
+  { image: "/images/builder-hero-ballroom-pink.webp", label: "Pink ballroom hero", type: "photo" },
+  { image: "/images/builder-hero-ballroom-lilac.webp", label: "Lilac ballroom hero", type: "photo" },
+  { image: "/images/builder-hero-garden-beige.webp", label: "Beige garden hero", type: "photo" },
+  { image: "/images/builder-hero-garden-olive.webp", label: "Olive garden hero", type: "photo" },
+  { image: "/images/builder-hero-garden-dusty-blue.webp", label: "Dusty blue garden hero", type: "photo" },
+  { image: "/images/builder-hero-garden-burgundy.webp", label: "Burgundy garden hero", type: "photo" },
+  { image: "/images/builder-hero-garden-pink.webp", label: "Pink garden hero", type: "photo" },
+  { image: "/images/builder-hero-garden-lilac.webp", label: "Lilac garden hero", type: "photo" },
+  { image: "/images/builder-hero-islamic-hall-beige.webp", label: "Beige elegant hall hero", type: "photo" },
+  { image: "/images/builder-hero-islamic-hall-olive.webp", label: "Olive elegant hall hero", type: "photo" },
+  { image: "/images/builder-hero-islamic-hall-dusty-blue.webp", label: "Dusty blue elegant hall hero", type: "photo" },
+  { image: "/images/builder-envelope-classic-burgundy.webp", label: "Burgundy envelope opening", type: "opening" },
+  { image: "/images/builder-envelope-botanical-pink.webp", label: "Pink botanical envelope", type: "opening" },
+  { image: "/images/builder-curtain-classic-olive.webp", label: "Olive curtain reveal", type: "opening" },
+  { image: "/images/builder-curtain-botanical-lilac.webp", label: "Lilac botanical curtain", type: "opening" },
+];'''
+          text, count = re.subn(r'const movingShowcaseSecondRow = \[.*?\n\];', moving_two, text, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit('Could not replace second moving showcase')
+
+          text = text.replace(
+              '// Each marquee row has its own images. Six photo cards + two opening cards keeps openings at 25%.',
+              '// Each marquee row has its own images. Twelve photo cards + four opening cards keeps openings at 25%.',
+          )
+
+          included = '''const includedParts = [
+  "Countdown",
+  "Our Timeline",
+  "Event Details + Location",
+  "Important Notes",
+];'''
+          text, count = re.subn(r'const includedParts = \[.*?\n\];', included, text, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit('Could not replace included parts')
+
+          old_custom_class = '''className="button button-wine"\n                  href={customPartWhatsAppLink}'''
+          new_custom_class = '''className="button button-wine whatsapp-button"\n                  href={customPartWhatsAppLink}'''
+          if old_custom_class not in text:
+              raise SystemExit('Could not locate custom WhatsApp button class')
+          text = text.replace(old_custom_class, new_custom_class, 1)
+
+          old_custom_body = '''Discuss your custom idea <Send aria-hidden="true" />'''
+          new_custom_body = '''<WhatsAppLogo /> Message us on WhatsApp'''
+          if old_custom_body not in text:
+              raise SystemExit('Could not locate custom button text')
+          text = text.replace(old_custom_body, new_custom_body, 1)
+
+          old_footer = '''            <p>Choose your options and see a live phone preview before sending your design.</p>\n            <a href="/design-invitation" className="footer-arrow-link">Open the invitation designer <ArrowRight aria-hidden="true" /></a>'''
+          new_footer = '''            <a href="/design-invitation">Design your own invitation</a>'''
+          if old_footer not in text:
+              raise SystemExit('Could not locate Start creating footer content')
+          text = text.replace(old_footer, new_footer, 1)
+
+          component.write_text(text)
+
+          css = Path('app/landing-template-gallery-compact.css')
+          css.write_text('''.landing-refresh .collection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 15.5rem;
+  column-gap: 2rem;
+  align-items: start;
+}
+
+.landing-refresh .collection > .section-heading {
+  grid-column: 1 / -1;
+}
+
+.landing-refresh .collection-grid {
+  grid-column: 1;
+  width: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  justify-content: stretch;
+  gap: .9rem;
+}
+
+.landing-refresh .collection-card {
+  width: 100%;
+  max-width: none;
+  aspect-ratio: .72;
+  border-radius: 1.05rem;
+}
+
+.landing-refresh .collection-number {
+  top: .75rem;
+  left: .75rem;
+  width: 1.95rem;
+  height: 1.95rem;
+  font-size: .5rem;
+}
+
+.landing-refresh .collection-content {
+  left: .9rem;
+  right: 3rem;
+  bottom: .95rem;
+}
+
+.landing-refresh .collection-content > span {
+  font-size: .4rem;
+}
+
+.landing-refresh .collection-content h3 {
+  margin: .4rem 0 .25rem;
+  font-size: clamp(1.25rem, 1.6vw, 1.75rem);
+}
+
+.landing-refresh .collection-content p {
+  font-size: .68rem;
+}
+
+.landing-refresh .collection-card > a {
+  right: .75rem;
+  bottom: .8rem;
+  width: 2rem;
+  height: 2rem;
+}
+
+.landing-refresh .collection-card > a svg {
+  width: .78rem;
+}
+
+.landing-refresh .palette-showcase {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  margin: 0;
+  padding: 1rem;
+  border-radius: 1.15rem;
+}
+
+.landing-refresh .palette-showcase-label {
+  margin-bottom: .75rem;
+  font-size: .55rem;
+  letter-spacing: .16em;
+  text-align: left;
+}
+
+.landing-refresh .palette-showcase-grid {
+  grid-template-columns: 1fr;
+  gap: .55rem;
+}
+
+.landing-refresh .palette-pill {
+  gap: .6rem;
+  min-height: 2.75rem;
+  padding: .45rem .7rem;
+  font-size: .68rem;
+}
+
+.landing-refresh .palette-dots i {
+  width: .9rem;
+  height: .9rem;
+}
+
+@media (max-width: 1280px) {
+  .landing-refresh .collection {
+    grid-template-columns: minmax(0, 1fr) 14rem;
+    column-gap: 1.5rem;
+  }
+
+  .landing-refresh .collection-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .landing-refresh .collection {
+    grid-template-columns: 1fr;
+    row-gap: 1.5rem;
+  }
+
+  .landing-refresh .collection > .section-heading,
+  .landing-refresh .collection-grid,
+  .landing-refresh .palette-showcase {
+    grid-column: 1;
+  }
+
+  .landing-refresh .palette-showcase {
+    grid-row: auto;
+    width: min(44rem, 100%);
+    margin: 0 auto;
+  }
+
+  .landing-refresh .palette-showcase-label {
+    text-align: center;
+  }
+
+  .landing-refresh .palette-showcase-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .landing-refresh .collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .8rem;
+  }
+
+  .landing-refresh .palette-showcase {
+    width: min(34rem, 100%);
+    padding: .8rem;
+  }
+
+  .landing-refresh .palette-showcase-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-refresh .collection-grid {
+    grid-template-columns: 1fr;
+    width: min(15rem, 100%);
+    margin: 0 auto;
+  }
+
+  .landing-refresh .palette-showcase-grid {
+    grid-template-columns: 1fr;
+  }
+}
+''')
+          PY
+
+      - name: Verify expected changes
+        shell: bash
+        run: |
+          grep -q 'Our Timeline' components/landing-experience-refresh.tsx
+          grep -q 'Important Notes' components/landing-experience-refresh.tsx
+          grep -q 'Message us on WhatsApp' components/landing-experience-refresh.tsx
+          grep -q 'Design your own invitation' components/landing-experience-refresh.tsx
+          grep -q 'repeat(5' app/landing-template-gallery-compact.css
+
+      - name: Commit landing changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/landing-experience-refresh.tsx app/landing-template-gallery-compact.css
+          git diff --cached --quiet && exit 0
+          git commit -m "Polish landing examples, copy and footer [skip ci]"
+          git push origin HEAD:main
