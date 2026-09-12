@@ -10,10 +10,12 @@ import {
   CircleDollarSign,
   Clock3,
   Copy,
+  ExternalLink,
   Heart,
   Image as ImageIcon,
   Info,
   LockKeyhole,
+  Loader2,
   MapPin,
   MessageCircle,
   Monitor,
@@ -22,6 +24,8 @@ import {
   Palette,
   Phone,
   Plus,
+  RotateCcw,
+  Rocket,
   Save,
   Sparkles,
   Trash2,
@@ -52,22 +56,34 @@ import {
   type PaletteId,
   type SectionType,
 } from "@/lib/invitation-designer";
+import {
+  getPrimaryEventDate,
+  type InvitationOrderRecord,
+  type InvitationOrderSummary,
+} from "@/lib/invitation-orders";
 
-type DraftIdentity = { id: string; editToken: string };
-type SaveState = "idle" | "saving" | "saved" | "error";
+type SubmissionIdentity = { id: string; uploadToken?: string };
+type SaveState = "idle" | "saving" | "saved" | "submitted" | "error";
 type PreviewFocus = { target: string; key: number };
+export type AdminInvitationOrder = InvitationOrderRecord & { summary: InvitationOrderSummary };
 
-const draftStorageKey = "paperless-invites-active-draft";
+type InvitationDesignerProps = {
+  adminOrder?: AdminInvitationOrder;
+  today?: string;
+  onAdminBack?: () => void;
+  onAdminOrderChange?: (order: AdminInvitationOrder) => void;
+};
+
 const maxImageBytes = 5 * 1024 * 1024;
 const acceptedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const whatsappSupportNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
 const whatsappSupportMessage = "Hi, I had trouble saving my invitation design. Could you please help me?";
 
-export function InvitationDesigner() {
-  const [config, setConfig] = useState<InvitationConfig>(() => createInitialInvitation());
+export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdminOrderChange }: InvitationDesignerProps = {}) {
+  const adminMode = Boolean(adminOrder);
+  const [config, setConfig] = useState<InvitationConfig>(() => adminOrder ? normalizeInvitationConfig(adminOrder.config) : createInitialInvitation());
   const [addType, setAddType] = useState<SectionType>("special-message");
   const [pendingFiles, setPendingFiles] = useState<Record<string, File[]>>({});
-  const [draft, setDraft] = useState<DraftIdentity | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [saveError, setSaveError] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -75,42 +91,39 @@ export function InvitationDesigner() {
   const [replayKey, setReplayKey] = useState(0);
   const [previewFocus, setPreviewFocus] = useState<PreviewFocus>({ target: "hero", key: 0 });
   const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
+  const [currentAdminOrder, setCurrentAdminOrder] = useState<AdminInvitationOrder | null>(adminOrder ?? null);
+  const [adminPrice, setAdminPrice] = useState(adminOrder?.total_price ?? 1000);
+  const [adminSlug, setAdminSlug] = useState(adminOrder?.slug ?? "");
+  const [adminActiveUntil, setAdminActiveUntil] = useState(() => adminOrder ? suggestActiveUntil(adminOrder, normalizeInvitationConfig(adminOrder.config), today) : "");
+  const [adminAction, setAdminAction] = useState<"deploy" | "deactivate" | "review" | "">("");
+  const [adminNotice, setAdminNotice] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
   const objectUrls = useRef<string[]>([]);
   const sectionMoveAnchor = useRef<{ id: string; top: number; focusedControl: HTMLElement | null } | null>(null);
   const price = useMemo(() => calculateInvitationPrice(config), [config]);
   const palette = getPalette(config.palette);
   const availableHeroPresets = getHeroPresets(config);
-  const saveButtonText = saveState === "saving" ? "Saving…" : draft ? "Save changes" : "Save my design";
+  const saveButtonText = saveState === "saving"
+    ? "Saving…"
+    : saveState === "submitted"
+      ? "Invitation sent for processing"
+      : saveState === "saved"
+        ? "Changes saved"
+        : adminMode
+          ? "Save edits"
+          : "Save my design";
   const hasCustomPart = config.sections.some((section) => section.type === "custom");
   const whatsappSupportUrl = whatsappSupportNumber
     ? `https://wa.me/${whatsappSupportNumber}?text=${encodeURIComponent(whatsappSupportMessage)}`
     : "/#consultation";
 
-  useEffect(() => {
-    const saved = window.localStorage.getItem(draftStorageKey);
-    if (!saved) return;
-    try {
-      const identity = JSON.parse(saved) as DraftIdentity;
-      if (!identity.id || !identity.editToken) return;
-      window.setTimeout(() => setDraft(identity), 0);
-      fetch(`/api/invitations?id=${encodeURIComponent(identity.id)}&token=${encodeURIComponent(identity.editToken)}`)
-        .then(async (response) => {
-          if (!response.ok) throw new Error("Draft unavailable");
-          return response.json() as Promise<{ invitation: { config: InvitationConfig; updated_at?: string } }>;
-        })
-        .then(({ invitation }) => {
-          if (invitation.config?.version === 1) setConfig(normalizeInvitationConfig(invitation.config));
-        })
-        .catch(() => {
-          window.localStorage.removeItem(draftStorageKey);
-          setDraft(null);
-        });
-    } catch {
-      window.localStorage.removeItem(draftStorageKey);
-    }
-  }, []);
-
   useEffect(() => () => objectUrls.current.forEach((url) => URL.revokeObjectURL(url)), []);
+
+  useEffect(() => {
+    if (!showSuccess) return;
+    const timer = window.setTimeout(() => window.location.assign("/"), 2800);
+    return () => window.clearTimeout(timer);
+  }, [showSuccess]);
 
   useLayoutEffect(() => {
     const anchor = sectionMoveAnchor.current;
@@ -134,6 +147,7 @@ export function InvitationDesigner() {
     setConfig((current) => updater(current));
     if (saveState === "saved") setSaveState("idle");
     if (saveError) setSaveError("");
+    if (adminNotice) setAdminNotice("");
   }
 
   function activatePreview(target: string) {
@@ -381,7 +395,7 @@ export function InvitationDesigner() {
     if (errors.length) {
       setValidationErrors(errors);
       setSaveState("idle");
-      window.setTimeout(() => document.getElementById("designer-contact-title")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
+      window.setTimeout(() => document.getElementById("designer-validation-errors")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
       return;
     }
     setValidationErrors([]);
@@ -390,40 +404,80 @@ export function InvitationDesigner() {
 
     try {
       let workingConfig = removeLocalPhotoUrls(config);
-      let identity = draft;
-      const firstSave = await saveInvitation(workingConfig, identity);
-      identity = { id: firstSave.id, editToken: firstSave.editToken };
-      setDraft(identity);
-      window.localStorage.setItem(draftStorageKey, JSON.stringify(identity));
-
-      const uploadedBySlot: Record<string, string[]> = {};
-      for (const [slot, files] of Object.entries(pendingFiles)) {
-        uploadedBySlot[slot] = [];
-        for (let index = 0; index < files.length; index += 1) {
-          const form = new FormData();
-          form.set("file", files[index]);
-          form.set("invitationId", identity.id);
-          form.set("editToken", identity.editToken);
-          form.set("slot", `${slot}:${index}`);
-          const response = await fetch("/api/invitations/media", { method: "POST", body: form });
-          const result = await response.json() as { url?: string; error?: string };
-          if (!response.ok || !result.url) throw new Error(result.error || "A photo could not be uploaded.");
-          uploadedBySlot[slot].push(result.url);
-        }
+      if (adminMode && currentAdminOrder) {
+        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media");
+        if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
+        const updated = await updateAdminOrder(currentAdminOrder.id, "save", {
+          config: workingConfig,
+          totalPrice: adminPrice,
+          slug: adminSlug,
+        });
+        setConfig(normalizeInvitationConfig(updated.config));
+        setCurrentAdminOrder(updated);
+        setAdminPrice(updated.total_price);
+        setAdminSlug(updated.slug ?? "");
+        setPendingFiles({});
+        setSaveState("saved");
+        onAdminOrderChange?.(updated);
+        window.setTimeout(() => onAdminBack?.(), 650);
+        return;
       }
 
-      if (Object.keys(uploadedBySlot).length) {
+      const expectsMedia = Object.keys(pendingFiles).length > 0;
+      const submission = await createInvitation(workingConfig, expectsMedia);
+      if (expectsMedia) {
+        if (!submission.uploadToken) throw new Error("The secure photo upload could not be started.");
+        const uploadedBySlot = await uploadPendingPhotos(submission.id, pendingFiles, "/api/invitations/media", submission.uploadToken);
         workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
-        await saveInvitation(workingConfig, identity);
+        await finalizeInvitationMedia(workingConfig, submission);
       }
 
       setConfig(workingConfig);
       setPendingFiles({});
-      setSaveState("saved");
+      setSaveState("submitted");
+      setShowSuccess(true);
     } catch (error) {
-      console.error("Unable to save invitation design", error);
+      console.error(adminMode ? "Unable to update invitation order" : "Unable to send invitation design", error);
       setSaveState("error");
-      setSaveError("An error happened while saving your design. If it persists, please contact us on WhatsApp or social media.");
+      setSaveError(error instanceof Error ? error.message : "An error happened while saving your design. If it persists, please contact us on WhatsApp or social media.");
+    }
+  }
+
+  async function runAdminLifecycle(nextAction: "deploy" | "deactivate" | "review") {
+    if (!currentAdminOrder || adminAction) return;
+    if (nextAction === "deactivate" && !window.confirm("Take this invitation offline now? It will remain under Previous orders.")) return;
+    if (nextAction === "review" && !window.confirm("Move this invitation back to Need your review? Its public link will stop working.")) return;
+    setAdminAction(nextAction);
+    setAdminNotice("");
+    setSaveError("");
+    try {
+      let workingConfig = removeLocalPhotoUrls(config);
+      if (nextAction === "deploy") {
+        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media");
+        if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
+      }
+      const updated = await updateAdminOrder(currentAdminOrder.id, nextAction, nextAction === "deploy" ? {
+        config: workingConfig,
+        totalPrice: adminPrice,
+        slug: adminSlug,
+        activeUntil: adminActiveUntil,
+      } : {});
+      setCurrentAdminOrder(updated);
+      setConfig(normalizeInvitationConfig(updated.config));
+      setAdminPrice(updated.total_price);
+      setAdminSlug(updated.slug ?? "");
+      setAdminActiveUntil(suggestActiveUntil(updated, normalizeInvitationConfig(updated.config), today));
+      setPendingFiles({});
+      onAdminOrderChange?.(updated);
+      setAdminNotice(nextAction === "deploy"
+        ? `Invitation is live at /${updated.slug}.`
+        : nextAction === "deactivate"
+          ? "Invitation taken offline and moved to Previous orders."
+          : "Invitation moved back to Need your review.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "The order could not be updated.");
+    } finally {
+      setAdminAction("");
     }
   }
 
@@ -449,20 +503,47 @@ export function InvitationDesigner() {
         ))}
       </div>
       <header className="designer-header">
-        <Link href="/" className="designer-back"><ArrowLeft aria-hidden="true" /> Back to Home</Link>
+        {adminMode
+          ? <button type="button" className="designer-back admin-designer-back" onClick={onAdminBack}><ArrowLeft aria-hidden="true" /> Back to orders</button>
+          : <Link href="/" className="designer-back"><ArrowLeft aria-hidden="true" /> Back to Home</Link>}
         <div className="designer-title">
           <span className="designer-brand-mark">PI</span>
-          <div><p>Invitation designer</p><h1>Create your invitation</h1></div>
+          <div><p>{adminMode ? `Order ${currentAdminOrder?.id.slice(0, 8)}` : "Invitation designer"}</p><h1>{adminMode ? "Edit invitation" : "Create your invitation"}</h1></div>
         </div>
-        <div className="designer-header-price"><span>Your price</span><strong>Rs {price.total.toLocaleString("en-US")}</strong></div>
+        <div className="designer-header-price"><span>{adminMode ? "Order price" : "Your price"}</span><strong>Rs {(adminMode ? adminPrice : price.total).toLocaleString("en-US")}</strong></div>
       </header>
+
+      {adminMode && currentAdminOrder && (
+        <>
+          <AdminOrderOverview
+            order={currentAdminOrder}
+            config={config}
+            price={adminPrice}
+            slug={adminSlug}
+            onName={(value) => updateContact("name", value)}
+            onPhone={(value) => updateContact("phone", value)}
+            onEventDate={(value) => updateConfig((current) => updateOrderEventDate(current, value))}
+            onPrice={setAdminPrice}
+            onSlug={setAdminSlug}
+          />
+          <AdminDeployControls
+            order={currentAdminOrder}
+            activeUntil={adminActiveUntil}
+            today={today}
+            action={adminAction}
+            onActiveUntil={setAdminActiveUntil}
+            onAction={(nextAction) => void runAdminLifecycle(nextAction)}
+          />
+          {adminNotice && <div className="orders-notice admin-designer-notice"><Check aria-hidden="true" />{adminNotice}</div>}
+        </>
+      )}
 
       <div className="designer-mobile-switch" aria-label="Choose editor or preview">
         <button type="button" className={mobileView === "edit" ? "is-active" : ""} onClick={() => setMobileView("edit")}>Edit invitation</button>
         <button type="button" className={mobileView === "preview" ? "is-active" : ""} onClick={showMobilePreview}>View preview</button>
       </div>
 
-      {showDesktopTip && <div className="designer-device-tip" role="status"><Monitor aria-hidden="true" /><span>For the easiest design experience, use a laptop or desktop computer.</span></div>}
+      {!adminMode && showDesktopTip && <div className="designer-device-tip" role="status"><Monitor aria-hidden="true" /><span>For the easiest design experience, use a laptop or desktop computer.</span></div>}
 
       <div className="designer-workspace">
         <form id="invitation-designer-form" className="designer-form" onSubmit={saveDesign} noValidate>
@@ -473,7 +554,7 @@ export function InvitationDesigner() {
             <a href="#designer-sections" onClick={(event) => openDesignerStep(event, "designer-sections")}><span>4</span>Parts</a>
           </nav>
 
-          <MainStep id="designer-colours" number="1" icon={<Palette />} title="Choose your colours" description="The same artwork changes into your selected colour, so the design stays consistent.">
+          <MainStep id="designer-colours" number="1" icon={<Palette />} title="Choose your colours" description="The same artwork changes into your selected colour, so the design stays consistent." defaultOpen={!adminMode}>
             <div className="designer-palette-grid">
               {paletteOptions.map((option) => (
                 <button type="button" key={option.id} className={`designer-palette-option ${config.palette === option.id ? "is-selected" : ""}`} onClick={() => choosePalette(option.id)} aria-pressed={config.palette === option.id}>
@@ -485,7 +566,7 @@ export function InvitationDesigner() {
             </div>
           </MainStep>
 
-          <MainStep id="designer-opening" number="2" icon={<Sparkles />} title="Choose how it opens" description="You can replay the opening as many times as you like." onActivate={() => activatePreview("opening")}>
+          <MainStep id="designer-opening" number="2" icon={<Sparkles />} title="Choose how it opens" description="You can replay the opening as many times as you like." onActivate={() => activatePreview("opening")} defaultOpen={!adminMode}>
             <div className="designer-choice-grid designer-opening-options">
               {openingOptions.map((option) => (
                 <ChoiceButton key={option.id} selected={config.opening.type === option.id} title={option.name} description={option.description} price={option.price} onClick={() => chooseOpening(option.id)} />
@@ -513,7 +594,7 @@ export function InvitationDesigner() {
             )}
           </MainStep>
 
-          <MainStep id="designer-hero" number="3" icon={<ImageIcon />} title="Choose the main area" description="This is the first part your guests will see after the opening." onActivate={() => activatePreview("hero")}>
+          <MainStep id="designer-hero" number="3" icon={<ImageIcon />} title="Choose the main area" description="This is the first part your guests will see after the opening." onActivate={() => activatePreview("hero")} defaultOpen={!adminMode}>
             <div className="designer-choice-grid">
               <ChoiceButton selected={config.hero.type === "basic"} title="Basic" description="Your chosen photo appears in the background." price={0} onClick={() => chooseHero("basic")} />
               <ChoiceButton selected={config.hero.type === "interactive"} title="Interactive" description="Guests scratch only the framed photo to reveal it." price={200} onClick={() => chooseHero("interactive")} />
@@ -561,7 +642,7 @@ export function InvitationDesigner() {
             </div>
           </MainStep>
 
-          <MainStep id="designer-sections" className="designer-sections-step" number="4" icon={<Heart />} title="Choose and write your invitation parts" description="The four important parts are included. Add any other part as many times as you need.">
+          <MainStep id="designer-sections" className="designer-sections-step" number="4" icon={<Heart />} title="Choose and write your invitation parts" description="The four important parts are included. Add any other part as many times as you need." defaultOpen={!adminMode}>
             <div className="designer-included-note"><LockKeyhole aria-hidden="true" /><span><strong>Already included:</strong> Countdown, Our Timeline, Event Details + Location and Important Notes.</span></div>
 
             <div className="designer-section-list">
@@ -582,6 +663,7 @@ export function InvitationDesigner() {
                   onRemove={() => removeSection(section.id)}
                   onPhotos={(files) => selectGlimpsePhotos(section.id, files)}
                   onRemovePhoto={(imageIndex) => removeGlimpsePhoto(section.id, imageIndex)}
+                  defaultOpen={!adminMode}
                 />
               ))}
             </div>
@@ -594,7 +676,7 @@ export function InvitationDesigner() {
           </MainStep>
 
           <section className="designer-price-summary" aria-labelledby="designer-price-title">
-            <div><CircleDollarSign aria-hidden="true" /><span><small>Your current price</small><strong id="designer-price-title">Rs {price.total.toLocaleString("en-US")}</strong></span></div>
+            <div><CircleDollarSign aria-hidden="true" /><span><small>{adminMode ? "Calculated price guide" : "Your current price"}</small><strong id="designer-price-title">Rs {price.total.toLocaleString("en-US")}</strong></span></div>
             <dl>
               <div><dt>Basic invitation</dt><dd>Rs {price.base.toLocaleString("en-US")}</dd></div>
               {price.opening > 0 && <div><dt>{config.opening.type === "envelope" ? "Envelope opening" : "Curtain opening"}</dt><dd>+ Rs {price.opening}</dd></div>}
@@ -603,7 +685,7 @@ export function InvitationDesigner() {
             </dl>
           </section>
 
-          <section className="designer-contact-card" aria-labelledby="designer-contact-title">
+          {!adminMode && <section className="designer-contact-card" aria-labelledby="designer-contact-title">
             <div className="designer-contact-heading">
               <span><UserRound aria-hidden="true" /></span>
               <div>
@@ -616,10 +698,10 @@ export function InvitationDesigner() {
               <TextField label="Your name" placeholder="For example: Aisha Rahman" value={config.contact.name} onChange={(value) => updateContact("name", value)} autoComplete="name" required icon={<UserRound />} />
               <TextField label="Mauritian phone or WhatsApp number" placeholder="For example: 58749327" hint="Enter exactly 8 digits, starting with 5 (for example: 58749327)." type="tel" value={config.contact.phone} onChange={(value) => updateContact("phone", value)} autoComplete="tel" inputMode="numeric" minLength={8} maxLength={8} pattern="5[0-9]{7}" title="Enter a Mauritian phone number with exactly 8 digits, starting with 5." required icon={<Phone />} />
             </div>
-          </section>
+          </section>}
 
           {validationErrors.length > 0 && (
-            <div className="designer-validation-card" role="alert">
+            <div className="designer-validation-card" id="designer-validation-errors" role="alert">
               <span><Info aria-hidden="true" /></span>
               <div><strong>Please check your contact details</strong><ul>{validationErrors.map((error) => <li key={error}>{error}</li>)}</ul></div>
             </div>
@@ -628,23 +710,102 @@ export function InvitationDesigner() {
             <div className="designer-notice is-error" role="alert">
               <Info aria-hidden="true" />
               <span>{saveError}</span>
-              <a href={whatsappSupportUrl} target={whatsappSupportNumber ? "_blank" : undefined} rel={whatsappSupportNumber ? "noreferrer" : undefined}><MessageCircle aria-hidden="true" /> WhatsApp</a>
+              {!adminMode && <a href={whatsappSupportUrl} target={whatsappSupportNumber ? "_blank" : undefined} rel={whatsappSupportNumber ? "noreferrer" : undefined}><MessageCircle aria-hidden="true" /> WhatsApp</a>}
             </div>
           )}
           <div className="designer-submit-panel">
-            <button className="designer-final-save" type="submit" disabled={saveState === "saving"}><Save aria-hidden="true" />{saveButtonText}</button>
-            <p>{hasCustomPart ? "We will contact you to discuss your custom part during a video consultation or by message, then share payment details when your order is ready." : "Once your order is ready, we will contact you with the payment details."}</p>
+            <button className={`designer-final-save ${saveState === "submitted" || saveState === "saved" ? "is-complete" : ""}`} type="submit" disabled={saveState === "saving" || saveState === "submitted" || saveState === "saved"}>{saveState === "submitted" || saveState === "saved" ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}{saveButtonText}</button>
+            <p>{adminMode
+              ? "Saving updates this order in the database and returns you to the orders table."
+              : hasCustomPart
+                ? "We will contact you to discuss your custom part during a video consultation or by message, then share payment details when your order is ready."
+                : "Once your order is ready, we will contact you with the payment details."}</p>
           </div>
         </form>
 
-        <InvitationPhonePreview config={config} replayKey={replayKey} focusTarget={previewFocus.target} focusKey={previewFocus.key} priceTotal={price.total} onReplay={() => { setReplayKey((key) => key + 1); activatePreview("opening"); }} />
+        <InvitationPhonePreview config={config} replayKey={replayKey} focusTarget={previewFocus.target} focusKey={previewFocus.key} priceTotal={adminMode ? adminPrice : price.total} onReplay={() => { setReplayKey((key) => key + 1); activatePreview("opening"); }} />
       </div>
 
+      {showSuccess && <SubmissionSuccessModal />}
     </main>
   );
 }
 
-function MainStep({ id, className = "", number, icon, title, description, onActivate, children }: {
+function AdminOrderOverview({ order, config, price, slug, onName, onPhone, onEventDate, onPrice, onSlug }: {
+  order: AdminInvitationOrder;
+  config: InvitationConfig;
+  price: number;
+  slug: string;
+  onName: (value: string) => void;
+  onPhone: (value: string) => void;
+  onEventDate: (value: string) => void;
+  onPrice: (value: number) => void;
+  onSlug: (value: string) => void;
+}) {
+  return (
+    <section className="admin-order-overview" aria-labelledby="admin-order-overview-title">
+      <div className="admin-order-overview-heading">
+        <div><span>Order overview</span><h2 id="admin-order-overview-title">The details that matter most</h2></div>
+        <span className={`admin-order-status is-${order.status}`}>{order.status === "pending" ? "Needs review" : order.status === "active" ? "Currently live" : "Previous order"}</span>
+      </div>
+      <div className="admin-order-overview-grid">
+        <label><span>Customer name</span><input value={config.contact.name} onChange={(event) => onName(event.target.value)} /></label>
+        <label className="is-phone"><span>Phone number</span><div><input inputMode="numeric" maxLength={8} value={config.contact.phone} onChange={(event) => onPhone(event.target.value)} />{/^5\d{7}$/.test(config.contact.phone) && <a href={`https://wa.me/230${config.contact.phone}`} target="_blank" rel="noreferrer" aria-label="Message customer on WhatsApp"><MessageCircle aria-hidden="true" /></a>}</div></label>
+        <label className="is-link"><span>Invitation link</span><div><b>/</b><input value={slug} placeholder="created-when-deployed" onChange={(event) => onSlug(event.target.value)} />{order.status === "active" && slug && <a href={`/${slug}`} target="_blank" rel="noreferrer" aria-label="Open live invitation"><ExternalLink aria-hidden="true" /></a>}</div></label>
+        <label><span>Event date</span><input type="date" value={getPrimaryEventDate(config)} onChange={(event) => onEventDate(event.target.value)} /></label>
+        <label><span>Order price (Rs)</span><input type="number" min="0" step="1" value={price} onChange={(event) => onPrice(Math.max(0, Math.round(Number(event.target.value) || 0)))} /></label>
+      </div>
+    </section>
+  );
+}
+
+function AdminDeployControls({ order, activeUntil, today, action, onActiveUntil, onAction }: {
+  order: AdminInvitationOrder;
+  activeUntil: string;
+  today: string;
+  action: "deploy" | "deactivate" | "review" | "";
+  onActiveUntil: (value: string) => void;
+  onAction: (action: "deploy" | "deactivate" | "review") => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const publicPath = order.slug ? `/${order.slug}` : "";
+  async function copyLink() {
+    if (!publicPath) return;
+    await navigator.clipboard.writeText(`${window.location.origin}${publicPath}`);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+  return (
+    <section className="order-deploy-bar admin-designer-deploy" id="admin-deploy-controls" aria-label="Invitation publishing controls">
+      <div className="order-deploy-copy"><Rocket aria-hidden="true" /><div><strong>{order.status === "active" ? "This invitation is live" : order.status === "inactive" ? "Ready to publish again?" : "Ready after your review"}</strong><small>{order.status === "active" ? `Guests can open ${publicPath}` : "Choose the final active date, then publish in one tap."}</small></div></div>
+      <label><span>Keep active until</span><input type="date" value={activeUntil} min={today} onChange={(event) => onActiveUntil(event.target.value)} /></label>
+      <button className="order-primary-action" type="button" onClick={() => onAction("deploy")} disabled={Boolean(action) || !activeUntil}>
+        {action === "deploy" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <Rocket aria-hidden="true" />}
+        {order.status === "pending" ? "Deploy invitation" : order.status === "inactive" ? "Redeploy invitation" : "Update live invitation"}
+      </button>
+      {order.status === "active" && <button className="order-review-action" type="button" onClick={() => onAction("review")} disabled={Boolean(action)}>{action === "review" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <RotateCcw aria-hidden="true" />} Move to review</button>}
+      {order.status === "active" && <button className="order-danger-action" type="button" onClick={() => onAction("deactivate")} disabled={Boolean(action)}>{action === "deactivate" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <span aria-hidden="true">×</span>} Take offline</button>}
+      {publicPath && <div className="order-public-link"><span>{order.status === "active" ? "Live invitation link" : "Saved link (currently offline)"}</span><strong>{publicPath}</strong><button type="button" onClick={() => void copyLink()}>{copied ? <Check /> : <Copy />}<span className="sr-only">Copy invitation link</span></button>{order.status === "active" && <a href={publicPath} target="_blank" rel="noreferrer"><ExternalLink /><span className="sr-only">Open live invitation</span></a>}</div>}
+    </section>
+  );
+}
+
+function SubmissionSuccessModal() {
+  return (
+    <div className="designer-success-backdrop" role="presentation">
+      <section className="designer-success-modal" role="dialog" aria-modal="true" aria-labelledby="designer-success-title" aria-describedby="designer-success-description">
+        <span className="designer-success-check"><Check aria-hidden="true" /></span>
+        <p>Design received</p>
+        <h2 id="designer-success-title">Your invitation has been sent for processing</h2>
+        <span id="designer-success-description">We have safely received your choices. Our team will contact you when your invitation is ready to review.</span>
+        <div className="designer-success-progress"><i /></div>
+        <small>Redirecting you to the home page…</small>
+      </section>
+    </div>
+  );
+}
+
+function MainStep({ id, className = "", number, icon, title, description, onActivate, defaultOpen = true, children }: {
   id: string;
   className?: string;
   number: string;
@@ -652,9 +813,10 @@ function MainStep({ id, className = "", number, icon, title, description, onActi
   title: string;
   description: string;
   onActivate?: () => void;
+  defaultOpen?: boolean;
   children: ReactNode;
 }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
     <details className={`designer-step-card designer-main-step ${className}`} id={id} open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)} onFocusCapture={onActivate}>
       <summary onClick={onActivate}>
@@ -733,11 +895,12 @@ type SectionEditorProps = {
   onRemove: () => void;
   onPhotos: (files: FileList | null) => void;
   onRemovePhoto: (imageIndex: number) => void;
+  defaultOpen?: boolean;
 };
 
-function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto }: SectionEditorProps) {
+function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto, defaultOpen = true }: SectionEditorProps) {
   const definition = sectionDefinitions[section.type];
-  const [isOpen, setIsOpen] = useState(section.type === "event-details" || (!section.included && index === total - 1));
+  const [isOpen, setIsOpen] = useState(defaultOpen && (section.type === "event-details" || (!section.included && index === total - 1)));
   return (
     <details className="designer-section-editor" id={`editor-${section.id}`} open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)} onFocusCapture={onActivate}>
       <summary onClick={onActivate}>
@@ -906,15 +1069,55 @@ function TextArea({ label, hint, value, onChange, full = false, rows = 3 }: { la
   return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{label}</span><textarea value={value ?? ""} rows={rows} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
 }
 
-async function saveInvitation(config: InvitationConfig, draft: DraftIdentity | null) {
+async function createInvitation(config: InvitationConfig, expectsMedia: boolean): Promise<SubmissionIdentity> {
   const response = await fetch("/api/invitations", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ config, id: draft?.id, editToken: draft?.editToken }),
+    body: JSON.stringify({ config, expectsMedia }),
   });
-  const result = await response.json() as { id?: string; editToken?: string; error?: string };
-  if (!response.ok || !result.id || !result.editToken) throw new Error(result.error || "Your design could not be saved.");
-  return { id: result.id, editToken: result.editToken };
+  const result = await response.json() as { id?: string; uploadToken?: string; error?: string };
+  if (!response.ok || !result.id || (expectsMedia && !result.uploadToken)) throw new Error(result.error || "Your invitation could not be sent.");
+  return { id: result.id, uploadToken: result.uploadToken };
+}
+
+async function finalizeInvitationMedia(config: InvitationConfig, submission: SubmissionIdentity) {
+  const response = await fetch("/api/invitations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ operation: "finalize-media", id: submission.id, uploadToken: submission.uploadToken, config }),
+  });
+  const result = await response.json() as { id?: string; error?: string };
+  if (!response.ok || !result.id) throw new Error(result.error || "Your photo submission could not be completed.");
+}
+
+async function uploadPendingPhotos(invitationId: string, pendingFiles: Record<string, File[]>, endpoint: string, uploadToken?: string) {
+  const uploadedBySlot: Record<string, string[]> = {};
+  for (const [slot, files] of Object.entries(pendingFiles)) {
+    uploadedBySlot[slot] = [];
+    for (let index = 0; index < files.length; index += 1) {
+      const form = new FormData();
+      form.set("file", files[index]);
+      form.set("invitationId", invitationId);
+      if (uploadToken) form.set("uploadToken", uploadToken);
+      form.set("slot", `${slot}:${index}`);
+      const response = await fetch(endpoint, { method: "POST", body: form });
+      const result = await response.json() as { url?: string; error?: string };
+      if (!response.ok || !result.url) throw new Error(result.error || "A photo could not be uploaded.");
+      uploadedBySlot[slot].push(result.url);
+    }
+  }
+  return uploadedBySlot;
+}
+
+async function updateAdminOrder(id: string, action: "save" | "deploy" | "deactivate" | "review", values: Record<string, unknown>) {
+  const response = await fetch("/api/dashboard/orders", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, action, ...values }),
+  });
+  const result = await response.json() as { order?: AdminInvitationOrder; error?: string };
+  if (!response.ok || !result.order) throw new Error(result.error || "The order could not be updated.");
+  return result.order;
 }
 
 function removeLocalPhotoUrls(config: InvitationConfig): InvitationConfig {
@@ -934,4 +1137,24 @@ function applyUploadedUrls(config: InvitationConfig, uploads: Record<string, str
       return urls?.length ? { ...section, images: [...section.images, ...urls].slice(0, 8) } : section;
     }),
   };
+}
+
+function updateOrderEventDate(config: InvitationConfig, date: string): InvitationConfig {
+  const next = structuredClone(config);
+  next.hero.date = date;
+  const countdown = next.sections.find((section) => section.type === "countdown");
+  if (countdown) countdown.fields.date = date;
+  const events = next.sections.find((section) => section.type === "event-details");
+  if (events) {
+    const items = getSectionItems(events).map((item) => ({ ...item }));
+    if (items[0]) items[0].date = date;
+    events.items = items;
+  }
+  return next;
+}
+
+function suggestActiveUntil(order: InvitationOrderRecord, config: InvitationConfig, today: string) {
+  const eventDate = getPrimaryEventDate(config);
+  const candidate = order.active_until || eventDate || today;
+  return candidate && candidate >= today ? candidate : today;
 }

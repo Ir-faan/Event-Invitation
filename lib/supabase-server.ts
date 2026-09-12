@@ -19,13 +19,13 @@ export function getSupabaseEnvironment(): SupabaseEnvironment {
   };
 }
 
-export async function hashEditToken(token: string) {
+export async function hashSubmissionToken(token: string) {
   const bytes = new TextEncoder().encode(token);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-export function createEditToken() {
+export function createSubmissionToken() {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -45,8 +45,8 @@ export async function supabaseRequest(path: string, init: RequestInit = {}) {
   return response;
 }
 
-export async function invitationExists(id: string, token: string) {
-  const hash = await hashEditToken(token);
+export async function invitationAcceptsUpload(id: string, token: string) {
+  const hash = await hashSubmissionToken(token);
   const params = new URLSearchParams({ select: "id", id: `eq.${id}`, edit_token_hash: `eq.${hash}`, limit: "1" });
   const response = await supabaseRequest(`/rest/v1/invitations?${params.toString()}`);
   const rows = (await response.json()) as Array<{ id: string }>;

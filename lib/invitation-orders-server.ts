@@ -7,7 +7,7 @@ import {
 } from "@/lib/invitation-orders";
 import { supabaseRequest } from "@/lib/supabase-server";
 
-const orderFields = "id,status,slug,active_until,total_price,created_at,updated_at,deployed_at,inactive_at,config";
+const orderFields = "id,status,slug,active_until,total_price,created_at,deployed_at,inactive_at,config";
 
 export async function expirePastInvitations() {
   const params = new URLSearchParams({ status: "eq.active", active_until: `lt.${todayInMauritius()}` });
@@ -68,6 +68,13 @@ export async function createUniqueInvitationSlug(order: InvitationOrderRecord) {
     if (!matches.length) return candidate;
   }
   return `${base}-${order.id.slice(0, 8)}`;
+}
+
+export async function invitationSlugIsAvailable(slug: string, orderId: string) {
+  const params = new URLSearchParams({ select: "id", slug: `eq.${slug}`, id: `neq.${orderId}`, limit: "1" });
+  const response = await supabaseRequest(`/rest/v1/invitations?${params.toString()}`, { cache: "no-store" });
+  const matches = (await response.json()) as Array<{ id: string }>;
+  return matches.length === 0;
 }
 
 export function getPublicSiteOrigin(request: Request) {

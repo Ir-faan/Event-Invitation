@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
-import {
-  getSupabaseEnvironment,
-  invitationAcceptsUpload,
-  publicStorageUrl,
-  supabaseRequest,
-} from "@/lib/supabase-server";
+import { getInvitationOrder } from "@/lib/invitation-orders-server";
+import { validInvitationId } from "@/lib/invitation-validation";
+import { getSupabaseEnvironment, publicStorageUrl, supabaseRequest } from "@/lib/supabase-server";
 
 export const runtime = "edge";
 
@@ -19,21 +16,18 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const file = form.get("file");
     const invitationId = form.get("invitationId");
-    const uploadToken = form.get("uploadToken");
     const slot = form.get("slot");
 
-    if (!(file instanceof File) || typeof invitationId !== "string" || typeof uploadToken !== "string" || typeof slot !== "string") {
+    if (!(file instanceof File) || typeof invitationId !== "string" || typeof slot !== "string") {
       return NextResponse.json({ error: "The photo upload is incomplete." }, { status: 400 });
     }
-    if (!/^[0-9a-f-]{36}$/i.test(invitationId) || !/^[a-z0-9:_-]{1,120}$/i.test(slot)) {
+    if (!validInvitationId(invitationId) || !/^[a-z0-9:_-]{1,120}$/i.test(slot)) {
       return NextResponse.json({ error: "The photo destination is invalid." }, { status: 400 });
     }
     const extension = allowedTypes.get(file.type);
     if (!extension) return NextResponse.json({ error: "Please use a JPG, PNG or WebP photo." }, { status: 415 });
     if (file.size > 5 * 1024 * 1024) return NextResponse.json({ error: "Each photo must be 5 MB or smaller." }, { status: 413 });
-    if (!(await invitationAcceptsUpload(invitationId, uploadToken))) {
-      return NextResponse.json({ error: "This submission cannot accept photo uploads." }, { status: 403 });
-    }
+    if (!(await getInvitationOrder(invitationId))) return NextResponse.json({ error: "This order could not be found." }, { status: 404 });
 
     const { bucket } = getSupabaseEnvironment();
     const storagePath = `${invitationId}/${slot}-${crypto.randomUUID()}.${extension}`;
@@ -60,7 +54,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url, path: storagePath }, { status: 201 });
   } catch (error) {
-    console.error("Unable to upload invitation photo", error);
-    return NextResponse.json({ error: "This photo could not be uploaded. Your preview has not been changed." }, { status: 503 });
+    console.error("Unable to upload administrator invitation photo", error);
+    return NextResponse.json({ error: "This photo could not be uploaded." }, { status: 503 });
   }
 }

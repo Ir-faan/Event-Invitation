@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { InvitationDashboard } from "@/components/invitation-dashboard";
+import { DesignerMobileEnhancements } from "@/components/designer-mobile-enhancements";
 import "@/app/design-invitation/design-invitation.css";
+import "@/app/design-invitation/mobile-ui-modifications.css";
+import "@/app/design-invitation/designer-gradient-accents.css";
 import "./dashboard.css";
 
 export const metadata: Metadata = {
@@ -10,5 +13,5 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardPage() {
-  return <InvitationDashboard />;
+  return <><DesignerMobileEnhancements /><InvitationDashboard /></>;
 }

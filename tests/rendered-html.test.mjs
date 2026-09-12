@@ -19,7 +19,7 @@ test("renders the complete Paperless Invites landing page", async () => {
   assert.match(html, /Make the first tap/);
   assert.match(html, /Paper or digital/);
   assert.match(html, /Simple pricing/);
-  assert.match(html, /Enquiries welcome/);
+  assert.match(html, /Your celebration/);
   assert.match(html, /\/design-invitation/);
 });
 
@@ -42,7 +42,6 @@ test("renders the guided invitation designer and mobile preview", async () => {
   assert.match(html, /Add another event/);
   assert.match(html, /Date to count down to/);
   assert.match(html, /Time to count down to/);
-  assert.match(html, /Use 24-hour time/);
   assert.match(html, /Choose an additional part/);
   assert.match(html, /\+ Rs 150/);
   assert.match(html, /video consultation or by message/);
@@ -175,12 +174,43 @@ test("protects mobile preview interactions and layout regressions", async () => 
 test("renders the private order dashboard shell without a public login", async () => {
   const { default: Dashboard } = await vite.ssrLoadModule("/app/dashboard/page.tsx");
   const html = renderToStaticMarkup(React.createElement(Dashboard));
-  assert.match(html, /Your invitation orders/);
+  assert.match(html, /Order desk/);
   assert.match(html, /Need your review/);
   assert.match(html, /Currently live/);
   assert.match(html, /Previous orders/);
+  assert.match(html, /Order value/);
   assert.match(html, /Search names, phone or link/);
+  assert.doesNotMatch(html, /Your invitation orders/);
+  assert.doesNotMatch(html, /Mauritius date/);
   assert.doesNotMatch(html, /Login|Log in|Sign in/);
+});
+
+test("renders admin orders in the shared designer with collapsed editing steps", async () => {
+  const [{ InvitationDesigner }, { createInitialInvitation }, { summarizeOrder }] = await Promise.all([
+    vite.ssrLoadModule("/components/invitation-designer.tsx"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+    vite.ssrLoadModule("/lib/invitation-orders.ts"),
+  ]);
+  const config = createInitialInvitation();
+  config.contact = { name: "Aisha Rahman", phone: "58749327" };
+  const record = {
+    id: "11111111-1111-4111-8111-111111111111",
+    status: "pending",
+    slug: "aisha-and-rayan",
+    active_until: null,
+    total_price: 1400,
+    created_at: "2026-09-12T08:15:00Z",
+    deployed_at: null,
+    inactive_at: null,
+    config,
+  };
+  const html = renderToStaticMarkup(React.createElement(InvitationDesigner, { adminOrder: { ...record, summary: summarizeOrder(record) }, today: "2026-09-12" }));
+  assert.match(html, /Edit invitation/);
+  assert.match(html, /The details that matter most/);
+  assert.match(html, /Invitation link/);
+  assert.match(html, /Order price \(Rs\)/);
+  assert.match(html, /Save edits/);
+  assert.doesNotMatch(html, /designer-step-card designer-main-step[^>]*open=/);
 });
 
 test("supports automatic invitation routes and order lifecycle storage", async () => {
@@ -192,21 +222,33 @@ test("supports automatic invitation routes and order lifecycle storage", async (
   assert.equal(makeInvitationSlug(config), "salma-and-sam");
   assert.equal(todayInMauritius(new Date("2027-05-22T20:00:00Z")), "2027-05-23");
 
-  const [migration, proxy, publicRoute, dashboardApi] = await Promise.all([
+  const [migration, proxy, publicRoute, dashboardApi, customerApi, designer, dashboard] = await Promise.all([
     readFile(new URL("../supabase/dashboard-migration.sql", import.meta.url), "utf8"),
     readFile(new URL("../proxy.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/[slug]/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/dashboard/orders/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/invitations/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation-designer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation-dashboard.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(migration, /status in \('pending', 'active', 'inactive'\)/);
   assert.match(migration, /active_until/);
   assert.match(migration, /invitations_slug_idx/);
+  assert.match(migration, /drop column if exists updated_at/);
   assert.match(proxy, /DASHBOARD_USERNAME/);
   assert.match(proxy, /\/api\/dashboard/);
   assert.match(publicRoute, /getPublicInvitationBySlug/);
   assert.match(publicRoute, /force-dynamic/);
   assert.match(dashboardApi, /createUniqueInvitationSlug/);
   assert.match(dashboardApi, /action === "deactivate"/);
+  assert.match(dashboardApi, /action === "review"/);
+  assert.match(dashboardApi, /export async function DELETE/);
+  assert.doesNotMatch(customerApi, /export async function GET/);
+  assert.doesNotMatch(designer, /localStorage/);
+  assert.match(designer, /Your invitation has been sent for processing/);
+  assert.match(designer, /window\.location\.assign\("\/"\)/);
+  assert.match(dashboard, /new Set\(\["pending"\]\)/);
+  assert.match(dashboard, /orders-datatable/);
 });
 
 test("renders the complete Coastal Reverie invitation", async () => {

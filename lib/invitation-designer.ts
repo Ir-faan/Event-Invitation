@@ -23,7 +23,7 @@ export type InvitationSection = {
   title: string;
   fields: Record<string, string>;
   images: string[];
-  /** Optional so drafts saved before repeatable items were introduced still open. */
+  /** Optional so orders created before repeatable items were introduced still open. */
   items?: InvitationSectionItem[];
 };
 
@@ -113,7 +113,7 @@ function builderAssetUrl(fileName: string) {
 function matchedHeroPresets(palette: PaletteId, signatureUrl: string): HeroPreset[] {
   return [
     { id: `${palette}-full`, name: "Signature scene", url: signatureUrl, objectPosition: "center center", zoom: 1 },
-    // Keep the legacy index so older saved drafts retain the correct following presets.
+    // Keep the legacy index so older saved orders retain the correct following presets.
     // The close crop is no longer offered in the designer and is normalized to the signature scene.
     { id: `${palette}-close`, name: "Closer crop", url: signatureUrl, objectPosition: "center 68%", zoom: 1.14, hidden: true },
     { id: `${palette}-ballroom`, name: "Grand ballroom", url: builderAssetUrl(`builder-hero-ballroom-${palette}.webp`), objectPosition: "center center", zoom: 1 },
@@ -326,7 +326,7 @@ export function getEventDetails(config: InvitationConfig) {
 export function getSectionItems(section: InvitationSection): InvitationSectionItem[] {
   if (Array.isArray(section.items) && section.items.length) return section.items;
 
-  // Backward-compatible conversion for drafts made with the first builder release.
+  // Backward-compatible conversion for orders made with the first builder release.
   if (section.type === "journey") {
     return [1, 2].map((number) => ({
       title: section.fields[`event${number}Title`] ?? "",

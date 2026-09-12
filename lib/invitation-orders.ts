@@ -9,7 +9,6 @@ export type InvitationOrderRecord = {
   active_until: string | null;
   total_price: number;
   created_at: string;
-  updated_at: string;
   deployed_at: string | null;
   inactive_at: string | null;
   config: InvitationConfig;

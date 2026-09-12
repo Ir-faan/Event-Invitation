@@ -298,6 +298,23 @@
 .designer-final-save { width: 100%; min-height: 3.7rem; margin: 0; display: inline-flex; align-items: center; justify-content: center; gap: .55rem; padding: 0 1rem; border: 0; border-radius: .9rem; color: #fff; background: var(--builder-accent); box-shadow: 0 .8rem 1.8rem color-mix(in srgb,var(--builder-accent) 25%,transparent); font-size: .86rem; font-weight: 800; }
 .designer-final-save:disabled { opacity: .65; cursor: wait; }
 .designer-final-save svg { width: 1rem; }
+.designer-final-save.is-complete { opacity: 1; color: #fff; background: #2e7854; box-shadow: 0 .8rem 1.8rem rgba(46,120,84,.2); cursor: default; }
+
+.designer-success-backdrop { position: fixed; z-index: 300; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgba(38,24,29,.68); backdrop-filter: blur(9px); animation: designer-success-backdrop-in .3s ease both; }
+.designer-success-modal { width: min(31rem,100%); display: grid; justify-items: center; gap: .55rem; padding: clamp(2rem,6vw,3rem); border: 1px solid rgba(255,255,255,.65); border-radius: 1.6rem; color: #38252a; background: radial-gradient(circle at 50% 0,#fff 0,#fffaf7 58%,#f8eee9 100%); box-shadow: 0 2rem 6rem rgba(25,12,17,.32); text-align: center; animation: designer-success-modal-in .45s cubic-bezier(.2,.85,.25,1.15) both; }
+.designer-success-check { width: 4.2rem; height: 4.2rem; display: grid; place-items: center; margin-bottom: .35rem; border-radius: 50%; color: #fff; background: linear-gradient(145deg,#3e936b,#276b4d); box-shadow: 0 .9rem 2rem rgba(39,107,77,.23); }
+.designer-success-check svg { width: 1.8rem; stroke-width: 2.5; animation: designer-success-tick .45s .25s cubic-bezier(.2,.85,.25,1.2) both; }
+.designer-success-modal > p { margin: 0; color: #357756; text-transform: uppercase; letter-spacing: .14em; font-size: .63rem; font-weight: 800; }
+.designer-success-modal h2 { max-width: 14ch; margin: 0; font: 500 clamp(2rem,6vw,2.7rem)/.95 var(--serif); }
+.designer-success-modal > span:not(.designer-success-check) { max-width: 26rem; color: #756268; font-size: .76rem; line-height: 1.65; }
+.designer-success-modal > small { color: #8d7b80; font-size: .65rem; }
+.designer-success-progress { width: min(15rem,80%); height: .28rem; margin: .7rem 0 .2rem; overflow: hidden; border-radius: 999px; background: #e9ddd9; }
+.designer-success-progress i { display: block; width: 100%; height: 100%; border-radius: inherit; background: #3e8965; transform-origin: left; animation: designer-success-progress 2.8s linear both; }
+
+@keyframes designer-success-backdrop-in { from { opacity: 0; } }
+@keyframes designer-success-modal-in { from { opacity: 0; transform: translateY(1rem) scale(.96); } }
+@keyframes designer-success-tick { from { opacity: 0; transform: scale(.25) rotate(-18deg); } }
+@keyframes designer-success-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 /* Phone frame and live invitation */
 .designer-preview-panel { position: sticky; top: clamp(2.5rem,calc((100vh - 50rem) / 2),6rem); align-self: start; display: grid; justify-items: center; transform: none; }

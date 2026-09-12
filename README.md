@@ -13,7 +13,9 @@ Open `/design-invitation` or choose **Design your invitation** on the landing pa
 - add, repeat, reorder, duplicate, and remove extra parts;
 - enter the event date, time, venue, address, and an optional Google Maps link;
 - see an instant mobile-sized preview and live price; and
-- submit the design and photos as a new order for review.
+- submit the design and photos once as a new order for review.
+
+Customers cannot reopen or edit an order after submitting it. When submission succeeds, the designer confirms that the invitation was sent for processing and redirects to the home page. Only the protected administrator dashboard can change a saved order.
 
 The existing Coastal Reverie and Rose Afterglow invitations remain separate from the builder. The traditional card has not been changed.
 
@@ -24,9 +26,9 @@ The existing Coastal Reverie and Rose Afterglow invitations remain separate from
 3. Copy `.env.example` to `.env.local`.
 4. Add the project URL and the **service role key** from **Project Settings > API**. The service role key is server-only and must never be prefixed with `NEXT_PUBLIC_` or committed.
 
-Saved rows are protected by Row Level Security. Browser requests go through validated server routes, and returning customers receive a random local edit token whose hash is stored in Supabase.
+Saved rows are protected by Row Level Security. Browser requests go through validated server routes. A one-time credential is used only while a new submission uploads photos and is invalidated immediately afterwards; it is never stored in the browser for later editing.
 
-If the original setup script was already run before the order dashboard was added, run [`supabase/dashboard-migration.sql`](supabase/dashboard-migration.sql) once instead. It preserves existing invitations while adding deployment status, public slugs, and active-until dates.
+If the original setup script was already run, run [`supabase/dashboard-migration.sql`](supabase/dashboard-migration.sql) again after pulling this version. It preserves existing invitations, removes the obsolete `updated_at` column, allows administrator price overrides, and keeps deployment status, public slugs, and active-until dates up to date.
 
 ## Private order dashboard
 
@@ -42,10 +44,13 @@ PUBLIC_SITE_URL=https://www.paperless-invites.com
 
 The dashboard lets the administrator:
 
-- search and filter orders that need review, are live, or are inactive;
-- open every order to edit its complete form values and see the mobile preview;
+- select one or several status cards to filter a searchable, sortable and paginated data table;
+- see an order-value total calculated from the orders currently in the table;
+- create, inspect, edit and permanently delete orders;
+- open every order in the same visual editor used by customers, with values pre-filled and all editing sections initially collapsed;
+- directly edit customer details, event date, price and public slug;
 - deploy without editing source code, producing a memorable route such as `/salma-and-sam`;
-- choose or update the final active date, take a live invitation offline, and redeploy it later; and
+- choose or update the final active date, take a live invitation offline, move it back to review, and redeploy it later; and
 - contact the customer through a direct WhatsApp shortcut.
 
 Public invitation routes check their status and active date on every request. Once the selected Mauritius date has passed, the route immediately becomes unavailable and the order moves to the inactive list the next time it is read.

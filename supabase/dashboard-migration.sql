@@ -25,6 +25,10 @@ alter table public.invitations
 alter table public.invitations
   add constraint invitations_active_date_check check (status <> 'active' or active_until is not null);
 
+alter table public.invitations drop constraint if exists invitations_total_price_check;
+alter table public.invitations
+  add constraint invitations_total_price_check check (total_price >= 0);
+
 create unique index if not exists invitations_slug_idx
   on public.invitations (slug)
   where slug is not null;
@@ -32,5 +36,13 @@ create unique index if not exists invitations_slug_idx
 create index if not exists invitations_active_until_idx
   on public.invitations (active_until)
   where status = 'active';
+
+drop index if exists public.invitations_status_updated_at_idx;
+create index if not exists invitations_status_created_at_idx
+  on public.invitations (status, created_at desc);
+
+drop trigger if exists invitations_set_updated_at on public.invitations;
+drop function if exists public.set_invitation_updated_at();
+alter table public.invitations drop column if exists updated_at;
 
 commit;

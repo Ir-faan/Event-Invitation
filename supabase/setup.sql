@@ -5,16 +5,17 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.invitations (
   id uuid primary key default gen_random_uuid(),
+  -- Retained as a one-time photo-upload credential. It does not allow customers
+  -- to reopen or edit submitted orders.
   edit_token_hash text not null,
   config jsonb not null check (jsonb_typeof(config) = 'object'),
-  total_price integer not null default 1000 check (total_price >= 1000),
+  total_price integer not null default 1000 check (total_price >= 0),
   status text not null default 'pending' check (status in ('pending', 'active', 'inactive')),
   slug text,
   active_until date,
   deployed_at timestamptz,
   inactive_at timestamptz,
-  created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now())
+  created_at timestamptz not null default timezone('utc', now())
 );
 
 -- These statements also upgrade projects created with the original designer script.
@@ -38,11 +39,16 @@ alter table public.invitations
 alter table public.invitations
   add constraint invitations_active_date_check check (status <> 'active' or active_until is not null);
 
+alter table public.invitations drop constraint if exists invitations_total_price_check;
+alter table public.invitations
+  add constraint invitations_total_price_check check (total_price >= 0);
+
 create unique index if not exists invitations_edit_token_hash_idx
   on public.invitations (id, edit_token_hash);
 
-create index if not exists invitations_status_updated_at_idx
-  on public.invitations (status, updated_at desc);
+drop index if exists public.invitations_status_updated_at_idx;
+create index if not exists invitations_status_created_at_idx
+  on public.invitations (status, created_at desc);
 
 create unique index if not exists invitations_slug_idx
   on public.invitations (slug)
@@ -66,22 +72,9 @@ create table if not exists public.invitation_media (
 create index if not exists invitation_media_invitation_id_idx
   on public.invitation_media (invitation_id, created_at);
 
-create or replace function public.set_invitation_updated_at()
-returns trigger
-language plpgsql
-security invoker
-set search_path = public
-as $$
-begin
-  new.updated_at = timezone('utc', now());
-  return new;
-end;
-$$;
-
 drop trigger if exists invitations_set_updated_at on public.invitations;
-create trigger invitations_set_updated_at
-before update on public.invitations
-for each row execute function public.set_invitation_updated_at();
+drop function if exists public.set_invitation_updated_at();
+alter table public.invitations drop column if exists updated_at;
 
 alter table public.invitations enable row level security;
 alter table public.invitation_media enable row level security;
