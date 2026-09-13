@@ -208,28 +208,164 @@ test("renders admin orders in the shared designer with collapsed editing steps",
   assert.match(html, /Edit invitation/);
   assert.match(html, /The details that matter most/);
   assert.match(html, /Invitation link/);
+  assert.match(html, /https:\/\/www\.paperless-invites\.com\/aisha-and-rayan/);
   assert.match(html, /Order price \(Rs\)/);
   assert.match(html, /Save edits/);
   assert.doesNotMatch(html, /designer-step-card designer-main-step[^>]*open=/);
+  const liveRecord = { ...record, status: "active", active_until: "2027-09-12", deployed_at: "2026-09-12T09:00:00Z" };
+  const liveHtml = renderToStaticMarkup(React.createElement(InvitationDesigner, { adminOrder: { ...liveRecord, summary: summarizeOrder(liveRecord) }, today: "2026-09-12" }));
+  assert.match(liveHtml, /Update live invitation/);
+  assert.doesNotMatch(liveHtml, />Save edits</);
+  assert.equal((liveHtml.match(/Update live invitation</g) ?? []).length, 1);
+});
+
+test("published invitations use the browser width while editor previews keep their phone frame", async () => {
+  const [css, designerCss, { PublishedInvitation }, { createInitialInvitation }] = await Promise.all([
+    readFile(new URL("../app/[slug]/published-invitation.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
+    vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+  ]);
+  const html = renderToStaticMarkup(React.createElement(PublishedInvitation, { config: createInitialInvitation() }));
+  assert.match(html, /class="published-invitation"/);
+  assert.match(html, /designer-phone-screen published-invitation-screen/);
+  assert.match(css, /\.published-invitation-screen\s*\{[^}]*width: 100%;[^}]*height: auto;[^}]*overflow: visible;/);
+  assert.doesNotMatch(css, /width:\s*min\(30rem/);
+  assert.match(css, /@media \(min-width: 48rem\)/);
+  assert.match(css, /@media \(min-width: 64rem\)/);
+  assert.match(css, /\.published-invitation \.preview-opening \{ position: fixed/);
+  assert.match(css, /\.published-invitation \.preview-event-list \{[^}]*grid-template-columns:/);
+  assert.match(designerCss, /\.designer-phone-screen \{[^}]*height: clamp\(22rem/);
+});
+
+test("duplicates review orders with independent photo storage and rejects live orders", async () => {
+  const [{ POST }, { createInitialInvitation, createSection }] = await Promise.all([
+    vite.ssrLoadModule("/app/api/dashboard/orders/route.ts"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+  ]);
+  const originalId = "11111111-1111-4111-8111-111111111111";
+  const storageOrigin = "https://test-project.supabase.co";
+  const oldUrl = `${storageOrigin}/storage/v1/object/public/invitation-media/${originalId}/photo.jpg`;
+  const config = createInitialInvitation();
+  config.hero.type = "interactive";
+  config.hero.photoSource = "uploaded";
+  config.hero.uploadedUrl = oldUrl;
+  const gallery = createSection("glimpse");
+  gallery.images = [oldUrl];
+  config.sections.push(gallery);
+  const original = { id: originalId, status: "pending", slug: "custom-link", active_until: null, total_price: 1730, created_at: "2026-09-12T08:15:00Z", deployed_at: null, inactive_at: null, config };
+  const existingFetch = globalThis.fetch;
+  const previousUrl = process.env.SUPABASE_URL;
+  const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  process.env.SUPABASE_URL = storageOrigin;
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
+  const posts = [];
+  let failMediaInsert = false;
+  const response = (value, status = 200) => Response.json(value, { status });
+  const endpoint = "/api/dashboard/orders";
+  try {
+    globalThis.fetch = async (input, init = {}) => {
+      const url = String(input);
+      if (url.includes("/rest/v1/invitations?") && (!init.method || init.method === "GET")) {
+        if (new URL(url).searchParams.get("select") === "id") return response([]);
+        return response([original]);
+      }
+      if (url.includes("/rest/v1/invitation_media?") && (!init.method || init.method === "GET")) {
+        return response([{ storage_path: `${originalId}/photo.jpg`, public_url: oldUrl, slot: "hero", mime_type: "image/jpeg", size_bytes: 3 }]);
+      }
+      if (url === oldUrl) return new Response(new Uint8Array([1, 2, 3]), { status: 200 });
+      if (init.method === "POST" && url.includes("/storage/v1/object/invitation-media/")) {
+        posts.push({ type: "photo", url });
+        return response({});
+      }
+      if (init.method === "POST" && url.includes("/rest/v1/invitations?")) {
+        const values = JSON.parse(init.body);
+        posts.push({ type: "order", values });
+        return response([{ ...original, ...values, active_until: null, deployed_at: null, inactive_at: null }], 201);
+      }
+      if (init.method === "POST" && url.endsWith("/rest/v1/invitation_media")) {
+        posts.push({ type: "media", values: JSON.parse(init.body) });
+        return failMediaInsert ? response({ message: "Insert failed" }, 500) : response({}, 201);
+      }
+      if (init.method === "DELETE" && url.includes("/rest/v1/invitations?")) {
+        posts.push({ type: "order-rollback", url });
+        return response({});
+      }
+      if (init.method === "DELETE" && url.endsWith("/storage/v1/object/invitation-media")) {
+        posts.push({ type: "photo-rollback", values: JSON.parse(init.body) });
+        return response({});
+      }
+      throw new Error(`Unexpected fetch: ${init.method ?? "GET"} ${url}`);
+    };
+
+    const duplicated = await POST(new Request(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
+    assert.equal(duplicated.status, 201);
+    const { order } = await duplicated.json();
+    assert.equal(order.status, "pending");
+    assert.equal(order.slug, "custom-link-copy");
+    assert.equal(order.total_price, 1730);
+    assert.notEqual(order.id, originalId);
+    assert.deepEqual(posts.map((item) => item.type), ["photo", "order", "media"]);
+    const photoUrl = posts[2].values[0].public_url;
+    assert.match(photoUrl, new RegExp(`/${order.id}/`));
+    assert.equal(posts[1].values.config.hero.uploadedUrl, photoUrl);
+    assert.equal(order.config.hero.uploadedUrl, photoUrl);
+    assert.equal(posts[1].values.config.sections.at(-1).images[0], photoUrl);
+    assert.equal(posts[2].values[0].invitation_id, order.id);
+    assert.notEqual(photoUrl, oldUrl);
+
+    original.status = "active";
+    const denied = await POST(new Request(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
+    assert.equal(denied.status, 409);
+    assert.equal(posts.length, 3);
+
+    original.status = "pending";
+    failMediaInsert = true;
+    const previousConsoleError = console.error;
+    const expectedErrors = [];
+    let unsuccessful;
+    try {
+      console.error = (...args) => expectedErrors.push(args);
+      unsuccessful = await POST(new Request(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
+    } finally {
+      console.error = previousConsoleError;
+    }
+    assert.match(expectedErrors[0][0], /Unable to duplicate invitation order/);
+    assert.equal(unsuccessful.status, 503);
+    assert.deepEqual(posts.slice(3).map((item) => item.type), ["photo", "order", "media", "order-rollback", "photo-rollback"]);
+    assert.match(posts[6].url, new RegExp(`id=eq\\.${posts[4].values.id}`));
+    assert.deepEqual(posts[7].values.prefixes, [posts[5].values[0].storage_path]);
+  } finally {
+    globalThis.fetch = existingFetch;
+    if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
+    if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = previousKey;
+  }
 });
 
 test("supports automatic invitation routes and order lifecycle storage", async () => {
-  const { createInitialInvitation } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
-  const { makeInvitationSlug, todayInMauritius } = await vite.ssrLoadModule("/lib/invitation-orders.ts");
+  const { createInitialInvitation, createSection } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
+  const { makeInvitationSlug, summarizeOrder, todayInMauritius } = await vite.ssrLoadModule("/lib/invitation-orders.ts");
   const config = createInitialInvitation();
   config.hero.firstName = "Salma";
   config.hero.secondName = "Sam";
   assert.equal(makeInvitationSlug(config), "salma-and-sam");
   assert.equal(todayInMauritius(new Date("2027-05-22T20:00:00Z")), "2027-05-23");
+  const order = { id: "11111111-1111-4111-8111-111111111111", status: "pending", slug: null, active_until: null, total_price: 1000, created_at: "2026-09-12T08:15:00Z", deployed_at: null, inactive_at: null, config };
+  assert.equal(summarizeOrder(order).hasCustomPart, false);
+  assert.equal(summarizeOrder(order).suggestedSlug, "salma-and-sam");
+  config.sections.push(createSection("custom"));
+  assert.equal(summarizeOrder(order).hasCustomPart, true);
 
-  const [migration, proxy, publicRoute, dashboardApi, customerApi, designer, dashboard] = await Promise.all([
+  const [migration, proxy, publicRoute, privatePreview, dashboardApi, customerApi, designer, dashboard, confirmation] = await Promise.all([
     readFile(new URL("../supabase/dashboard-migration.sql", import.meta.url), "utf8"),
     readFile(new URL("../proxy.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/[slug]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/preview/[id]/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/dashboard/orders/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/invitations/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../components/invitation-designer.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/invitation-dashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/order-confirmation-modal.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(migration, /status in \('pending', 'active', 'inactive'\)/);
   assert.match(migration, /active_until/);
@@ -237,18 +373,31 @@ test("supports automatic invitation routes and order lifecycle storage", async (
   assert.match(migration, /drop column if exists updated_at/);
   assert.match(proxy, /DASHBOARD_USERNAME/);
   assert.match(proxy, /\/api\/dashboard/);
+  assert.match(proxy, /\/dashboard\/:path\*/);
   assert.match(publicRoute, /getPublicInvitationBySlug/);
   assert.match(publicRoute, /force-dynamic/);
+  assert.match(privatePreview, /getInvitationOrder/);
+  assert.match(privatePreview, /PublishedInvitation/);
+  assert.match(privatePreview, /Private preview/);
   assert.match(dashboardApi, /createUniqueInvitationSlug/);
   assert.match(dashboardApi, /action === "deactivate"/);
   assert.match(dashboardApi, /action === "review"/);
+  assert.match(dashboardApi, /action === "prepare-link"/);
   assert.match(dashboardApi, /export async function DELETE/);
   assert.doesNotMatch(customerApi, /export async function GET/);
+  assert.match(customerApi, /createUniqueInvitationSlug\(\{ id, config: body\.config \}\)/);
   assert.doesNotMatch(designer, /localStorage/);
   assert.match(designer, /Your invitation has been sent for processing/);
   assert.match(designer, /window\.location\.assign\("\/"\)/);
+  assert.match(designer, /7000/);
+  assert.doesNotMatch(designer, /window\.confirm/);
   assert.match(dashboard, /new Set\(\["pending"\]\)/);
   assert.match(dashboard, /orders-datatable/);
+  assert.match(dashboard, /Custom part/);
+  assert.match(dashboard, /\/dashboard\/preview\/\$\{order\.id\}/);
+  assert.match(dashboard, /wa\.me\/230/);
+  assert.doesNotMatch(dashboard, /window\.confirm/);
+  assert.match(confirmation, /role="dialog"/);
 });
 
 test("renders the complete Coastal Reverie invitation", async () => {

@@ -35,6 +35,8 @@ import {
   Video,
 } from "lucide-react";
 import { InvitationPhonePreview } from "@/components/invitation-phone-preview";
+import { OrderConfirmationModal } from "@/components/order-confirmation-modal";
+import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import {
   calculateInvitationPrice,
   createInitialInvitation,
@@ -58,6 +60,7 @@ import {
 } from "@/lib/invitation-designer";
 import {
   getPrimaryEventDate,
+  makeInvitationSlug,
   type InvitationOrderRecord,
   type InvitationOrderSummary,
 } from "@/lib/invitation-orders";
@@ -70,6 +73,7 @@ export type AdminInvitationOrder = InvitationOrderRecord & { summary: Invitation
 type InvitationDesignerProps = {
   adminOrder?: AdminInvitationOrder;
   today?: string;
+  publicOrigin?: string;
   onAdminBack?: () => void;
   onAdminOrderChange?: (order: AdminInvitationOrder) => void;
 };
@@ -79,7 +83,7 @@ const acceptedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const whatsappSupportNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
 const whatsappSupportMessage = "Hi, I had trouble saving my invitation design. Could you please help me?";
 
-export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdminOrderChange }: InvitationDesignerProps = {}) {
+export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "https://www.paperless-invites.com", onAdminBack, onAdminOrderChange }: InvitationDesignerProps = {}) {
   const adminMode = Boolean(adminOrder);
   const [config, setConfig] = useState<InvitationConfig>(() => adminOrder ? normalizeInvitationConfig(adminOrder.config) : createInitialInvitation());
   const [addType, setAddType] = useState<SectionType>("special-message");
@@ -96,6 +100,8 @@ export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdmi
   const [adminSlug, setAdminSlug] = useState(adminOrder?.slug ?? "");
   const [adminActiveUntil, setAdminActiveUntil] = useState(() => adminOrder ? suggestActiveUntil(adminOrder, normalizeInvitationConfig(adminOrder.config), today) : "");
   const [adminAction, setAdminAction] = useState<"deploy" | "deactivate" | "review" | "">("");
+  const [adminConfirmation, setAdminConfirmation] = useState<"deactivate" | "review" | "">("");
+  const [adminConfirmationError, setAdminConfirmationError] = useState("");
   const [adminNotice, setAdminNotice] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const objectUrls = useRef<string[]>([]);
@@ -110,7 +116,7 @@ export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdmi
       : saveState === "saved"
         ? "Changes saved"
         : adminMode
-          ? "Save edits"
+          ? currentAdminOrder?.status === "active" ? "Update live invitation" : "Save edits"
           : "Save my design";
   const hasCustomPart = config.sections.some((section) => section.type === "custom");
   const whatsappSupportUrl = whatsappSupportNumber
@@ -121,7 +127,7 @@ export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdmi
 
   useEffect(() => {
     if (!showSuccess) return;
-    const timer = window.setTimeout(() => window.location.assign("/"), 2800);
+    const timer = window.setTimeout(() => window.location.assign("/"), 7000);
     return () => window.clearTimeout(timer);
   }, [showSuccess]);
 
@@ -407,10 +413,11 @@ export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdmi
       if (adminMode && currentAdminOrder) {
         const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media");
         if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
-        const updated = await updateAdminOrder(currentAdminOrder.id, "save", {
+        const updated = await updateAdminOrder(currentAdminOrder.id, currentAdminOrder.status === "active" ? "deploy" : "save", {
           config: workingConfig,
           totalPrice: adminPrice,
           slug: adminSlug,
+          ...(currentAdminOrder.status === "active" ? { activeUntil: adminActiveUntil } : {}),
         });
         setConfig(normalizeInvitationConfig(updated.config));
         setCurrentAdminOrder(updated);
@@ -445,9 +452,8 @@ export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdmi
 
   async function runAdminLifecycle(nextAction: "deploy" | "deactivate" | "review") {
     if (!currentAdminOrder || adminAction) return;
-    if (nextAction === "deactivate" && !window.confirm("Take this invitation offline now? It will remain under Previous orders.")) return;
-    if (nextAction === "review" && !window.confirm("Move this invitation back to Need your review? Its public link will stop working.")) return;
     setAdminAction(nextAction);
+    setAdminConfirmationError("");
     setAdminNotice("");
     setSaveError("");
     try {
@@ -474,8 +480,11 @@ export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdmi
         : nextAction === "deactivate"
           ? "Invitation taken offline and moved to Previous orders."
           : "Invitation moved back to Need your review.");
+      setAdminConfirmation("");
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : "The order could not be updated.");
+      const message = error instanceof Error ? error.message : "The order could not be updated.";
+      setSaveError(message);
+      setAdminConfirmationError(message);
     } finally {
       setAdminAction("");
     }
@@ -520,6 +529,7 @@ export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdmi
             config={config}
             price={adminPrice}
             slug={adminSlug}
+            publicOrigin={publicOrigin}
             onName={(value) => updateContact("name", value)}
             onPhone={(value) => updateContact("phone", value)}
             onEventDate={(value) => updateConfig((current) => updateOrderEventDate(current, value))}
@@ -531,8 +541,15 @@ export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdmi
             activeUntil={adminActiveUntil}
             today={today}
             action={adminAction}
+            publicOrigin={publicOrigin}
             onActiveUntil={setAdminActiveUntil}
-            onAction={(nextAction) => void runAdminLifecycle(nextAction)}
+            onAction={(nextAction) => {
+              if (nextAction === "deploy") void runAdminLifecycle(nextAction);
+              else {
+                setAdminConfirmationError("");
+                setAdminConfirmation(nextAction);
+              }
+            }}
           />
           {adminNotice && <div className="orders-notice admin-designer-notice"><Check aria-hidden="true" />{adminNotice}</div>}
         </>
@@ -716,7 +733,9 @@ export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdmi
           <div className="designer-submit-panel">
             <button className={`designer-final-save ${saveState === "submitted" || saveState === "saved" ? "is-complete" : ""}`} type="submit" disabled={saveState === "saving" || saveState === "submitted" || saveState === "saved"}>{saveState === "submitted" || saveState === "saved" ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}{saveButtonText}</button>
             <p>{adminMode
-              ? "Saving updates this order in the database and returns you to the orders table."
+              ? currentAdminOrder?.status === "active"
+                ? "Updating publishes these edits and the active-until date above to the live invitation, then returns you to the orders table."
+                : "Saving keeps this order ready for review and returns you to the orders table."
               : hasCustomPart
                 ? "We will contact you to discuss your custom part during a video consultation or by message, then share payment details when your order is ready."
                 : "Once your order is ready, we will contact you with the payment details."}</p>
@@ -727,21 +746,38 @@ export function InvitationDesigner({ adminOrder, today = "", onAdminBack, onAdmi
       </div>
 
       {showSuccess && <SubmissionSuccessModal />}
+      {currentAdminOrder && adminConfirmation && <OrderConfirmationModal
+        icon={adminConfirmation === "review" ? <RotateCcw aria-hidden="true" /> : <Rocket aria-hidden="true" style={{ transform: "rotate(180deg)" }} />}
+        eyebrow={adminConfirmation === "review" ? "Return to review" : "Take offline"}
+        title={adminConfirmation === "review" ? "Move this invitation to review?" : "Undeploy this invitation?"}
+        description={adminConfirmation === "review"
+          ? "Its public link will stop working immediately. The saved order and its link remain available for review and later deployment."
+          : "Guests will lose access immediately. The order and its link remain under Previous orders so you can redeploy it later."}
+        confirmLabel={adminConfirmation === "review" ? "Move to review" : "Undeploy invitation"}
+        tone={adminConfirmation === "review" ? "wine" : "danger"}
+        busy={Boolean(adminAction)}
+        error={adminConfirmationError}
+        onCancel={() => setAdminConfirmation("")}
+        onConfirm={() => void runAdminLifecycle(adminConfirmation)}
+      />}
     </main>
   );
 }
 
-function AdminOrderOverview({ order, config, price, slug, onName, onPhone, onEventDate, onPrice, onSlug }: {
+function AdminOrderOverview({ order, config, price, slug, publicOrigin, onName, onPhone, onEventDate, onPrice, onSlug }: {
   order: AdminInvitationOrder;
   config: InvitationConfig;
   price: number;
   slug: string;
+  publicOrigin: string;
   onName: (value: string) => void;
   onPhone: (value: string) => void;
   onEventDate: (value: string) => void;
   onPrice: (value: number) => void;
   onSlug: (value: string) => void;
 }) {
+  const proposedSlug = slug.trim().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 90) || makeInvitationSlug(config);
+  const linkSaved = order.slug === proposedSlug;
   return (
     <section className="admin-order-overview" aria-labelledby="admin-order-overview-title">
       <div className="admin-order-overview-heading">
@@ -751,41 +787,51 @@ function AdminOrderOverview({ order, config, price, slug, onName, onPhone, onEve
       <div className="admin-order-overview-grid">
         <label><span>Customer name</span><input value={config.contact.name} onChange={(event) => onName(event.target.value)} /></label>
         <label className="is-phone"><span>Phone number</span><div><input inputMode="numeric" maxLength={8} value={config.contact.phone} onChange={(event) => onPhone(event.target.value)} />{/^5\d{7}$/.test(config.contact.phone) && <a href={`https://wa.me/230${config.contact.phone}`} target="_blank" rel="noreferrer" aria-label="Message customer on WhatsApp"><MessageCircle aria-hidden="true" /></a>}</div></label>
-        <label className="is-link"><span>Invitation link</span><div><b>/</b><input value={slug} placeholder="created-when-deployed" onChange={(event) => onSlug(event.target.value)} />{order.status === "active" && slug && <a href={`/${slug}`} target="_blank" rel="noreferrer" aria-label="Open live invitation"><ExternalLink aria-hidden="true" /></a>}</div></label>
+        <label className="is-link"><span>Invitation link</span><div><b>/</b><input value={slug} placeholder={makeInvitationSlug(config)} onChange={(event) => onSlug(event.target.value)} />{order.status === "active" && order.slug && <a href={`/${order.slug}`} target="_blank" rel="noreferrer" aria-label="Open live invitation"><ExternalLink aria-hidden="true" /></a>}</div></label>
         <label><span>Event date</span><input type="date" value={getPrimaryEventDate(config)} onChange={(event) => onEventDate(event.target.value)} /></label>
         <label><span>Order price (Rs)</span><input type="number" min="0" step="1" value={price} onChange={(event) => onPrice(Math.max(0, Math.round(Number(event.target.value) || 0)))} /></label>
+        <div className="admin-link-preview"><span>{linkSaved ? "Saved invitation link:" : "Link preview:"}</span><strong>{publicOrigin}/{proposedSlug}</strong>{!linkSaved && <em>Suggested address; save edits or deploy to confirm availability.</em>}{order.status !== "active" && <em>Guests cannot open it until deployment.</em>}</div>
       </div>
     </section>
   );
 }
 
-function AdminDeployControls({ order, activeUntil, today, action, onActiveUntil, onAction }: {
+function AdminDeployControls({ order, activeUntil, today, action, publicOrigin, onActiveUntil, onAction }: {
   order: AdminInvitationOrder;
   activeUntil: string;
   today: string;
   action: "deploy" | "deactivate" | "review" | "";
+  publicOrigin: string;
   onActiveUntil: (value: string) => void;
   onAction: (action: "deploy" | "deactivate" | "review") => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState("");
   const publicPath = order.slug ? `/${order.slug}` : "";
   async function copyLink() {
     if (!publicPath) return;
-    await navigator.clipboard.writeText(`${window.location.origin}${publicPath}`);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
+    try {
+      await copyToClipboard(`${publicOrigin}${publicPath}`);
+      setCopyError("");
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopyError("Please select and copy the link manually.");
+    }
   }
   return (
     <section className="order-deploy-bar admin-designer-deploy" id="admin-deploy-controls" aria-label="Invitation publishing controls">
       <div className="order-deploy-copy"><Rocket aria-hidden="true" /><div><strong>{order.status === "active" ? "This invitation is live" : order.status === "inactive" ? "Ready to publish again?" : "Ready after your review"}</strong><small>{order.status === "active" ? `Guests can open ${publicPath}` : "Choose the final active date, then publish in one tap."}</small></div></div>
       <label><span>Keep active until</span><input type="date" value={activeUntil} min={today} onChange={(event) => onActiveUntil(event.target.value)} /></label>
-      <button className="order-primary-action" type="button" onClick={() => onAction("deploy")} disabled={Boolean(action) || !activeUntil}>
+      {order.status !== "active" && <button className="order-primary-action" type="button" onClick={() => onAction("deploy")} disabled={Boolean(action) || !activeUntil}>
         {action === "deploy" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <Rocket aria-hidden="true" />}
-        {order.status === "pending" ? "Deploy invitation" : order.status === "inactive" ? "Redeploy invitation" : "Update live invitation"}
-      </button>
+        {order.status === "pending" ? "Deploy invitation" : "Redeploy invitation"}
+      </button>}
       {order.status === "active" && <button className="order-review-action" type="button" onClick={() => onAction("review")} disabled={Boolean(action)}>{action === "review" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <RotateCcw aria-hidden="true" />} Move to review</button>}
       {order.status === "active" && <button className="order-danger-action" type="button" onClick={() => onAction("deactivate")} disabled={Boolean(action)}>{action === "deactivate" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <span aria-hidden="true">×</span>} Take offline</button>}
+      {order.status === "active" && <p className="order-deploy-tip">Use Update live invitation at the bottom to publish your edits and apply this active-until date together.</p>}
       {publicPath && <div className="order-public-link"><span>{order.status === "active" ? "Live invitation link" : "Saved link (currently offline)"}</span><strong>{publicPath}</strong><button type="button" onClick={() => void copyLink()}>{copied ? <Check /> : <Copy />}<span className="sr-only">Copy invitation link</span></button>{order.status === "active" && <a href={publicPath} target="_blank" rel="noreferrer"><ExternalLink /><span className="sr-only">Open live invitation</span></a>}</div>}
+      {copyError && <p className="order-deploy-tip" role="alert">{copyError}</p>}
     </section>
   );
 }

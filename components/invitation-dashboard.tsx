@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
-  Archive,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -11,7 +10,11 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
+  Check,
+  Copy,
+  Eye,
   ExternalLink,
+  Files,
   Loader2,
   PackageCheck,
   PencilLine,
@@ -24,11 +27,15 @@ import {
   Trash2,
 } from "lucide-react";
 import { InvitationDesigner, type AdminInvitationOrder } from "@/components/invitation-designer";
+import { OrderConfirmationModal } from "@/components/order-confirmation-modal";
+import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import type { InvitationOrderStatus, InvitationOrderSummary } from "@/lib/invitation-orders";
 
 type SortKey = "coupleName" | "customerName" | "eventDate" | "created_at" | "total_price" | "status";
 type SortState = { key: SortKey; direction: "asc" | "desc" };
-type RowAction = { id: string; action: "delete" | "deactivate" | "review" } | null;
+type OrderAction = "delete" | "deactivate" | "review" | "duplicate";
+type RowAction = { id: string; action: OrderAction } | null;
+type Confirmation = { order: InvitationOrderSummary; action: OrderAction } | null;
 
 const statusLabels: Record<InvitationOrderStatus, string> = {
   pending: "Need your review",
@@ -39,6 +46,7 @@ const statusLabels: Record<InvitationOrderStatus, string> = {
 export function InvitationDashboard() {
   const [orders, setOrders] = useState<InvitationOrderSummary[]>([]);
   const [today, setToday] = useState("");
+  const [publicOrigin, setPublicOrigin] = useState("");
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState("");
   const [search, setSearch] = useState("");
@@ -49,19 +57,29 @@ export function InvitationDashboard() {
   const [selected, setSelected] = useState<AdminInvitationOrder | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [rowAction, setRowAction] = useState<RowAction>(null);
+  const [confirmation, setConfirmation] = useState<Confirmation>(null);
+  const [confirmationError, setConfirmationError] = useState("");
+  const [actionNotice, setActionNotice] = useState("");
+  const [copyingId, setCopyingId] = useState("");
+  const [copiedId, setCopiedId] = useState("");
   const [deployOrder, setDeployOrder] = useState<InvitationOrderSummary | null>(null);
   const [deployUntil, setDeployUntil] = useState("");
   const [deploying, setDeploying] = useState(false);
+  const [preparingLink, setPreparingLink] = useState(false);
+  const [deployError, setDeployError] = useState("");
+  const [deploySuccess, setDeploySuccess] = useState(false);
+  const deployPreparationId = useRef(0);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
     setListError("");
     try {
       const response = await fetch("/api/dashboard/orders", { cache: "no-store" });
-      const data = await response.json() as { orders?: InvitationOrderSummary[]; today?: string; error?: string };
+      const data = await response.json() as { orders?: InvitationOrderSummary[]; today?: string; publicOrigin?: string; error?: string };
       if (!response.ok || !data.orders) throw new Error(data.error || "Orders could not be loaded.");
       setOrders(data.orders);
       setToday(data.today || new Date().toISOString().slice(0, 10));
+      setPublicOrigin(data.publicOrigin || window.location.origin);
     } catch (error) {
       setListError(error instanceof Error ? error.message : "Orders could not be loaded.");
     } finally {
@@ -125,17 +143,23 @@ export function InvitationDashboard() {
       : { key, direction: key === "created_at" || key === "total_price" ? "desc" : "asc" });
   }
 
-  async function runRowAction(order: InvitationOrderSummary, action: "delete" | "deactivate" | "review") {
-    const question = action === "delete"
-      ? `Permanently delete the order for ${order.coupleName}? This cannot be undone.`
-      : action === "deactivate"
-        ? `Take ${order.coupleName}'s invitation offline?`
-        : `Move ${order.coupleName}'s invitation back to Need your review?`;
-    if (!window.confirm(question)) return;
+  async function runRowAction(order: InvitationOrderSummary, action: OrderAction) {
     setRowAction({ id: order.id, action });
-    setListError("");
+    setConfirmationError("");
+    setActionNotice("");
     try {
-      if (action === "delete") {
+      if (action === "duplicate") {
+        const response = await fetch("/api/dashboard/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: order.id, action }),
+        });
+        const data = await response.json() as { order?: AdminInvitationOrder; error?: string };
+        if (!response.ok || !data.order) throw new Error(data.error || "The order could not be duplicated.");
+        setOrders((current) => upsertSummary(current, data.order!.summary));
+        setPage(1);
+        setActionNotice(`A separate copy of ${order.coupleName} is ready for review with its own link.`);
+      } else if (action === "delete") {
         const response = await fetch(`/api/dashboard/orders?id=${encodeURIComponent(order.id)}`, { method: "DELETE" });
         const data = await response.json() as { deleted?: boolean; error?: string };
         if (!response.ok || !data.deleted) throw new Error(data.error || "The order could not be deleted.");
@@ -150,23 +174,77 @@ export function InvitationDashboard() {
         if (!response.ok || !data.order) throw new Error(data.error || "The order could not be updated.");
         setOrders((current) => upsertSummary(current, data.order!.summary));
       }
+      setConfirmation(null);
     } catch (error) {
-      setListError(error instanceof Error ? error.message : "The order could not be updated.");
+      setConfirmationError(error instanceof Error ? error.message : "The order could not be updated.");
     } finally {
       setRowAction(null);
     }
   }
 
+  function askToConfirm(order: InvitationOrderSummary, action: OrderAction) {
+    setConfirmationError("");
+    setConfirmation({ order, action });
+  }
+
+  async function prepareOrderLink(order: InvitationOrderSummary) {
+    if (order.slug) return order;
+    const response = await fetch("/api/dashboard/orders", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: order.id, action: "prepare-link" }),
+    });
+    const data = await response.json() as { order?: AdminInvitationOrder; error?: string };
+    if (!response.ok || !data.order?.slug) throw new Error(data.error || "The invitation link could not be prepared.");
+    setOrders((current) => upsertSummary(current, data.order!.summary));
+    return data.order.summary;
+  }
+
+  async function copyOrderLink(order: InvitationOrderSummary) {
+    setCopyingId(order.id);
+    setListError("");
+    try {
+      const readyOrder = await prepareOrderLink(order);
+      await copyToClipboard(`${publicOrigin || window.location.origin}/${readyOrder.slug}`);
+      setCopiedId(order.id);
+      window.setTimeout(() => setCopiedId((current) => current === order.id ? "" : current), 2400);
+    } catch (error) {
+      setListError(error instanceof Error ? error.message : "The link could not be copied.");
+    } finally {
+      setCopyingId("");
+    }
+  }
+
   function openDeploy(order: InvitationOrderSummary) {
+    const requestId = ++deployPreparationId.current;
     const candidate = order.active_until || order.eventDate || today;
     setDeployUntil(candidate && candidate >= today ? candidate : today);
     setDeployOrder(order);
+    setDeployError("");
+    setDeploySuccess(false);
+    setPreparingLink(!order.slug);
+    if (!order.slug) {
+      void prepareOrderLink(order).then((prepared) => {
+        if (deployPreparationId.current === requestId) setDeployOrder((current) => current?.id === order.id ? prepared : current);
+      }).catch((error) => {
+        if (deployPreparationId.current === requestId) setDeployError(error instanceof Error ? error.message : "The invitation link could not be prepared.");
+      }).finally(() => {
+        if (deployPreparationId.current === requestId) setPreparingLink(false);
+      });
+    }
+  }
+
+  function closeDeploy() {
+    if (deploying) return;
+    deployPreparationId.current += 1;
+    setDeployOrder(null);
+    setPreparingLink(false);
   }
 
   async function deployFromTable() {
-    if (!deployOrder || !deployUntil) return;
+    if (!deployOrder?.slug || !deployUntil || preparingLink) return;
     setDeploying(true);
-    setListError("");
+    setDeployError("");
     try {
       const response = await fetch("/api/dashboard/orders", {
         method: "PATCH",
@@ -176,9 +254,10 @@ export function InvitationDashboard() {
       const data = await response.json() as { order?: AdminInvitationOrder; error?: string };
       if (!response.ok || !data.order) throw new Error(data.error || "The invitation could not be deployed.");
       setOrders((current) => upsertSummary(current, data.order!.summary));
-      setDeployOrder(null);
+      setDeployOrder(data.order.summary);
+      setDeploySuccess(true);
     } catch (error) {
-      setListError(error instanceof Error ? error.message : "The invitation could not be deployed.");
+      setDeployError(error instanceof Error ? error.message : "The invitation could not be deployed.");
     } finally {
       setDeploying(false);
     }
@@ -190,6 +269,7 @@ export function InvitationDashboard() {
         key={selected.id}
         adminOrder={selected}
         today={today}
+        publicOrigin={publicOrigin}
         onAdminBack={() => { setSelected(null); void loadOrders(); }}
         onAdminOrderChange={(order) => {
           setSelected(order);
@@ -211,6 +291,7 @@ export function InvitationDashboard() {
             </div>
 
             {listError && <DashboardError>{listError}</DashboardError>}
+            {actionNotice && <p className="orders-action-notice" role="status"><Check aria-hidden="true" />{actionNotice}</p>}
             {loading ? <DashboardLoading /> : filteredOrders.length ? (
               <>
                 <div className="orders-table-scroll">
@@ -218,6 +299,7 @@ export function InvitationDashboard() {
                     <thead><tr>
                       <SortableHeading label="Invitation" sortKey="coupleName" sort={sort} onSort={updateSort} />
                       <SortableHeading label="Customer" sortKey="customerName" sort={sort} onSort={updateSort} />
+                      <th scope="col">Link</th>
                       <SortableHeading label="Event date" sortKey="eventDate" sort={sort} onSort={updateSort} />
                       <SortableHeading label="Created" sortKey="created_at" sort={sort} onSort={updateSort} />
                       <SortableHeading label="Price" sortKey="total_price" sort={sort} onSort={updateSort} />
@@ -231,9 +313,14 @@ export function InvitationDashboard() {
                         busy={rowAction?.id === order.id}
                         onOpen={() => void openOrder(order.id)}
                         onDeploy={() => openDeploy(order)}
-                        onDelete={() => void runRowAction(order, "delete")}
-                        onDeactivate={() => void runRowAction(order, "deactivate")}
-                        onReview={() => void runRowAction(order, "review")}
+                        onDelete={() => askToConfirm(order, "delete")}
+                        onDuplicate={() => askToConfirm(order, "duplicate")}
+                        onDeactivate={() => askToConfirm(order, "deactivate")}
+                        onReview={() => askToConfirm(order, "review")}
+                        onCopyLink={() => void copyOrderLink(order)}
+                        publicOrigin={publicOrigin}
+                        copying={copyingId === order.id}
+                        copied={copiedId === order.id}
                       />
                     ))}</tbody>
                   </table>
@@ -253,7 +340,8 @@ export function InvitationDashboard() {
         </div>
       </div>
       {detailLoading && <div className="orders-loading-overlay"><Loader2 className="is-spinning" aria-hidden="true" /><span>Opening order…</span></div>}
-      {deployOrder && <DeployModal order={deployOrder} value={deployUntil} today={today} busy={deploying} onValue={setDeployUntil} onClose={() => !deploying && setDeployOrder(null)} onDeploy={() => void deployFromTable()} />}
+      {deployOrder && <DeployModal order={deployOrder} value={deployUntil} today={today} busy={deploying} preparingLink={preparingLink} success={deploySuccess} error={deployError} publicOrigin={publicOrigin} onValue={setDeployUntil} onClose={closeDeploy} onDeploy={() => void deployFromTable()} />}
+      {confirmation && <OrderConfirmationModal {...confirmationDetails(confirmation)} busy={rowAction !== null} error={confirmationError} onCancel={() => setConfirmation(null)} onConfirm={() => void runRowAction(confirmation.order, confirmation.action)} />}
     </main>
   );
 }
@@ -282,33 +370,52 @@ function SortableHeading({ label, sortKey, sort, onSort }: { label: string; sort
   return <th scope="col"><button type="button" onClick={() => onSort(sortKey)}>{label}{selected ? sort.direction === "asc" ? <ArrowUp /> : <ArrowDown /> : <ArrowUpDown />}</button></th>;
 }
 
-function OrderRow({ order, busy, onOpen, onDeploy, onDelete, onDeactivate, onReview }: {
+function OrderRow({ order, busy, onOpen, onDeploy, onDelete, onDuplicate, onDeactivate, onReview, onCopyLink, publicOrigin, copying, copied }: {
   order: InvitationOrderSummary;
   busy: boolean;
   onOpen: () => void;
   onDeploy: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
   onDeactivate: () => void;
   onReview: () => void;
+  onCopyLink: () => void;
+  publicOrigin: string;
+  copying: boolean;
+  copied: boolean;
 }) {
+  const linkPath = `/${order.slug || order.suggestedSlug}`;
+  const fullUrl = `${publicOrigin || "https://www.paperless-invites.com"}${linkPath}`;
+  const phone = order.phone.trim();
+  const whatsappUrl = /^5\d{7}$/.test(phone)
+    ? `https://wa.me/230${phone}${order.status === "active" && order.slug ? `?text=${encodeURIComponent(`Hi ${order.customerName}, your invitation is live! ${fullUrl}`)}` : ""}`
+    : "";
   return (
     <tr>
-      <td><span className="orders-invitation-cell"><i>{initials(order.coupleName)}</i><span><strong>{order.coupleName}</strong><small>{order.slug ? `/${order.slug}` : `Order ${order.id.slice(0, 8)}`}</small></span></span></td>
+      <td><span className="orders-invitation-cell"><i>{initials(order.coupleName)}</i><span><strong>{order.coupleName}</strong><small title={order.id}>Order {order.id.slice(0, 8)}</small></span></span></td>
       <td><span className="orders-cell-stack"><strong>{order.customerName}</strong><small>{formatPhone(order.phone)}</small></span></td>
-      <td><span className="orders-cell-stack"><strong>{formatDate(order.eventDate)}</strong><small>{order.sectionCount} invitation parts</small></span></td>
+      <td><button className="orders-link-button" type="button" onClick={onCopyLink} disabled={copying || busy} title={order.slug ? `Click to copy ${fullUrl}` : `Suggested ${fullUrl} · click to reserve and copy the exact link`} aria-label={`Copy ${order.coupleName}'s full invitation link`}>{copying ? <Loader2 className="is-spinning" aria-hidden="true" /> : copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}<span>{linkPath}</span></button>{!order.slug && <small className="orders-link-note">Suggested · reserve on copy</small>}{copied && <small className="orders-link-note" role="status">Full link copied</small>}</td>
+      <td><span className="orders-cell-stack"><strong>{formatDate(order.eventDate)}</strong><small>{order.sectionCount} invitation parts</small>{order.hasCustomPart && <span className="orders-custom-badge"><Sparkles aria-hidden="true" /> Custom part</span>}</span></td>
       <td><span className="orders-cell-stack"><strong>{formatCreatedDate(order.created_at)}</strong><small>{formatCreatedTime(order.created_at)}</small></span></td>
       <td><strong>{formatMoney(order.total_price)}</strong></td>
       <td><span className="orders-cell-stack"><StatusChip status={order.status} />{order.status === "active" && <small>Until {formatDate(order.active_until)}</small>}</span></td>
       <td><div className="orders-row-actions">
         <button type="button" title="Edit and preview" aria-label={`Edit and preview ${order.coupleName}`} onClick={onOpen} disabled={busy}><PencilLine /></button>
+        {order.status === "pending" && <button type="button" title="Duplicate this order" aria-label={`Duplicate ${order.coupleName}`} onClick={onDuplicate} disabled={busy}>{busy ? <Loader2 className="is-spinning" /> : <Files />}</button>}
+        {order.status !== "active" && <a href={`/dashboard/preview/${order.id}`} target="_blank" rel="noreferrer" title="Show desktop browser preview (private)" aria-label={`Show private preview of ${order.coupleName}`}><Eye /></a>}
         {order.status === "active" && order.slug && <a href={`/${order.slug}`} target="_blank" rel="noreferrer" title="Open live invitation" aria-label={`Open ${order.coupleName}'s live invitation`}><ExternalLink /></a>}
         {order.status !== "active" && <button type="button" title="Deploy invitation" aria-label={`Deploy ${order.coupleName}`} onClick={onDeploy} disabled={busy}><Rocket /></button>}
-        {order.status === "active" && <button type="button" title="Undeploy to Previous orders" aria-label={`Take ${order.coupleName} offline`} onClick={onDeactivate} disabled={busy}>{busy ? <Loader2 className="is-spinning" /> : <Archive />}</button>}
+        {order.status === "active" && <button className="is-undeploy" type="button" title="Undeploy to Previous orders" aria-label={`Take ${order.coupleName} offline`} onClick={onDeactivate} disabled={busy}>{busy ? <Loader2 className="is-spinning" /> : <Rocket />}</button>}
         {order.status !== "pending" && <button type="button" title="Move to Need your review" aria-label={`Move ${order.coupleName} to review`} onClick={onReview} disabled={busy}><RotateCcw /></button>}
+        {whatsappUrl && order.status !== "inactive" && <a className="is-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" title={order.status === "active" ? "WhatsApp customer with invitation link" : "Chat with customer on WhatsApp"} aria-label={order.status === "active" ? `WhatsApp ${order.customerName} with the live invitation link` : `WhatsApp ${order.customerName}`}><WhatsAppIcon /></a>}
         <button type="button" className="is-delete" title="Delete order" aria-label={`Delete ${order.coupleName}`} onClick={onDelete} disabled={busy}>{busy ? <Loader2 className="is-spinning" /> : <Trash2 />}</button>
       </div></td>
     </tr>
   );
+}
+
+function WhatsAppIcon() {
+  return <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.03 2a9.73 9.73 0 0 0-8.39 14.65L2.3 21.55l5.02-1.32A9.75 9.75 0 1 0 12.03 2Zm0 17.72a8 8 0 0 1-4.08-1.12l-.29-.17-2.98.78.8-2.91-.19-.3a8.01 8.01 0 1 1 6.74 3.72Zm4.38-5.98c-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.93-1.19-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.47-.39-.4-.54-.41h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.69 2.58 4.09 3.62.57.25 1.02.39 1.37.5.58.18 1.1.16 1.51.1.46-.07 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28Z" /></svg>;
 }
 
 function DataTableFooter({ count, page, pageSize, totalPages, onPage, onPageSize }: { count: number; page: number; pageSize: number; totalPages: number; onPage: (page: number) => void; onPageSize: (size: number) => void }) {
@@ -323,16 +430,94 @@ function DataTableFooter({ count, page, pageSize, totalPages, onPage, onPageSize
   );
 }
 
-function DeployModal({ order, value, today, busy, onValue, onClose, onDeploy }: { order: InvitationOrderSummary; value: string; today: string; busy: boolean; onValue: (value: string) => void; onClose: () => void; onDeploy: () => void }) {
+function DeployModal({ order, value, today, busy, preparingLink, success, error, publicOrigin, onValue, onClose, onDeploy }: {
+  order: InvitationOrderSummary;
+  value: string;
+  today: string;
+  busy: boolean;
+  preparingLink: boolean;
+  success: boolean;
+  error: string;
+  publicOrigin: string;
+  onValue: (value: string) => void;
+  onClose: () => void;
+  onDeploy: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState("");
+  const dateRef = useRef<HTMLInputElement>(null);
+  const copyRef = useRef<HTMLButtonElement>(null);
+  const publicUrl = `${publicOrigin || "https://www.paperless-invites.com"}/${order.slug || order.suggestedSlug}`;
+
+  useEffect(() => { dateRef.current?.focus(); }, []);
+  useEffect(() => { if (success) copyRef.current?.focus(); }, [success]);
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) { if (event.key === "Escape" && !busy) onClose(); }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [busy, onClose]);
+
+  async function copyLink() {
+    if (!order.slug) return;
+    try {
+      await copyToClipboard(publicUrl);
+      setCopied(true);
+      setCopyError("");
+      window.setTimeout(() => setCopied(false), 2400);
+    } catch {
+      setCopyError("The link could not be copied. Try again or select the URL manually.");
+    }
+  }
+
   return (
     <div className="orders-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="orders-deploy-modal" role="dialog" aria-modal="true" aria-labelledby="orders-deploy-title">
-        <span><Rocket aria-hidden="true" /></span><p>Publish invitation</p><h2 id="orders-deploy-title">Make {order.coupleName} live</h2>
-        <label><span>Keep the invitation active until</span><input type="date" min={today} value={value} onChange={(event) => onValue(event.target.value)} /></label>
-        <div><button type="button" onClick={onClose} disabled={busy}>Cancel</button><button type="button" onClick={onDeploy} disabled={busy || !value}>{busy ? <Loader2 className="is-spinning" /> : <Rocket />} Deploy invitation</button></div>
+        <span>{success ? <Check aria-hidden="true" /> : <Rocket aria-hidden="true" />}</span><p>{success ? "Invitation published" : "Publish invitation"}</p><h2 id="orders-deploy-title">{success ? `${order.coupleName} is live` : `Make ${order.coupleName} live`}</h2>
+        <p className="orders-modal-description">{success ? "The public link is ready to share with your customer." : "Choose when it goes offline and copy the link whenever you are ready."}</p>
+        {!success && <label><span>Keep the invitation active until</span><input ref={dateRef} type="date" min={today} value={value} onChange={(event) => onValue(event.target.value)} /></label>}
+        <div className="orders-deploy-link"><span>{success ? "Live invitation link" : "Invitation link"}</span><button ref={copyRef} type="button" onClick={() => void copyLink()} disabled={preparingLink || !order.slug} title={order.slug ? `Copy ${publicUrl}` : "Preparing an available link"}><span>{preparingLink ? "Preparing your link…" : publicUrl}</span>{copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}</button><small>{copied ? "Full link copied to clipboard" : !order.slug ? "The suggested address will be reserved before you can copy or deploy it." : !success ? "The link starts working when you deploy the invitation." : "You can now send this link to your customer."}</small></div>
+        {(error || copyError) && <p className="orders-modal-error" role="alert">{error || copyError}</p>}
+        {copyError && <input className="orders-deploy-manual-copy" readOnly value={publicUrl} aria-label="Select the full invitation URL to copy manually" onFocus={(event) => event.currentTarget.select()} />}
+        {success && <p className="orders-modal-feedback"><Check aria-hidden="true" /> The invitation is available to guests now.</p>}
+        <div className="orders-deploy-actions">{success ? <><a href={`/${order.slug}`} target="_blank" rel="noreferrer"><ExternalLink aria-hidden="true" /> Open invitation</a><button type="button" onClick={onClose}>Done</button></> : <><button type="button" onClick={onClose} disabled={busy}>Cancel</button><button type="button" onClick={onDeploy} disabled={busy || preparingLink || !order.slug || !value}>{busy ? <Loader2 className="is-spinning" /> : <Rocket />} Deploy invitation</button></>}</div>
       </section>
     </div>
   );
+}
+
+function confirmationDetails({ order, action }: Exclude<Confirmation, null>) {
+  if (action === "duplicate") return {
+    icon: <Files aria-hidden="true" />,
+    eyebrow: "Make a separate copy",
+    title: `Duplicate ${order.coupleName}?`,
+    description: "A new order needing your review will have the same design, price and its own copies of uploaded photos. Its invitation link will end in -copy so both orders can be managed independently.",
+    confirmLabel: "Duplicate order",
+    tone: "wine" as const,
+  };
+  if (action === "delete") return {
+    icon: <Trash2 aria-hidden="true" />,
+    eyebrow: "Delete order",
+    title: `Delete ${order.coupleName}?`,
+    description: "This permanently removes the order and its uploaded photos. This cannot be undone.",
+    confirmLabel: "Delete permanently",
+    tone: "danger" as const,
+  };
+  if (action === "deactivate") return {
+    icon: <Rocket aria-hidden="true" style={{ transform: "rotate(180deg)" }} />,
+    eyebrow: "Take offline",
+    title: `Undeploy ${order.coupleName}?`,
+    description: "Guests will lose access immediately. The order and its link stay saved under Previous orders, ready to redeploy later.",
+    confirmLabel: "Undeploy invitation",
+    tone: "danger" as const,
+  };
+  return {
+    icon: <RotateCcw aria-hidden="true" />,
+    eyebrow: "Return to review",
+    title: `Review ${order.coupleName} again?`,
+    description: "If it is live, the public invitation will become unavailable immediately. The order and its link are kept for your next review.",
+    confirmLabel: "Move to review",
+    tone: "wine" as const,
+  };
 }
 
 function StatusChip({ status }: { status: InvitationOrderStatus }) {

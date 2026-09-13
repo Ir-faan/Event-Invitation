@@ -1,0 +1,13 @@
+.admin-private-preview { min-height: 100dvh; background: #211b1d; }
+.admin-private-preview-bar { position: relative; z-index: 70; min-height: 4.25rem; display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .65rem clamp(1rem,4vw,2.5rem); color: #fff; background: #382330; font: 500 .78rem "DM Sans", Arial, sans-serif; }
+.admin-private-preview-bar > div { display: flex; align-items: center; gap: .7rem; }
+.admin-private-preview-bar > div > svg { width: 1.15rem; color: #ecc4d1; }
+.admin-private-preview-bar span { display: grid; gap: .15rem; }
+.admin-private-preview-bar strong { font-weight: 700; }
+.admin-private-preview-bar small { color: #e0c6d1; font-size: .7rem; }
+.admin-private-preview-bar a { min-height: 2.4rem; display: inline-flex; align-items: center; gap: .45rem; padding: .4rem .75rem; border: 1px solid rgba(255,255,255,.28); border-radius: .55rem; color: #fff; text-decoration: none; white-space: nowrap; }
+.admin-private-preview-bar a:hover { background: rgba(255,255,255,.12); }
+.admin-private-preview-bar a svg { width: .9rem; }
+@media (max-width: 34rem) {
+  .admin-private-preview-bar { align-items: flex-start; flex-direction: column; }
+}

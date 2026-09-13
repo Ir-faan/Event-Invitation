@@ -3,6 +3,7 @@ import {
   calculateInvitationPrice,
 } from "@/lib/invitation-designer";
 import { isInvitationConfig, validInvitationId } from "@/lib/invitation-validation";
+import { createUniqueInvitationSlug } from "@/lib/invitation-orders-server";
 import {
   createSubmissionToken,
   hashSubmissionToken,
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
     }
 
     const id = crypto.randomUUID();
+    const slug = await createUniqueInvitationSlug({ id, config: body.config });
     const uploadToken = createSubmissionToken();
     const submissionTokenHash = await hashSubmissionToken(uploadToken);
     const response = await supabaseRequest("/rest/v1/invitations", {
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json", Prefer: "return=representation" },
       body: JSON.stringify({
         id,
+        slug,
         edit_token_hash: submissionTokenHash,
         config: body.config,
         total_price: price.total,

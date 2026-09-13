@@ -58,7 +58,7 @@ export async function getPublicInvitationBySlug(slug: string): Promise<Invitatio
   return order;
 }
 
-export async function createUniqueInvitationSlug(order: InvitationOrderRecord) {
+export async function createUniqueInvitationSlug(order: Pick<InvitationOrderRecord, "id" | "config">) {
   const base = makeInvitationSlug(order.config);
   for (let suffix = 0; suffix < 100; suffix += 1) {
     const candidate = suffix ? `${base}-${suffix + 1}` : base;

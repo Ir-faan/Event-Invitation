@@ -3,9 +3,10 @@
   --serif: "Cormorant Garamond", Georgia, serif;
   --sans: "Montserrat", Arial, sans-serif;
   min-height: 100dvh;
-  display: grid;
-  place-items: start center;
-  background: #211b1d;
+  width: 100%;
+  display: block;
+  overflow-x: clip;
+  background: var(--preview-bg);
 }
 
 .published-invitation *,
@@ -13,14 +14,95 @@
 .published-invitation *::after { box-sizing: border-box; }
 
 .published-invitation-screen {
-  width: min(30rem, 100%);
-  height: 100dvh;
+  width: 100%;
+  height: auto;
   min-height: 100dvh;
+  overflow: visible;
   border-radius: 0;
-  box-shadow: 0 0 5rem rgba(0, 0, 0, .4);
+  box-shadow: none;
   overscroll-behavior: auto;
 }
 
-@media (max-width: 30rem) {
-  .published-invitation-screen { box-shadow: none; }
+/* The editor keeps its own scrollable phone; the published invitation scrolls as a page. */
+.published-invitation .preview-opening { position: fixed; inset: 0; height: 100dvh; }
+.published-invitation .invite-preview-hero:not(.is-interactive) { min-height: 100svh; }
+.published-invitation .invite-preview-hero.is-interactive { min-height: 100svh; }
+.published-invitation .invite-preview-hero-copy h2 { max-width: 100%; overflow-wrap: anywhere; }
+
+@media (max-width: 47.99rem) {
+  .published-invitation .invite-preview-hero-copy h2 { font-size: clamp(3.15rem, 13vw, 5.7rem); }
+  .published-invitation .invite-preview-section { padding-inline: clamp(1.25rem, 5vw, 2rem); }
+  .published-invitation .preview-gallery { max-width: 29rem; }
+}
+
+@media (min-width: 48rem) {
+  .published-invitation .invite-preview-hero:not(.is-interactive) { min-height: min(58rem, 100svh); }
+  .published-invitation .invite-preview-hero-copy { width: min(76rem, 100%); padding: 10rem 2rem 6rem; }
+  .published-invitation .invite-preview-hero.has-bismillah:not(.is-interactive) .invite-preview-hero-copy { padding-top: 13rem; }
+  .published-invitation .invite-preview-hero-copy h2 { font-size: clamp(5rem, 8vw, 8.5rem); }
+  .published-invitation .invite-preview-hero-copy > span { font-size: .75rem; }
+  .published-invitation .invite-preview-hero-copy p { max-width: 36rem; font-size: 1.4rem; }
+  .published-invitation .invite-preview-hero-copy time { font-size: .72rem; }
+  .published-invitation .invite-preview-bismillah { top: 3.5rem; width: min(18rem, 30vw); }
+  .published-invitation .invite-preview-section { min-height: 32rem; padding: clamp(5rem, 9vw, 8rem) clamp(2rem, 6vw, 6rem); }
+  .published-invitation .preview-section-eyebrow { font-size: .7rem; }
+  .published-invitation .invite-preview-section h3 { max-width: 60rem; font-size: clamp(4.5rem, 7vw, 7rem); }
+  .published-invitation .invite-preview-section > p,
+  .published-invitation .invite-preview-section article p { max-width: 47rem; font-size: 1.15rem; }
+  .published-invitation .preview-section-introduction { max-width: 43rem !important; font-size: 1rem !important; }
+  .published-invitation .preview-countdown-grid { width: min(47rem, 100%); gap: 1.5rem; }
+  .published-invitation .preview-countdown-grid strong { font-size: clamp(3.8rem, 7vw, 6rem); }
+  .published-invitation .preview-countdown-grid span { font-size: .7rem; }
+  .published-invitation .journey-timeline { max-width: 51rem; margin: 3rem auto 0; }
+  .published-invitation .journey-timeline article { min-height: 8rem; }
+  .published-invitation .journey-timeline h4 { font-size: 1.8rem; }
+  .published-invitation .journey-timeline time { font-size: .68rem; }
+  .published-invitation .journey-timeline article p { font-size: 1.1rem; }
+  .published-invitation .preview-memory-card { max-width: 52rem; padding: 4.5rem clamp(2rem, 6vw, 5rem); }
+  .published-invitation .preview-event-list { max-width: 75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); align-items: stretch; gap: 1.5rem; }
+  .published-invitation .preview-event-card { width: 100%; padding: 1.6rem; }
+  .published-invitation .preview-event-card h4 { font-size: 1.75rem; }
+  .published-invitation .preview-event-card > p { font-size: .7rem !important; }
+  .published-invitation .preview-event-facts > span { font-size: .92rem; }
+  .published-invitation .preview-event-facts small { font-size: .75rem; }
+  .published-invitation .preview-event-card > a { font-size: .72rem; }
+  .published-invitation .preview-table-list { max-width: 72rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1.5rem; margin-inline: auto; }
+  .published-invitation .preview-table-list article { flex: none; width: 100%; }
+  .published-invitation .preview-table-name strong { font-size: 1.5rem; }
+  .published-invitation .preview-family-list span { font-size: .9rem; }
+  .published-invitation .preview-programme-list { max-width: 54rem; margin-inline: auto; }
+  .published-invitation .preview-programme-list article { min-height: 7.5rem; grid-template-columns: 4rem minmax(0, 1fr) max-content; column-gap: 1rem; }
+  .published-invitation .preview-programme-list article::before { left: 1.8rem; top: 3.6rem; }
+  .published-invitation .programme-icon { width: 3.6rem; height: 3.6rem; }
+  .published-invitation .preview-programme-list h4 { font-size: 1.4rem; }
+  .published-invitation .preview-programme-list p { font-size: .95rem !important; }
+  .published-invitation .preview-programme-list time { font-size: .75rem; }
+  .published-invitation .preview-glimpse { min-height: 0; }
+  .published-invitation .preview-gallery,
+  .published-invitation .preview-gallery.has-photos:has(> :nth-child(7)) { max-width: 74rem; min-height: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: 1.5rem; margin: 2.5rem auto 0; }
+  .published-invitation .preview-gallery figure,
+  .published-invitation .preview-gallery > span { position: relative; inset: auto; width: 100%; transform: none; }
+  .published-invitation .preview-gallery > span { min-height: 15rem; }
+  .published-invitation .preview-glimpse:has(.preview-gallery > :nth-child(7)) { min-height: 0; }
+  .published-invitation .invite-preview-footer { min-height: 17rem; }
+  .published-invitation .invite-preview-footer strong { font-size: 4.5rem; }
+  .published-invitation .invite-preview-footer time { font-size: .85rem; }
+  .published-invitation .invite-preview-footer span { font-size: .7rem; }
+  .published-invitation .invite-preview-hero.is-interactive { min-height: max(45rem, 100svh); display: grid; grid-template-columns: minmax(0, 26rem) minmax(0, 33rem); grid-template-rows: repeat(3, auto); align-content: center; justify-content: center; gap: 1rem clamp(2rem, 6vw, 7rem); padding: 7rem 3rem 4rem; }
+  .published-invitation .invite-preview-hero.is-interactive.has-bismillah { padding-top: 9rem; }
+  .published-invitation .invite-preview-hero.is-interactive .invite-preview-bismillah { top: 1.5rem; width: 16rem; }
+  .published-invitation .interactive-frame-composition { grid-column: 1; grid-row: 1 / 4; width: min(26rem, 100%); }
+  .published-invitation .interactive-hero-copy { grid-column: 2; grid-row: 1; width: 100%; margin: 0; text-align: left; }
+  .published-invitation .interactive-hero-copy h2 { font-size: clamp(4rem, 6vw, 6rem); overflow-wrap: anywhere; }
+  .published-invitation .interactive-hero-message { grid-column: 2; grid-row: 2; max-width: 30rem; margin: 0; font-size: 1.4rem; }
+  .published-invitation .interactive-hero-date { grid-column: 2; grid-row: 3; margin: 0; font-size: .75rem; }
+}
+
+@media (min-width: 64rem) {
+  .published-invitation .preview-seating { display: grid; grid-template-columns: minmax(14rem, 23rem) minmax(0, 1fr); align-items: center; gap: clamp(2rem, 7vw, 7rem); }
+  .published-invitation .preview-seating-heading { text-align: left; }
+  .published-invitation .preview-seating-heading h3 { margin-inline: 0; font-size: clamp(3.6rem, 6vw, 5.8rem); }
+  .published-invitation .preview-seating-flourish { margin-inline: 0; }
+  .published-invitation .preview-seating-heading p { max-width: 22rem; margin-inline: 0; font-size: 1.2rem; }
+  .published-invitation .preview-table-list { margin-top: 0; }
 }

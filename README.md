@@ -47,11 +47,16 @@ The dashboard lets the administrator:
 - select one or several status cards to filter a searchable, sortable and paginated data table;
 - see an order-value total calculated from the orders currently in the table;
 - create, inspect, edit and permanently delete orders;
+- duplicate orders needing review into independent new orders (including their uploaded photos and price), with a unique `-copy` invitation link;
 - open every order in the same visual editor used by customers, with values pre-filled and all editing sections initially collapsed;
 - directly edit customer details, event date, price and public slug;
 - deploy without editing source code, producing a memorable route such as `/salma-and-sam`;
 - choose or update the final active date, take a live invitation offline, move it back to review, and redeploy it later; and
 - contact the customer through a direct WhatsApp shortcut.
+
+The table shows each order ID, a copyable full invitation URL, and whether a custom part was requested. New orders get a reserved slug immediately; a suggested URL for an older, still-unassigned order is reserved when you copy it or open the deployment dialog. The eye icon opens a private, password-protected full-page preview of an unpublished invitation; the public URL does not work until deployment. Public and private invitation pages fill the desktop browser width and adapt to mobile screens, while the editor keeps a separate phone-sized preview. The configured `PUBLIC_SITE_URL` is used for copied links and live WhatsApp messages.
+
+For an order needing review, **Save edits** updates its content, customer details, price, and slug without publishing it. For a live order, the bottom button reads **Update live invitation**; it saves those values and applies the active-until date selected above in a single action. Both return to the orders table. **Move to review** takes a live invitation out of public access immediately and clears its active-until date, but keeps the reserved slug so it can be deployed again. **Undeploy** also stops public access immediately and files the order under Previous orders instead.
 
 Public invitation routes check their status and active date on every request. Once the selected Mauritius date has passed, the route immediately becomes unavailable and the order moves to the inactive list the next time it is read.
 

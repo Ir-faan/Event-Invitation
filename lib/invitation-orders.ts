@@ -23,6 +23,8 @@ export type InvitationOrderSummary = Omit<InvitationOrderRecord, "config"> & {
   openingType: InvitationConfig["opening"]["type"];
   heroType: InvitationConfig["hero"]["type"];
   sectionCount: number;
+  hasCustomPart: boolean;
+  suggestedSlug: string;
 };
 
 export function getPrimaryEventDate(config: InvitationConfig) {
@@ -48,6 +50,8 @@ export function summarizeOrder(order: InvitationOrderRecord): InvitationOrderSum
     openingType: config.opening.type,
     heroType: config.hero.type,
     sectionCount: config.sections.length,
+    hasCustomPart: config.sections.some((section) => section.type === "custom"),
+    suggestedSlug: makeInvitationSlug(config),
   };
 }
 
