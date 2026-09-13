@@ -211,7 +211,12 @@ test("renders admin orders in the shared designer with collapsed editing steps",
   assert.match(html, /https:\/\/www\.paperless-invites\.com\/aisha-and-rayan/);
   assert.match(html, /Order price \(Rs\)/);
   assert.match(html, /Save edits/);
+  assert.match(html, /Preview saved invitation/);
+  assert.match(html, /\/dashboard\/preview\/11111111-1111-4111-8111-111111111111/);
   assert.doesNotMatch(html, /designer-step-card designer-main-step[^>]*open=/);
+  const copyRecord = { ...record, slug: "john-and-sameer-copy" };
+  const copyHtml = renderToStaticMarkup(React.createElement(InvitationDesigner, { adminOrder: { ...copyRecord, summary: summarizeOrder(copyRecord) }, today: "2026-09-12" }));
+  assert.match(copyHtml, /https:\/\/www\.paperless-invites\.com\/john-and-sameer-copy/);
   const liveRecord = { ...record, status: "active", active_until: "2027-09-12", deployed_at: "2026-09-12T09:00:00Z" };
   const liveHtml = renderToStaticMarkup(React.createElement(InvitationDesigner, { adminOrder: { ...liveRecord, summary: summarizeOrder(liveRecord) }, today: "2026-09-12" }));
   assert.match(liveHtml, /Update live invitation/);
@@ -235,7 +240,26 @@ test("published invitations use the browser width while editor previews keep the
   assert.match(css, /@media \(min-width: 64rem\)/);
   assert.match(css, /\.published-invitation \.preview-opening \{ position: fixed/);
   assert.match(css, /\.published-invitation \.preview-event-list \{[^}]*grid-template-columns:/);
+  assert.match(css, /font-size: clamp\(4\.5rem, 26vw, 7rem\)/);
+  assert.match(css, /\.published-invitation \.invite-preview-hero-image \{ scale: 1\.08/);
+  assert.match(css, /\.published-invitation \.journey-timeline::before \{ left: 50%/);
+  assert.match(css, /minmax\(min\(100%, 16rem\), 22rem\)/);
   assert.match(designerCss, /\.designer-phone-screen \{[^}]*height: clamp\(22rem/);
+  assert.match(designerCss, /\.journey-timeline article p \{[^}]*italic \.98rem\/1\.75/);
+  assert.match(designerCss, /\.designer-header \.admin-designer-back \{[^}]*display: inline-flex/);
+});
+
+test("the dashboard has mobile cards, expiring feedback, and a WhatsApp publishing action", async () => {
+  const [css, dashboard] = await Promise.all([
+    readFile(new URL("../app/dashboard/dashboard.css", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation-dashboard.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(css, /@media \(max-width: 700px\)[\s\S]*?\.orders-datatable tbody tr \{[^}]*display: grid/);
+  assert.match(css, /\.orders-datatable td::before \{ content: attr\(data-label\)/);
+  assert.match(dashboard, /data-label="Actions"/);
+  assert.match(dashboard, /setActionNotice\(""\); \}, 5000\)/);
+  assert.match(dashboard, /Send via WhatsApp/);
+  assert.match(dashboard, /wa\.me\/230\$\{phone\}\?text=/);
 });
 
 test("duplicates review orders with independent photo storage and rejects live orders", async () => {
@@ -247,6 +271,8 @@ test("duplicates review orders with independent photo storage and rejects live o
   const storageOrigin = "https://test-project.supabase.co";
   const oldUrl = `${storageOrigin}/storage/v1/object/public/invitation-media/${originalId}/photo.jpg`;
   const config = createInitialInvitation();
+  config.hero.firstName = "John";
+  config.hero.secondName = "Sameer";
   config.hero.type = "interactive";
   config.hero.photoSource = "uploaded";
   config.hero.uploadedUrl = oldUrl;
@@ -335,6 +361,12 @@ test("duplicates review orders with independent photo storage and rejects live o
     assert.deepEqual(posts.slice(3).map((item) => item.type), ["photo", "order", "media", "order-rollback", "photo-rollback"]);
     assert.match(posts[6].url, new RegExp(`id=eq\\.${posts[4].values.id}`));
     assert.deepEqual(posts[7].values.prefixes, [posts[5].values[0].storage_path]);
+
+    original.slug = null;
+    failMediaInsert = false;
+    const withoutSlug = await POST(new Request(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
+    assert.equal(withoutSlug.status, 201);
+    assert.equal((await withoutSlug.json()).order.slug, "john-and-sameer-copy");
   } finally {
     globalThis.fetch = existingFetch;
     if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
@@ -353,6 +385,14 @@ test("supports automatic invitation routes and order lifecycle storage", async (
   const order = { id: "11111111-1111-4111-8111-111111111111", status: "pending", slug: null, active_until: null, total_price: 1000, created_at: "2026-09-12T08:15:00Z", deployed_at: null, inactive_at: null, config };
   assert.equal(summarizeOrder(order).hasCustomPart, false);
   assert.equal(summarizeOrder(order).suggestedSlug, "salma-and-sam");
+  const { getPublicSiteOrigin } = await vite.ssrLoadModule("/lib/invitation-orders-server.ts");
+  const previousPublicSiteUrl = process.env.PUBLIC_SITE_URL;
+  try {
+    delete process.env.PUBLIC_SITE_URL;
+    assert.equal(getPublicSiteOrigin(new Request("http://localhost:5173/dashboard")), "https://www.paperless-invites.com");
+  } finally {
+    if (previousPublicSiteUrl === undefined) delete process.env.PUBLIC_SITE_URL; else process.env.PUBLIC_SITE_URL = previousPublicSiteUrl;
+  }
   config.sections.push(createSection("custom"));
   assert.equal(summarizeOrder(order).hasCustomPart, true);
 

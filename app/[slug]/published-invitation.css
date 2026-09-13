@@ -30,8 +30,9 @@
 .published-invitation .invite-preview-hero-copy h2 { max-width: 100%; overflow-wrap: anywhere; }
 
 @media (max-width: 47.99rem) {
-  .published-invitation .invite-preview-hero-copy h2 { font-size: clamp(3.15rem, 13vw, 5.7rem); }
-  .published-invitation .invite-preview-section { padding-inline: clamp(1.25rem, 5vw, 2rem); }
+  /* Match the phone-frame composition at the real device's viewport width. */
+  .published-invitation .invite-preview-hero-copy h2 { font-size: clamp(4.5rem, 26vw, 7rem); }
+  .published-invitation .invite-preview-hero-image { scale: 1.08; }
   .published-invitation .preview-gallery { max-width: 29rem; }
 }
 
@@ -53,19 +54,25 @@
   .published-invitation .preview-countdown-grid { width: min(47rem, 100%); gap: 1.5rem; }
   .published-invitation .preview-countdown-grid strong { font-size: clamp(3.8rem, 7vw, 6rem); }
   .published-invitation .preview-countdown-grid span { font-size: .7rem; }
-  .published-invitation .journey-timeline { max-width: 51rem; margin: 3rem auto 0; }
-  .published-invitation .journey-timeline article { min-height: 8rem; }
-  .published-invitation .journey-timeline h4 { font-size: 1.8rem; }
+  /* Template 1's alternating centre-line story, scoped to the page-width view. */
+  .published-invitation .journey-timeline { max-width: 68rem; margin: 4rem auto 0; }
+  .published-invitation .journey-timeline::before { left: 50%; }
+  .published-invitation .journey-timeline article { width: 50%; min-height: 11rem; display: flex; flex-direction: column; align-items: flex-end; margin: 0; padding: 0 3rem 2rem 0; text-align: right; }
+  .published-invitation .journey-timeline article:nth-child(even) { align-items: flex-start; margin-left: 50%; padding: 0 0 2rem 3rem; text-align: left; }
+  .published-invitation .journey-heart { left: auto; right: -.65rem; }
+  .published-invitation .journey-timeline article:nth-child(even) .journey-heart { left: -.65rem; right: auto; }
+  .published-invitation .journey-timeline h4 { font-size: clamp(2.4rem, 4vw, 3.2rem); }
   .published-invitation .journey-timeline time { font-size: .68rem; }
-  .published-invitation .journey-timeline article p { font-size: 1.1rem; }
+  .published-invitation .journey-timeline article p { max-width: 27rem; font: italic 1.05rem/1.85 var(--serif); }
   .published-invitation .preview-memory-card { max-width: 52rem; padding: 4.5rem clamp(2rem, 6vw, 5rem); }
-  .published-invitation .preview-event-list { max-width: 75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); align-items: stretch; gap: 1.5rem; }
-  .published-invitation .preview-event-card { width: 100%; padding: 1.6rem; }
+  .published-invitation .preview-event-list { max-width: 72rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 22rem)); justify-content: center; align-items: stretch; gap: 1.25rem; }
+  .published-invitation .preview-event-card { width: 100%; padding: 1.2rem; }
   .published-invitation .preview-event-card h4 { font-size: 1.75rem; }
   .published-invitation .preview-event-card > p { font-size: .7rem !important; }
   .published-invitation .preview-event-facts > span { font-size: .92rem; }
   .published-invitation .preview-event-facts small { font-size: .75rem; }
   .published-invitation .preview-event-card > a { font-size: .72rem; }
+  .published-invitation .preview-map-frame { aspect-ratio: 2.15; }
   .published-invitation .preview-table-list { max-width: 72rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1.5rem; margin-inline: auto; }
   .published-invitation .preview-table-list article { flex: none; width: 100%; }
   .published-invitation .preview-table-name strong { font-size: 1.5rem; }

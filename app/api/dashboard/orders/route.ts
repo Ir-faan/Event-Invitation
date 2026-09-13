@@ -8,7 +8,7 @@ import {
   invitationSlugIsAvailable,
   listInvitationOrders,
 } from "@/lib/invitation-orders-server";
-import { isValidActiveUntil, summarizeOrder, todayInMauritius, type InvitationOrderRecord } from "@/lib/invitation-orders";
+import { isValidActiveUntil, makeInvitationSlug, summarizeOrder, todayInMauritius, type InvitationOrderRecord } from "@/lib/invitation-orders";
 import { isInvitationConfig, validInvitationId } from "@/lib/invitation-validation";
 import { createSubmissionToken, getSupabaseEnvironment, hashSubmissionToken, publicStorageUrl, supabaseRequest } from "@/lib/supabase-server";
 
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
       if ((await getInvitationOrder(original.id))?.status !== "pending") {
         throw new Error("This order was moved out of review while its copy was being prepared.");
       }
-      const slug = await uniqueDuplicateSlug(original, id, config);
+      const slug = await uniqueDuplicateSlug(original, id);
       const response = await supabaseRequest("/rest/v1/invitations?select=id,status,slug,active_until,total_price,created_at,deployed_at,inactive_at,config", {
         method: "POST",
         headers: { "Content-Type": "application/json", Prefer: "return=representation" },
@@ -150,9 +150,9 @@ export async function POST(request: Request) {
   }
 }
 
-async function uniqueDuplicateSlug(original: InvitationOrderRecord, id: string, config: InvitationConfig) {
-  if (!original.slug) return createUniqueInvitationSlug({ id, config });
-  const base = `${original.slug.slice(0, 80).replace(/-+$/, "")}-copy`;
+async function uniqueDuplicateSlug(original: InvitationOrderRecord, id: string) {
+  const originalPath = original.slug || makeInvitationSlug(original.config);
+  const base = `${originalPath.slice(0, 80).replace(/-+$/, "")}-copy`;
   for (let suffix = 1; suffix <= 100; suffix += 1) {
     const candidate = suffix === 1 ? base : `${base}-${suffix}`;
     if (await invitationSlugIsAvailable(candidate, id)) return candidate;

@@ -10,6 +10,7 @@ import {
   CircleDollarSign,
   Clock3,
   Copy,
+  Eye,
   ExternalLink,
   Heart,
   Image as ImageIcon,
@@ -130,6 +131,12 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     const timer = window.setTimeout(() => window.location.assign("/"), 7000);
     return () => window.clearTimeout(timer);
   }, [showSuccess]);
+
+  useEffect(() => {
+    if (!adminMode || (!adminNotice && !saveError)) return;
+    const timer = window.setTimeout(() => { setAdminNotice(""); setSaveError(""); }, 5000);
+    return () => window.clearTimeout(timer);
+  }, [adminMode, adminNotice, saveError]);
 
   useLayoutEffect(() => {
     const anchor = sectionMoveAnchor.current;
@@ -782,7 +789,7 @@ function AdminOrderOverview({ order, config, price, slug, publicOrigin, onName, 
     <section className="admin-order-overview" aria-labelledby="admin-order-overview-title">
       <div className="admin-order-overview-heading">
         <div><span>Order overview</span><h2 id="admin-order-overview-title">The details that matter most</h2></div>
-        <span className={`admin-order-status is-${order.status}`}>{order.status === "pending" ? "Needs review" : order.status === "active" ? "Currently live" : "Previous order"}</span>
+        <div className="admin-overview-actions"><a href={`/dashboard/preview/${order.id}`} target="_blank" rel="noreferrer" title="Open the last saved version in a new tab"><Eye aria-hidden="true" /> Preview saved invitation</a><span className={`admin-order-status is-${order.status}`}>{order.status === "pending" ? "Needs review" : order.status === "active" ? "Currently live" : "Previous order"}</span></div>
       </div>
       <div className="admin-order-overview-grid">
         <label><span>Customer name</span><input value={config.contact.name} onChange={(event) => onName(event.target.value)} /></label>

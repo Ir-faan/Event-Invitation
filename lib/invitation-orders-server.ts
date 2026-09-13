@@ -80,5 +80,8 @@ export async function invitationSlugIsAvailable(slug: string, orderId: string) {
 export function getPublicSiteOrigin(request: Request) {
   const configured = process.env.PUBLIC_SITE_URL?.replace(/\/$/, "");
   if (configured && /^https?:\/\//i.test(configured)) return configured;
-  return new URL(request.url).origin;
+  const requestUrl = new URL(request.url);
+  // Never put a localhost address in a link meant to be sent to a customer.
+  if (["localhost", "127.0.0.1", "[::1]"].includes(requestUrl.hostname)) return "https://www.paperless-invites.com";
+  return requestUrl.origin;
 }
