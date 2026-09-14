@@ -227,10 +227,11 @@ test("renders admin orders in the shared designer with collapsed editing steps",
   assert.equal((liveHtml.match(/Update live invitation</g) ?? []).length, 1);
 });
 
-test("public invitations fill desktop browsers; private desktop previews keep the original centred canvas", async () => {
-  const [css, designerCss, { PublishedInvitation }, { createInitialInvitation }] = await Promise.all([
+test("live desktop invitations match the centred private preview while mobile still fills the viewport", async () => {
+  const [css, designerCss, templateCss, { PublishedInvitation }, { createInitialInvitation }] = await Promise.all([
     readFile(new URL("../app/[slug]/published-invitation.css", import.meta.url), "utf8"),
     readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/templates/coastal-reverie/coastal-reverie.module.css", import.meta.url), "utf8"),
     vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
   ]);
@@ -238,23 +239,44 @@ test("public invitations fill desktop browsers; private desktop previews keep th
   assert.match(html, /class="published-invitation"/);
   assert.match(html, /designer-phone-screen published-invitation-screen/);
   assert.match(css, /\.published-invitation-screen\s*\{[^}]*width: 100%;[^}]*height: auto;[^}]*overflow: visible;/);
-  assert.doesNotMatch(css, /width:\s*min\(30rem/);
   assert.match(css, /@media \(min-width: 48rem\)/);
-  assert.match(css, /@media \(min-width: 64rem\)/);
-  assert.match(css, /\.published-invitation \.preview-opening \{ position: fixed/);
-  assert.match(css, /\.published-invitation:not\(\.is-private\) \.preview-event-list \{[^}]*grid-template-columns:/);
+  assert.match(css, /\.published-invitation-screen \{ width: min\(30rem,100%\); min-width: 0;/);
+  assert.match(css, /\.published-invitation \.preview-opening \{ position: absolute; inset: 0; width: 100%;/);
+  assert.doesNotMatch(css, /\.published-invitation:not\(\.is-private\)/);
   assert.match(css, /font-size: clamp\(4\.5rem, 26vw, 7rem\)/);
   assert.match(css, /\.published-invitation \.invite-preview-hero-image \{ scale: 1;/);
-  assert.match(css, /\.published-invitation:not\(\.is-private\) \.journey-timeline::before \{ left: 50%/);
   assert.match(css, /calc\(100vw \* 656 \/ 333\)/);
   const privateCss = await readFile(new URL("../app/dashboard/preview.css", import.meta.url), "utf8");
   assert.match(privateCss, /\.admin-private-preview \.published-invitation-screen \{ width: min\(30rem,100%\)/);
-  assert.match(css, /minmax\(min\(100%, 16rem\), 22rem\)/);
   assert.match(designerCss, /\.designer-phone-screen \{[^}]*height: clamp\(22rem/);
   assert.match(designerCss, /\.journey-timeline article p \{[^}]*italic \.98rem\/1\.75/);
   assert.match(designerCss, /\.designer-header \.designer-back \{[^}]*display: inline-flex/);
   assert.match(designerCss, /\.designer-steps \{ width: 100%; margin: 0 0 \.8rem; grid-template-columns: repeat\(4,minmax\(0,1fr\)\)/);
   assert.match(designerCss, /\.designer-opening-images \{ grid-template-columns: repeat\(2,minmax\(0,1fr\)\)/);
+  // Use Template 1's full-image veil and text shadow, without a visible oval behind the text.
+  assert.match(templateCss, /\.heroVeil \{[^}]*rgba\(58,41,29,\.32\)/);
+  assert.match(designerCss, /\.invite-preview-hero-shade \{[^}]*rgba\(58,41,29,\.32\)/);
+  assert.doesNotMatch(designerCss, /\.invite-preview-hero-copy::before \{/);
+  assert.doesNotMatch(designerCss, /\.interactive-hero-copy::before \{/);
+});
+
+test("deployment modal remains readable and every WhatsApp contact uses the WhatsApp glyph", async () => {
+  const [styles, dashboard, designer, sharedIcon, landing] = await Promise.all([
+    readFile(new URL("../app/dashboard/dashboard.css", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation-dashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation-designer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/whatsapp-icon.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/landing-experience-refresh.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(styles, /\.orders-deploy-modal \{[^}]*max-height: calc\(100dvh - 1\.5rem\)/);
+  assert.match(styles, /\.orders-deploy-modal \.orders-deploy-actions \{[^}]*repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.orders-deploy-modal \.orders-deploy-actions\.has-whatsapp a\.is-whatsapp \{ grid-column: 1 \/ -1; grid-row: 2;/);
+  assert.match(styles, /\.orders-deploy-link > button span \{[^}]*overflow-wrap: anywhere/);
+  assert.match(dashboard, /import \{ WhatsAppIcon \}/);
+  assert.match(designer, /import \{ WhatsAppIcon \}/);
+  assert.doesNotMatch(designer, /MessageCircle/);
+  assert.match(sharedIcon, /export function WhatsAppIcon/);
+  assert.match(landing, /Discuss your custom idea <WhatsAppLogo \/>/);
 });
 
 test("the dashboard has mobile cards, expiring feedback, and a WhatsApp publishing action", async () => {

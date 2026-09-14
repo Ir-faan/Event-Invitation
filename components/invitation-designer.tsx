@@ -18,7 +18,6 @@ import {
   LockKeyhole,
   Loader2,
   MapPin,
-  MessageCircle,
   Monitor,
   MoveDown,
   MoveUp,
@@ -37,6 +36,7 @@ import {
 } from "lucide-react";
 import { InvitationPhonePreview } from "@/components/invitation-phone-preview";
 import { OrderConfirmationModal } from "@/components/order-confirmation-modal";
+import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { isHeicPhoto, maxOriginalImageBytes, preparePendingPhotos, preparePhoto, selectedUploadedPhotos, uploadPendingPhotos } from "@/lib/photo-upload";
 import type { UploadedPhoto } from "@/lib/media-submission";
@@ -809,7 +809,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
             <div className="designer-notice is-error" role="alert">
               <Info aria-hidden="true" />
               <span>{saveError}</span>
-              {!adminMode && <a href={whatsappSupportUrl} target={whatsappSupportNumber ? "_blank" : undefined} rel={whatsappSupportNumber ? "noreferrer" : undefined}><MessageCircle aria-hidden="true" /> WhatsApp</a>}
+              {!adminMode && <a href={whatsappSupportUrl} target={whatsappSupportNumber ? "_blank" : undefined} rel={whatsappSupportNumber ? "noreferrer" : undefined}><WhatsAppIcon /> WhatsApp</a>}
             </div>
           )}
           {photoProcessing > 0 && <p className="designer-notice" role="status"><Loader2 className="is-spinning" aria-hidden="true" /> Optimizing your photos for the invitation…</p>}
@@ -869,7 +869,7 @@ function AdminOrderOverview({ order, config, price, slug, publicOrigin, onName, 
       </div>
       <div className="admin-order-overview-grid">
         <label><span>Customer name</span><input value={config.contact.name} onChange={(event) => onName(event.target.value)} /></label>
-        <label className="is-phone"><span>Phone number</span><div><input inputMode="numeric" maxLength={8} value={config.contact.phone} onChange={(event) => onPhone(event.target.value)} />{/^5\d{7}$/.test(config.contact.phone) && <a href={customerWhatsAppUrl(config.contact.phone, config.contact.name)} target="_blank" rel="noreferrer" aria-label="Message customer on WhatsApp"><MessageCircle aria-hidden="true" /></a>}</div></label>
+        <label className="is-phone"><span>Phone number</span><div><input inputMode="numeric" maxLength={8} value={config.contact.phone} onChange={(event) => onPhone(event.target.value)} />{/^5\d{7}$/.test(config.contact.phone) && <a href={customerWhatsAppUrl(config.contact.phone, config.contact.name)} target="_blank" rel="noreferrer" aria-label="Message customer on WhatsApp"><WhatsAppIcon /></a>}</div></label>
         <label className="is-link"><span>Invitation link</span><div><b>/</b><input value={slug} placeholder={makeInvitationSlug(config)} onChange={(event) => onSlug(event.target.value)} />{order.status === "active" && order.slug && <a href={`/${order.slug}`} target="_blank" rel="noreferrer" aria-label="Open live invitation"><ExternalLink aria-hidden="true" /></a>}</div></label>
         <label><span>Event date</span><input type="date" value={getPrimaryEventDate(config)} onChange={(event) => onEventDate(event.target.value)} /></label>
         <label><span>Order price (Rs)</span><input type="number" min="0" step="1" value={price} onChange={(event) => onPrice(Math.max(0, Math.round(Number(event.target.value) || 0)))} /></label>
@@ -919,7 +919,7 @@ function AdminDeployControls({ order, activeUntil, today, action, photosProcessi
       {order.status === "active" && <button className="order-review-action" type="button" onClick={() => onAction("review")} disabled={Boolean(action)}>{action === "review" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <RotateCcw aria-hidden="true" />} Move to review</button>}
       {order.status === "active" && <button className="order-danger-action is-undeploy" type="button" onClick={() => onAction("deactivate")} disabled={Boolean(action)}>{action === "deactivate" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <Rocket aria-hidden="true" />} Undeploy</button>}
       {order.status === "active" && <p className="order-deploy-tip">Use Update live invitation at the bottom to publish your edits and apply this active-until date together.</p>}
-      {publicPath && <div className="order-public-link"><span>{order.status === "active" ? "Live invitation link" : "Saved link (currently offline)"}</span><strong>{publicPath}</strong><button type="button" onClick={() => void copyLink()} title="Copy invitation link">{copied ? <Check /> : <Copy />}<span className="sr-only">Copy invitation link</span></button>{order.status === "active" && <a href={publicPath} target="_blank" rel="noreferrer" title="Open live invitation"><ExternalLink /><span className="sr-only">Open live invitation</span></a>}{whatsappUrl && <a href={whatsappUrl} target="_blank" rel="noreferrer" title="Send invitation link on WhatsApp" aria-label={`Send ${customerName} the invitation link on WhatsApp`}><MessageCircle aria-hidden="true" /></a>}</div>}
+      {publicPath && <div className="order-public-link"><span>{order.status === "active" ? "Live invitation link" : "Saved link (currently offline)"}</span><strong>{publicPath}</strong><button type="button" onClick={() => void copyLink()} title="Copy invitation link">{copied ? <Check /> : <Copy />}<span className="sr-only">Copy invitation link</span></button>{order.status === "active" && <a href={publicPath} target="_blank" rel="noreferrer" title="Open live invitation"><ExternalLink /><span className="sr-only">Open live invitation</span></a>}{whatsappUrl && <a href={whatsappUrl} target="_blank" rel="noreferrer" title="Send invitation link on WhatsApp" aria-label={`Send ${customerName} the invitation link on WhatsApp`}><WhatsAppIcon /></a>}</div>}
       {copyError && <p className="order-deploy-tip" role="alert">{copyError}</p>}
     </section>
   );

@@ -406,7 +406,7 @@ export function LandingExperienceRefresh() {
                   target={whatsappNumber ? "_blank" : undefined}
                   rel={whatsappNumber ? "noreferrer" : undefined}
                 >
-                  Discuss your custom idea <Send aria-hidden="true" />
+                  Discuss your custom idea <WhatsAppLogo />
                 </a>
               </div>
             </div>
