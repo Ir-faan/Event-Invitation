@@ -3,10 +3,10 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowRight, LockKeyhole, LogIn } from "lucide-react";
-import "../dashboard.css";
+import "../dashboard/dashboard.css";
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -20,12 +20,12 @@ export default function AdminLogin() {
       const response = await fetch("/api/admin-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
       const result = await response.json() as { loggedIn?: boolean; error?: string };
       if (!response.ok || !result.loggedIn) throw new Error(result.error || "Could not sign in.");
       const next = new URLSearchParams(window.location.search).get("next");
-      window.location.assign(next?.startsWith("/dashboard") && !next.startsWith("//") ? next : "/dashboard");
+      window.location.assign(next && /^\/dashboard(?:\/|\?|$)/.test(next) ? next : "/dashboard");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not sign in. Please try again.");
       setBusy(false);
@@ -40,8 +40,8 @@ export default function AdminLogin() {
         <h1>Welcome back</h1>
         <p className="orders-login-description">Sign in to review orders, edit invitations and publish them for guests.</p>
         <form onSubmit={(event) => void submit(event)}>
-          <label htmlFor="admin-username">Username</label>
-          <input id="admin-username" name="username" autoComplete="username" required maxLength={128} value={username} onChange={(event) => setUsername(event.target.value)} />
+          <label htmlFor="admin-email">Email</label>
+          <input id="admin-email" name="email" type="email" autoComplete="username" required maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} />
           <label htmlFor="admin-password">Password</label>
           <input id="admin-password" name="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
           {error && <p role="alert" className="orders-login-error">{error}</p>}

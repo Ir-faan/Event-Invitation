@@ -537,38 +537,95 @@ test("a failed six-photo submission creates no invitation or media rows and clea
   }
 });
 
-test("admin login issues a signed HttpOnly session and rejects invalid credentials", async () => {
-  const [{ POST, DELETE }, session, { default: LoginPage }] = await Promise.all([
+test("Supabase Auth login requires admin membership and stores sessions in HttpOnly cookies", async () => {
+  const [{ POST, DELETE }, auth, { default: LoginPage }] = await Promise.all([
     vite.ssrLoadModule("/app/api/admin-session/route.ts"),
     vite.ssrLoadModule("/lib/admin-session.ts"),
-    vite.ssrLoadModule("/app/dashboard/login/page.tsx"),
+    vite.ssrLoadModule("/app/login/page.tsx"),
   ]);
-  const keys = ["DASHBOARD_USERNAME", "DASHBOARD_PASSWORD", "DASHBOARD_SESSION_SECRET"];
+  const keys = ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SERVICE_ROLE_KEY"];
   const previous = keys.map((key) => process.env[key]);
+  const originalFetch = globalThis.fetch;
+  const id = "11111111-1111-4111-8111-111111111111";
+  let isAdmin = true;
+  let refreshes = 0;
   try {
-    process.env.DASHBOARD_USERNAME = "admin";
-    process.env.DASHBOARD_PASSWORD = "correct horse battery staple!";
-    process.env.DASHBOARD_SESSION_SECRET = "long-independent-random-session-secret-0000000000000000000";
+    process.env.SUPABASE_URL = "https://example.supabase.co";
+    process.env.SUPABASE_PUBLISHABLE_KEY = "publishable-key";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "server-only-key";
+    globalThis.fetch = async (input, init = {}) => {
+      const url = String(input);
+      if (url.includes("/auth/v1/token?grant_type=password")) {
+        const { password } = JSON.parse(init.body);
+        return password === "correct password"
+          ? Response.json({ access_token: "access-admin", refresh_token: "refresh-admin", expires_in: 3600 })
+          : Response.json({ error: "invalid_grant" }, { status: 400 });
+      }
+      if (url.endsWith("/auth/v1/user")) {
+        assert.equal(init.headers.get("apikey"), "publishable-key");
+        return init.headers.get("Authorization") === "Bearer expired"
+          ? Response.json({ error: "expired" }, { status: 401 })
+          : Response.json({ id });
+      }
+      if (url.includes("/rest/v1/dashboard_admins?")) {
+        assert.equal(init.headers.get("apikey"), "server-only-key");
+        return Response.json(isAdmin ? [{ user_id: id }] : []);
+      }
+      if (url.includes("/auth/v1/token?grant_type=refresh_token")) {
+        refreshes++;
+        return Response.json({ access_token: "new-access", refresh_token: "new-refresh", expires_in: 3600 });
+      }
+      if (url.endsWith("/auth/v1/logout?scope=local")) return new Response(null, { status: 204 });
+      throw new Error("Unexpected authentication request: " + url);
+    };
     const loginRequest = (password, origin = "https://paperless.test") => new Request("https://paperless.test/api/admin-session", {
       method: "POST", headers: { Origin: origin, "Content-Type": "application/json" },
-      body: JSON.stringify({ username: "admin", password }),
+      body: JSON.stringify({ email: "admin@example.com", password }),
     });
     assert.equal((await POST(loginRequest("wrong"))).status, 401);
-    assert.equal((await POST(loginRequest("correct horse battery staple!", "https://attacker.test"))).status, 403);
-    const ok = await POST(loginRequest("correct horse battery staple!"));
+    assert.equal((await POST(loginRequest("correct password", "https://attacker.test"))).status, 403);
+    isAdmin = false;
+    assert.equal((await POST(loginRequest("correct password"))).status, 401);
+    isAdmin = true;
+    const ok = await POST(loginRequest("correct password"));
     assert.equal(ok.status, 200);
     const cookie = ok.headers.get("set-cookie");
+    assert.match(cookie, /paperless_sb_access=access-admin/);
+    assert.match(cookie, /paperless_sb_refresh=refresh-admin/);
     assert.match(cookie, /HttpOnly/);
     assert.match(cookie, /SameSite=Strict/i);
     assert.match(cookie, /Secure/);
-    const token = cookie.match(/paperless_admin_session=([^;]+)/)[1];
-    assert.equal(await session.verifyAdminSession(token), true);
-    assert.equal(await session.verifyAdminSession(token.replace("v1.", "v2.")), false);
-    assert.equal((await DELETE(new Request("https://paperless.test/api/admin-session", { method: "DELETE", headers: { Origin: "https://paperless.test" } }))).status, 200);
+    assert.deepEqual(await auth.getAdminSession("access-admin", "refresh-admin"), { authorized: true });
+    const renewed = await auth.getAdminSession("expired", "refresh-admin");
+    assert.equal(renewed.authorized, true);
+    assert.equal(renewed.tokens.refresh_token, "new-refresh");
+    assert.equal(refreshes, 1);
+    isAdmin = false;
+    assert.equal((await auth.getAdminSession("access-admin")).authorized, false);
+    assert.equal((await DELETE(new Request("https://paperless.test/api/admin-session", {
+      method: "DELETE", headers: { Origin: "https://paperless.test", Cookie: "paperless_sb_access=access-admin; paperless_sb_refresh=refresh-admin" },
+    }))).status, 200);
     const html = renderToStaticMarkup(React.createElement(LoginPage));
     assert.match(html, /Welcome back/);
     assert.match(html, /Sign in to orders/);
-  } finally { keys.forEach((key, index) => { if (previous[index] === undefined) delete process.env[key]; else process.env[key] = previous[index]; }); }
+    assert.match(html, /type="email"/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    keys.forEach((key, index) => { if (previous[index] === undefined) delete process.env[key]; else process.env[key] = previous[index]; });
+  }
+});
+
+test("dev bootstrap installs missing HEIC dependency before Vite loads invitation designer", async () => {
+  const [bootstrap, photo, proxy] = await Promise.all([
+    readFile(new URL("../scripts/ensure-dev-deps.mjs", import.meta.url), "utf8"),
+    readFile(new URL("../lib/photo-upload.ts", import.meta.url), "utf8"),
+    readFile(new URL("../proxy.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(bootstrap, /"heic-to"/);
+  assert.match(bootstrap, /\["ci"\]/);
+  assert.match(photo, /import\("heic-to"\)/);
+  assert.match(proxy, /matcher: \["\/login", "\/dashboard\/:path\*", "\/api\/dashboard\/:path\*"\]/);
+  assert.match(proxy, /new URL\("\/login", request.url\)/);
 });
 
 test("saving an admin edit prunes removed image metadata atomically and deletes its stored blob", async () => {

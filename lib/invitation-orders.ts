@@ -76,7 +76,7 @@ export function makeInvitationSlug(config: InvitationConfig) {
   return reservedSlugs.has(slug) ? `${slug}-celebration` : slug;
 }
 
-const reservedSlugs = new Set(["api", "dashboard", "design-invitation", "templates", "invitation"]);
+const reservedSlugs = new Set(["api", "dashboard", "login", "design-invitation", "templates", "invitation"]);
 
 function slugPart(value: string) {
   return value

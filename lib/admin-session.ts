@@ -1,46 +1,126 @@
-export const adminCookieName = "paperless_admin_session";
-const sessionDurationMs = 8 * 60 * 60 * 1000;
+import { supabaseRequest } from "@/lib/supabase-server";
+import { NextResponse } from "next/server";
 
-export function adminIsConfigured() {
-  return Boolean(process.env.DASHBOARD_USERNAME && process.env.DASHBOARD_PASSWORD
-    && (!process.env.DASHBOARD_SESSION_SECRET || process.env.DASHBOARD_SESSION_SECRET.length >= 32));
+export const accessCookieName = "paperless_sb_access";
+export const refreshCookieName = "paperless_sb_refresh";
+const refreshCookieAge = 7 * 24 * 60 * 60;
+const userIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type AuthTokens = { access_token: string; refresh_token: string; expires_in: number };
+type AdminSession = { authorized: boolean; tokens?: AuthTokens };
+
+export function authIsConfigured() {
+  return Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY) && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
-function base64Url(bytes: Uint8Array) {
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+function authEnvironment() {
+  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
+  const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!url || !anonKey || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("Admin login is not configured. Set SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY and SUPABASE_SERVICE_ROLE_KEY.");
+  }
+  return { url, anonKey };
 }
 
-async function sessionKey() {
-  const secret = `paperless-session-v1:${process.env.DASHBOARD_SESSION_SECRET || process.env.DASHBOARD_PASSWORD}`;
-  return crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+async function authRequest(path: string, init: RequestInit = {}) {
+  const { url, anonKey } = authEnvironment();
+  const headers = new Headers(init.headers);
+  headers.set("apikey", anonKey);
+  return fetch(url + "/auth/v1" + path, { ...init, headers, cache: "no-store" });
 }
 
-export async function matchesAdminCredentials(username: string, password: string) {
-  if (!adminIsConfigured()) return false;
-  const expected = `${process.env.DASHBOARD_USERNAME}\n${process.env.DASHBOARD_PASSWORD}`;
-  const supplied = `${username}\n${password}`;
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(process.env.DASHBOARD_SESSION_SECRET || process.env.DASHBOARD_PASSWORD!), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
-  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(expected));
-  return crypto.subtle.verify("HMAC", key, signature, new TextEncoder().encode(supplied));
+function parseTokens(value: unknown): AuthTokens | null {
+  if (!value || typeof value !== "object") return null;
+  const data = value as Partial<AuthTokens>;
+  if (typeof data.access_token !== "string" || !data.access_token || data.access_token.length > 4096
+    || typeof data.refresh_token !== "string" || !data.refresh_token || data.refresh_token.length > 4096
+    || typeof data.expires_in !== "number" || !Number.isFinite(data.expires_in) || data.expires_in < 1) return null;
+  return { access_token: data.access_token, refresh_token: data.refresh_token, expires_in: data.expires_in };
 }
 
-export async function issueAdminSession() {
-  if (!adminIsConfigured()) throw new Error("Admin login is not configured.");
-  const payload = `v1.${Date.now() + sessionDurationMs}.${crypto.randomUUID()}`;
-  const signature = await crypto.subtle.sign("HMAC", await sessionKey(), new TextEncoder().encode(payload));
-  return { value: `${payload}.${base64Url(new Uint8Array(signature))}`, maxAge: sessionDurationMs / 1000 };
+async function verifiedUserId(accessToken: string): Promise<string | null> {
+  const response = await authRequest("/user", { headers: { Authorization: "Bearer " + accessToken } });
+  if (response.status === 400 || response.status === 401 || response.status === 403) return null;
+  if (!response.ok) throw new Error("Supabase Auth is temporarily unavailable.");
+  const user = await response.json() as { id?: unknown };
+  return typeof user.id === "string" && userIdPattern.test(user.id) ? user.id : null;
 }
 
-export async function verifyAdminSession(value?: string) {
-  if (!adminIsConfigured() || !value || value.length > 256) return false;
-  const match = /^(v1\.\d{13}\.[0-9a-f-]{36})\.([A-Za-z0-9_-]{43})$/.exec(value);
-  if (!match) return false;
-  const expiry = Number(match[1].split(".")[1]);
-  if (!Number.isSafeInteger(expiry) || expiry < Date.now() || expiry > Date.now() + sessionDurationMs) return false;
+async function isDashboardAdmin(userId: string) {
+  const params = new URLSearchParams({ select: "user_id", user_id: "eq." + userId, limit: "1" });
+  // The service-role key stays on the server. No client or ordinary Auth user can read this allowlist.
+  const response = await supabaseRequest("/rest/v1/dashboard_admins?" + params, { cache: "no-store" });
+  const rows = await response.json() as Array<{ user_id: string }>;
+  return rows.some((row) => row.user_id === userId);
+}
+
+async function isAuthorized(accessToken: string) {
+  const userId = await verifiedUserId(accessToken);
+  return Boolean(userId && await isDashboardAdmin(userId));
+}
+
+export async function loginWithSupabase(email: string, password: string): Promise<AuthTokens | null> {
+  const response = await authRequest("/token?grant_type=password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (response.status === 400 || response.status === 401 || response.status === 403 || response.status === 429) return null;
+  if (!response.ok) throw new Error("Supabase Auth is temporarily unavailable.");
+  const tokens = parseTokens(await response.json());
+  return tokens && await isAuthorized(tokens.access_token) ? tokens : null;
+}
+
+export async function getAdminSession(accessToken?: string, refreshToken?: string): Promise<AdminSession> {
+  if (accessToken && accessToken.length <= 4096 && await isAuthorized(accessToken)) return { authorized: true };
+  if (!refreshToken || refreshToken.length > 4096) return { authorized: false };
+  const response = await authRequest("/token?grant_type=refresh_token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  if (response.status === 400 || response.status === 401 || response.status === 403) return { authorized: false };
+  if (!response.ok) throw new Error("Supabase Auth is temporarily unavailable.");
+  const tokens = parseTokens(await response.json());
+  return tokens && await isAuthorized(tokens.access_token) ? { authorized: true, tokens } : { authorized: false };
+}
+
+export function setAdminCookies(response: NextResponse, request: Request, tokens: AuthTokens) {
+  const options = {
+    httpOnly: true,
+    secure: new URL(request.url).protocol === "https:",
+    sameSite: "strict" as const,
+    path: "/",
+  };
+  response.cookies.set(accessCookieName, tokens.access_token, { ...options, maxAge: Math.min(tokens.expires_in, 86400) });
+  response.cookies.set(refreshCookieName, tokens.refresh_token, { ...options, maxAge: refreshCookieAge });
+  return response;
+}
+
+export function clearAdminCookies(response: NextResponse, request: Request) {
+  const options = { httpOnly: true, secure: new URL(request.url).protocol === "https:", sameSite: "strict" as const, path: "/", maxAge: 0 };
+  response.cookies.set(accessCookieName, "", options);
+  response.cookies.set(refreshCookieName, "", options);
+  return response;
+}
+
+export async function revokeAdminSession(accessToken?: string, refreshToken?: string) {
+  if (!authIsConfigured()) return;
   try {
-    const signature = Uint8Array.from(atob(match[2].replace(/-/g, "+").replace(/_/g, "/")), (char) => char.charCodeAt(0));
-    return crypto.subtle.verify("HMAC", await sessionKey(), signature, new TextEncoder().encode(match[1]));
-  } catch { return false; }
+    let token = accessToken;
+    if ((!token || !await verifiedUserId(token)) && refreshToken) {
+      const response = await authRequest("/token?grant_type=refresh_token", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      token = response.ok ? parseTokens(await response.json())?.access_token : undefined;
+    }
+    if (token) await authRequest("/logout?scope=local", {
+      method: "POST", headers: { Authorization: "Bearer " + token },
+    });
+  } catch {
+    // Clearing both HttpOnly cookies still signs this browser out if Auth is temporarily offline.
+  }
 }
 
 export function isSameOrigin(request: Request) {

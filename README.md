@@ -23,8 +23,9 @@ The existing Coastal Reverie and Rose Afterglow invitations remain separate from
 
 1. Create a Supabase project.
 2. In **SQL Editor**, run [`supabase/setup.sql`](supabase/setup.sql) for a new project, then [`supabase/media-commit-migration.sql`](supabase/media-commit-migration.sql) to install the atomic order/media functions.
-3. Copy `.env.example` to `.env.local`.
-4. Add the project URL and the **service role key** from **Project Settings > API**. The service role key is server-only and must never be prefixed with `NEXT_PUBLIC_` or committed.
+3. Create `.env.local` (the example file is intentionally not checked in).
+4. Add the project URL, a publishable (or legacy anon) API key, and the **service role key** from the Supabase **Connect** dialog / **Project Settings > API Keys**. The service role key is server-only and must never be prefixed with `NEXT_PUBLIC_` or committed.
+5. Before deploying, run [`supabase/admin-auth.sql`](supabase/admin-auth.sql), then create and allowlist your administrator as described below.
 
 Saved rows are protected by Row Level Security. Browser requests go through validated server routes. A signed, 30-minute upload permission exists only during a new submission; it is never saved in either database table and cannot edit an order. Images are staged in Storage first. Only after every image succeeds does a single PostgreSQL function insert the order and all of its photo rows together. A failed upload cannot leave a partial invitation or `invitation_media` entry. If an upload or save fails, the browser requests removal of staged blobs; exceptional network interruptions may leave unreferenced Storage objects, which should be reviewed periodically.
 
@@ -36,19 +37,26 @@ The browser converts iPhone HEIC/HEIF photos to JPEG for decoding, then encodes 
 
 ## Private order dashboard
 
-Open `/dashboard` to be redirected to `/dashboard/login`. Sign in with the configured administrator username and password; the browser receives an HttpOnly, SameSite session cookie that expires after eight hours. Sign out from the dashboard header. The dashboard API and private previews require the same login, and modifications also check the request origin. There are no customer login or customer-edit credentials.
+Open /login to sign in with a Supabase Auth email and password. /dashboard redirects guests to /login and takes signed-in administrators to the orders table. /dashboard/login redirects to /login for old bookmarks. Supabase verifies passwords and session tokens; an Auth account **also must** have a row in the server-only dashboard_admins allowlist before it can access orders. Signup is not offered on this website. Supabase access and refresh tokens are held in HttpOnly, SameSite cookies; the server checks the Auth user and admin allowlist before every protected request. Signing out revokes the refresh session. Administrator actions still check the request origin.
 
-Add these server-side values to `.env.local` and to the deployed environment:
+Before deploying this release to an existing Supabase project:
 
-```bash
-DASHBOARD_USERNAME=admin
-DASHBOARD_PASSWORD=use-a-long-unique-password
-# Optional (recommended): independent random secret, 32+ characters
-DASHBOARD_SESSION_SECRET=generate-a-random-secret-with-at-least-32-characters
-PUBLIC_SITE_URL=https://www.paperless-invites.com
-```
+1. Run [supabase/admin-auth.sql](supabase/admin-auth.sql) in Supabase SQL Editor. Keep any previously required [media-commit-migration.sql](supabase/media-commit-migration.sql) in place. Check the final query: if an older invitation uses the slug login, change its slug first so its URL will not conflict with /login.
+2. In Supabase **Authentication > Sign In / Providers**, enable Email and disable **Allow new users to sign up** if you do not need customer accounts. In **Authentication > Users**, use **Add user** to create a confirmed administrator with your email and a strong, unique password (or send yourself an invite and complete it).
+3. Return to SQL Editor. Uncomment the insert in admin-auth.sql, replace admin@example.com with the **exact email you created**, and run that insert. Confirm that it returns one user_id. Only users in this table can open the dashboard.
+4. Set these values in the deployed environment and your local `.env.local` (no admin password in environment variables):
 
-The existing `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD` work without further setup. Use a unique, strong password. An independent randomly generated `DASHBOARD_SESSION_SECRET` is recommended and rotates all existing sessions when changed; never expose either as a `NEXT_PUBLIC_` variable. Protect `/api/admin-session` with your hosting provider's IP-based login rate limit to discourage password guessing. For production, use HTTPS so the session cookie is Secure.
+    ```bash
+    SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+    SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+    SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
+    PUBLIC_SITE_URL=https://www.paperless-invites.com
+    ```
+
+   If your project has an older anon key instead, SUPABASE_ANON_KEY works in place of SUPABASE_PUBLISHABLE_KEY. Never expose SUPABASE_SERVICE_ROLE_KEY in browser code or commit either secret to GitHub.
+5. After the deployment, visit /login and sign in. Remove any old DASHBOARD_USERNAME, DASHBOARD_PASSWORD, and DASHBOARD_SESSION_SECRET values from your host; they are no longer used. Old cookies from the previous login cannot authenticate this version.
+
+The image upload code uses the locked heic-to dependency. If you saw a Vite cannot resolve heic-to error or a dynamically imported designer module error, stop the dev server and run npm ci, then npm run dev; predev now also restores missing packages automatically before Vite starts. If npm ci fails, check network/registry access and the Node version (22.13+), then retry. The same missing dependency was responsible for both screens failing to load.
 
 The dashboard lets the administrator:
 

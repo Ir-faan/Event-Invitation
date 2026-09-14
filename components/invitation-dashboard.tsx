@@ -357,7 +357,7 @@ export function InvitationDashboard() {
 function DashboardHeader({ onRefresh, loading }: { onRefresh: () => void; loading: boolean }) {
   async function signOut() {
     const response = await fetch("/api/admin-session", { method: "DELETE" });
-    if (response.ok) window.location.assign("/dashboard/login");
+    if (response.ok) window.location.assign("/login");
   }
   return (
     <header className="orders-header">
