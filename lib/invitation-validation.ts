@@ -30,7 +30,6 @@ export function isInvitationConfig(value: unknown): value is InvitationConfig {
       && config.hero
       && ["basic", "interactive"].includes(config.hero.type)
       && ["preset", "upload"].includes(config.hero.photoSource)
-      && (config.hero.type === "interactive" || config.hero.photoSource === "preset")
       && Number.isInteger(config.hero.presetIndex)
       && Number(config.hero.presetIndex) >= 0
       && Number(config.hero.presetIndex) <= 20

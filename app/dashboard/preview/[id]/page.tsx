@@ -28,7 +28,7 @@ export default async function AdminOrderPreviewPage({ params }: { params: Promis
         <div><LockKeyhole aria-hidden="true" /><span><strong>Private preview</strong><small>{order.status === "active" ? "This order is currently live" : "Guests cannot access this invitation until it is deployed"}</small></span></div>
         <Link href="/dashboard"><ArrowLeft aria-hidden="true" /> Back to orders</Link>
       </header>
-      <PublishedInvitation config={normalizeInvitationConfig(order.config)} />
+      <PublishedInvitation config={normalizeInvitationConfig(order.config)} privatePreview />
     </div>
   );
 }

@@ -5,9 +5,6 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.invitations (
   id uuid primary key default gen_random_uuid(),
-  -- Retained as a one-time photo-upload credential. It does not allow customers
-  -- to reopen or edit submitted orders.
-  edit_token_hash text not null,
   config jsonb not null check (jsonb_typeof(config) = 'object'),
   total_price integer not null default 1000 check (total_price >= 0),
   status text not null default 'pending' check (status in ('pending', 'active', 'inactive')),
@@ -42,9 +39,6 @@ alter table public.invitations
 alter table public.invitations drop constraint if exists invitations_total_price_check;
 alter table public.invitations
   add constraint invitations_total_price_check check (total_price >= 0);
-
-create unique index if not exists invitations_edit_token_hash_idx
-  on public.invitations (id, edit_token_hash);
 
 drop index if exists public.invitations_status_updated_at_idx;
 create index if not exists invitations_status_created_at_idx

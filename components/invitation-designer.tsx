@@ -38,6 +38,9 @@ import {
 import { InvitationPhonePreview } from "@/components/invitation-phone-preview";
 import { OrderConfirmationModal } from "@/components/order-confirmation-modal";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
+import { isHeicPhoto, maxOriginalImageBytes, preparePendingPhotos, preparePhoto, selectedUploadedPhotos, uploadPendingPhotos } from "@/lib/photo-upload";
+import type { UploadedPhoto } from "@/lib/media-submission";
+import { customerWhatsAppUrl, invitationPublicUrl } from "@/lib/whatsapp-messages";
 import {
   calculateInvitationPrice,
   createInitialInvitation,
@@ -79,7 +82,6 @@ type InvitationDesignerProps = {
   onAdminOrderChange?: (order: AdminInvitationOrder) => void;
 };
 
-const maxImageBytes = 5 * 1024 * 1024;
 const acceptedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const whatsappSupportNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
 const whatsappSupportMessage = "Hi, I had trouble saving my invitation design. Could you please help me?";
@@ -89,6 +91,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   const [config, setConfig] = useState<InvitationConfig>(() => adminOrder ? normalizeInvitationConfig(adminOrder.config) : createInitialInvitation());
   const [addType, setAddType] = useState<SectionType>("special-message");
   const [pendingFiles, setPendingFiles] = useState<Record<string, File[]>>({});
+  const [photoProcessing, setPhotoProcessing] = useState(0);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [saveError, setSaveError] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -105,7 +108,11 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   const [adminConfirmationError, setAdminConfirmationError] = useState("");
   const [adminNotice, setAdminNotice] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const submissionRef = useRef<SubmissionIdentity | null>(null);
+  const preparedPhotoRef = useRef(new Map<File, File>());
+  const uploadedPhotoUrlsRef = useRef(new Map<File, UploadedPhoto>());
   const objectUrls = useRef<string[]>([]);
+  const processingPhotosRef = useRef(0);
   const sectionMoveAnchor = useRef<{ id: string; top: number; focusedControl: HTMLElement | null } | null>(null);
   const price = useMemo(() => calculateInvitationPrice(config), [config]);
   const palette = getPalette(config.palette);
@@ -316,25 +323,37 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   }
 
   function validateFiles(files: File[]) {
-    if (files.find((file) => !acceptedImageTypes.has(file.type))) return "Please choose JPG, PNG or WebP photos.";
-    if (files.find((file) => file.size > maxImageBytes)) return "Each photo must be 5 MB or smaller.";
+    if (files.find((file) => !acceptedImageTypes.has(file.type) && !isHeicPhoto(file))) return "Please choose JPG, PNG, WebP or iPhone HEIC photos.";
+    if (files.find((file) => file.size > maxOriginalImageBytes)) return "Each photo must be 20 MB or smaller before compression.";
     return "";
   }
 
-  function selectHeroPhoto(files: FileList | null) {
+  function setProcessing(delta: number) {
+    processingPhotosRef.current = Math.max(0, processingPhotosRef.current + delta);
+    setPhotoProcessing(processingPhotosRef.current);
+  }
+
+  async function selectHeroPhoto(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
     const error = validateFiles([file]);
-    if (error) return;
-    if (config.hero.uploadedUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(config.hero.uploadedUrl);
-      objectUrls.current = objectUrls.current.filter((item) => item !== config.hero.uploadedUrl);
-    }
-    const url = URL.createObjectURL(file);
-    objectUrls.current.push(url);
-    setPendingFiles((current) => ({ ...current, hero: [file] }));
-    updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "upload", uploadedUrl: url } }));
-    activatePreview("hero");
+    if (error) { setSaveError(error); return; }
+    if (processingPhotosRef.current) { setSaveError("Please wait for your current photos to finish preparing before choosing more."); return; }
+    setProcessing(1);
+    try {
+      const prepared = await preparePhoto(file);
+      preparedPhotoRef.current.set(file, prepared);
+      if (config.hero.uploadedUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(config.hero.uploadedUrl);
+        objectUrls.current = objectUrls.current.filter((item) => item !== config.hero.uploadedUrl);
+      }
+      const url = URL.createObjectURL(prepared);
+      objectUrls.current.push(url);
+      setPendingFiles((current) => ({ ...current, hero: [file] }));
+      updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "upload", uploadedUrl: url } }));
+      activatePreview("hero");
+    } catch (cause) { setSaveError(cause instanceof Error ? cause.message : "This photo could not be read."); }
+    finally { setProcessing(-1); }
   }
 
   function removeHeroPhoto() {
@@ -355,18 +374,30 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     activatePreview("hero");
   }
 
-  function selectGlimpsePhotos(sectionId: string, list: FileList | null) {
+  async function selectGlimpsePhotos(sectionId: string, list: FileList | null) {
     const currentCount = config.sections.find((section) => section.id === sectionId)?.images.length ?? 0;
     const files = Array.from(list ?? []).slice(0, Math.max(0, 8 - currentCount));
     if (!files.length) return;
     const error = validateFiles(files);
-    if (error) return;
-    const urls = files.map((file) => URL.createObjectURL(file));
-    objectUrls.current.push(...urls);
-    const slot = `section:${sectionId}:images`;
-    setPendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), ...files] }));
-    updateSection(sectionId, (section) => ({ ...section, images: [...section.images, ...urls].slice(0, 8) }));
-    activatePreview(sectionId);
+    if (error) { setSaveError(error); return; }
+    if (processingPhotosRef.current) { setSaveError("Please wait for your current photos to finish preparing before choosing more."); return; }
+    const urls: string[] = [];
+    setProcessing(1);
+    try {
+      for (const file of files) {
+        const prepared = await preparePhoto(file);
+        preparedPhotoRef.current.set(file, prepared);
+        urls.push(URL.createObjectURL(prepared));
+      }
+      objectUrls.current.push(...urls);
+      const slot = `section:${sectionId}:images`;
+      setPendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), ...files] }));
+      updateSection(sectionId, (section) => ({ ...section, images: [...section.images, ...urls].slice(0, 8) }));
+      activatePreview(sectionId);
+    } catch (cause) {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+      setSaveError(cause instanceof Error ? cause.message : "These photos could not be read.");
+    } finally { setProcessing(-1); }
   }
 
   function removeGlimpsePhoto(sectionId: string, imageIndex: number) {
@@ -402,6 +433,11 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   async function saveDesign(event: FormEvent) {
     event.preventDefault();
     if (saveState === "saving") return;
+    if (processingPhotosRef.current) { setSaveError("Your photos are still being prepared. Please wait until they appear in the preview, then save."); return; }
+    if (Object.values(pendingFiles).reduce((count, files) => count + files.length, 0) > 32) {
+      setSaveError("Choose no more than 32 photos in this invitation.");
+      return;
+    }
     const errors: string[] = [];
     if (config.contact.name.trim().length < 2) errors.push("Please enter your name so we know who placed the order.");
     if (!/^5\d{7}$/.test(config.contact.phone.trim())) errors.push("Enter a Mauritian phone number with exactly 8 digits, starting with 5.");
@@ -417,13 +453,15 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
 
     try {
       let workingConfig = removeLocalPhotoUrls(config);
+      await preparePendingPhotos(pendingFiles, preparedPhotoRef.current);
       if (adminMode && currentAdminOrder) {
-        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media");
+        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
         if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
         const updated = await updateAdminOrder(currentAdminOrder.id, currentAdminOrder.status === "active" ? "deploy" : "save", {
           config: workingConfig,
           totalPrice: adminPrice,
           slug: adminSlug,
+          media: selectedUploadedPhotos(pendingFiles, uploadedPhotoUrlsRef.current),
           ...(currentAdminOrder.status === "active" ? { activeUntil: adminActiveUntil } : {}),
         });
         setConfig(normalizeInvitationConfig(updated.config));
@@ -431,26 +469,47 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
         setAdminPrice(updated.total_price);
         setAdminSlug(updated.slug ?? "");
         setPendingFiles({});
+        preparedPhotoRef.current.clear();
+        uploadedPhotoUrlsRef.current.clear();
         setSaveState("saved");
         onAdminOrderChange?.(updated);
         window.setTimeout(() => onAdminBack?.(), 650);
         return;
       }
 
-      const expectsMedia = Object.keys(pendingFiles).length > 0;
-      const submission = await createInvitation(workingConfig, expectsMedia);
-      if (expectsMedia) {
+      const slots = Object.entries(pendingFiles).flatMap(([slot, files]) => files.map((_, index) => `${slot}:${index}`));
+      const submission = await createInvitation(workingConfig, slots);
+      if (slots.length) {
         if (!submission.uploadToken) throw new Error("The secure photo upload could not be started.");
-        const uploadedBySlot = await uploadPendingPhotos(submission.id, pendingFiles, "/api/invitations/media", submission.uploadToken);
+        submissionRef.current = submission;
+        const uploadedBySlot = await uploadPendingPhotos(submission.id, pendingFiles, "/api/invitations/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current, submission.uploadToken);
         workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
-        await finalizeInvitationMedia(workingConfig, submission);
+        await finalizeInvitationMedia(workingConfig, submission, selectedUploadedPhotos(pendingFiles, uploadedPhotoUrlsRef.current));
       }
 
       setConfig(workingConfig);
       setPendingFiles({});
+      submissionRef.current = null;
+      preparedPhotoRef.current.clear();
+      uploadedPhotoUrlsRef.current.clear();
       setSaveState("submitted");
       setShowSuccess(true);
     } catch (error) {
+      if (adminMode && currentAdminOrder && uploadedPhotoUrlsRef.current.size) {
+        await cleanupUploadedPhotos("/api/dashboard/orders/media", currentAdminOrder.id, [...uploadedPhotoUrlsRef.current.values()]);
+        uploadedPhotoUrlsRef.current.clear();
+      } else if (submissionRef.current) {
+        const committed = await cleanupUploadedPhotos("/api/invitations", submissionRef.current.id, [...uploadedPhotoUrlsRef.current.values()], submissionRef.current.uploadToken);
+        if (committed) {
+          submissionRef.current = null;
+          uploadedPhotoUrlsRef.current.clear();
+          setSaveState("submitted");
+          setShowSuccess(true);
+          return;
+        }
+        submissionRef.current = null;
+        uploadedPhotoUrlsRef.current.clear();
+      }
       console.error(adminMode ? "Unable to update invitation order" : "Unable to send invitation design", error);
       setSaveState("error");
       setSaveError(error instanceof Error ? error.message : "An error happened while saving your design. If it persists, please contact us on WhatsApp or social media.");
@@ -459,6 +518,11 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
 
   async function runAdminLifecycle(nextAction: "deploy" | "deactivate" | "review") {
     if (!currentAdminOrder || adminAction) return;
+    if (processingPhotosRef.current) { setSaveError("Please wait for your photos to finish optimizing before publishing."); return; }
+    if (Object.values(pendingFiles).reduce((count, files) => count + files.length, 0) > 32) {
+      setSaveError("Choose no more than 32 new photos in this invitation.");
+      return;
+    }
     setAdminAction(nextAction);
     setAdminConfirmationError("");
     setAdminNotice("");
@@ -466,7 +530,8 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     try {
       let workingConfig = removeLocalPhotoUrls(config);
       if (nextAction === "deploy") {
-        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media");
+        await preparePendingPhotos(pendingFiles, preparedPhotoRef.current);
+        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
         if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
       }
       const updated = await updateAdminOrder(currentAdminOrder.id, nextAction, nextAction === "deploy" ? {
@@ -474,6 +539,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
         totalPrice: adminPrice,
         slug: adminSlug,
         activeUntil: adminActiveUntil,
+        media: selectedUploadedPhotos(pendingFiles, uploadedPhotoUrlsRef.current),
       } : {});
       setCurrentAdminOrder(updated);
       setConfig(normalizeInvitationConfig(updated.config));
@@ -481,6 +547,8 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       setAdminSlug(updated.slug ?? "");
       setAdminActiveUntil(suggestActiveUntil(updated, normalizeInvitationConfig(updated.config), today));
       setPendingFiles({});
+      preparedPhotoRef.current.clear();
+      uploadedPhotoUrlsRef.current.clear();
       onAdminOrderChange?.(updated);
       setAdminNotice(nextAction === "deploy"
         ? `Invitation is live at /${updated.slug}.`
@@ -489,6 +557,10 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
           : "Invitation moved back to Need your review.");
       setAdminConfirmation("");
     } catch (error) {
+      if (currentAdminOrder && uploadedPhotoUrlsRef.current.size) {
+        await cleanupUploadedPhotos("/api/dashboard/orders/media", currentAdminOrder.id, [...uploadedPhotoUrlsRef.current.values()]);
+        uploadedPhotoUrlsRef.current.clear();
+      }
       const message = error instanceof Error ? error.message : "The order could not be updated.";
       setSaveError(message);
       setAdminConfirmationError(message);
@@ -548,7 +620,10 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
             activeUntil={adminActiveUntil}
             today={today}
             action={adminAction}
+            photosProcessing={photoProcessing > 0}
             publicOrigin={publicOrigin}
+            customerName={config.contact.name}
+            customerPhone={config.contact.phone}
             onActiveUntil={setAdminActiveUntil}
             onAction={(nextAction) => {
               if (nextAction === "deploy") void runAdminLifecycle(nextAction);
@@ -648,8 +723,8 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
                 {config.hero.type === "interactive" && (
                   <div className={`designer-upload-card ${config.hero.photoSource === "upload" ? "is-selected" : ""}`}>
                     <label className={`designer-upload-option ${config.hero.photoSource === "upload" ? "is-selected" : ""}`}>
-                      {config.hero.photoSource === "upload" && config.hero.uploadedUrl ? <img src={config.hero.uploadedUrl} alt="Your uploaded hero preview" /> : <span><Upload aria-hidden="true" /><strong>Upload your photo</strong><small>JPG, PNG or WebP · max 5 MB</small></span>}
-                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { selectHeroPhoto(event.target.files); event.currentTarget.value = ""; }} />
+                      {config.hero.photoSource === "upload" && config.hero.uploadedUrl ? <img src={config.hero.uploadedUrl} alt="Your uploaded hero preview" /> : <span><Upload aria-hidden="true" /><strong>Upload your photo</strong><small>JPG, PNG, WebP or HEIC · max 20 MB</small></span>}
+                      <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" onChange={(event) => { void selectHeroPhoto(event.target.files); event.currentTarget.value = ""; }} />
                     </label>
                     {config.hero.photoSource === "upload" && config.hero.uploadedUrl && <button type="button" className="designer-photo-remove" onClick={removeHeroPhoto} aria-label="Remove uploaded hero photo"><Trash2 aria-hidden="true" /></button>}
                   </div>
@@ -737,8 +812,9 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
               {!adminMode && <a href={whatsappSupportUrl} target={whatsappSupportNumber ? "_blank" : undefined} rel={whatsappSupportNumber ? "noreferrer" : undefined}><MessageCircle aria-hidden="true" /> WhatsApp</a>}
             </div>
           )}
+          {photoProcessing > 0 && <p className="designer-notice" role="status"><Loader2 className="is-spinning" aria-hidden="true" /> Optimizing your photos for the invitation…</p>}
           <div className="designer-submit-panel">
-            <button className={`designer-final-save ${saveState === "submitted" || saveState === "saved" ? "is-complete" : ""}`} type="submit" disabled={saveState === "saving" || saveState === "submitted" || saveState === "saved"}>{saveState === "submitted" || saveState === "saved" ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}{saveButtonText}</button>
+            <button className={`designer-final-save ${saveState === "submitted" || saveState === "saved" ? "is-complete" : ""}`} type="submit" disabled={photoProcessing > 0 || saveState === "saving" || saveState === "submitted" || saveState === "saved"}>{saveState === "submitted" || saveState === "saved" ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}{saveButtonText}</button>
             <p>{adminMode
               ? currentAdminOrder?.status === "active"
                 ? "Updating publishes these edits and the active-until date above to the live invitation, then returns you to the orders table."
@@ -755,7 +831,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       {showSuccess && <SubmissionSuccessModal />}
       {currentAdminOrder && adminConfirmation && <OrderConfirmationModal
         icon={adminConfirmation === "review" ? <RotateCcw aria-hidden="true" /> : <Rocket aria-hidden="true" style={{ transform: "rotate(180deg)" }} />}
-        eyebrow={adminConfirmation === "review" ? "Return to review" : "Take offline"}
+        eyebrow={adminConfirmation === "review" ? "Return to review" : "Undeploy"}
         title={adminConfirmation === "review" ? "Move this invitation to review?" : "Undeploy this invitation?"}
         description={adminConfirmation === "review"
           ? "Its public link will stop working immediately. The saved order and its link remain available for review and later deployment."
@@ -789,11 +865,11 @@ function AdminOrderOverview({ order, config, price, slug, publicOrigin, onName, 
     <section className="admin-order-overview" aria-labelledby="admin-order-overview-title">
       <div className="admin-order-overview-heading">
         <div><span>Order overview</span><h2 id="admin-order-overview-title">The details that matter most</h2></div>
-        <div className="admin-overview-actions"><a href={`/dashboard/preview/${order.id}`} target="_blank" rel="noreferrer" title="Open the last saved version in a new tab"><Eye aria-hidden="true" /> Preview saved invitation</a><span className={`admin-order-status is-${order.status}`}>{order.status === "pending" ? "Needs review" : order.status === "active" ? "Currently live" : "Previous order"}</span></div>
+        <div className="admin-overview-actions">{order.status !== "active" && <a href={`/dashboard/preview/${order.id}`} target="_blank" rel="noreferrer" title="Open the last saved version in a new tab"><Eye aria-hidden="true" /> Preview saved invitation</a>}<span className={`admin-order-status is-${order.status}`}>{order.status === "pending" ? "Needs review" : order.status === "active" ? "Currently live" : "Previous order"}</span></div>
       </div>
       <div className="admin-order-overview-grid">
         <label><span>Customer name</span><input value={config.contact.name} onChange={(event) => onName(event.target.value)} /></label>
-        <label className="is-phone"><span>Phone number</span><div><input inputMode="numeric" maxLength={8} value={config.contact.phone} onChange={(event) => onPhone(event.target.value)} />{/^5\d{7}$/.test(config.contact.phone) && <a href={`https://wa.me/230${config.contact.phone}`} target="_blank" rel="noreferrer" aria-label="Message customer on WhatsApp"><MessageCircle aria-hidden="true" /></a>}</div></label>
+        <label className="is-phone"><span>Phone number</span><div><input inputMode="numeric" maxLength={8} value={config.contact.phone} onChange={(event) => onPhone(event.target.value)} />{/^5\d{7}$/.test(config.contact.phone) && <a href={customerWhatsAppUrl(config.contact.phone, config.contact.name)} target="_blank" rel="noreferrer" aria-label="Message customer on WhatsApp"><MessageCircle aria-hidden="true" /></a>}</div></label>
         <label className="is-link"><span>Invitation link</span><div><b>/</b><input value={slug} placeholder={makeInvitationSlug(config)} onChange={(event) => onSlug(event.target.value)} />{order.status === "active" && order.slug && <a href={`/${order.slug}`} target="_blank" rel="noreferrer" aria-label="Open live invitation"><ExternalLink aria-hidden="true" /></a>}</div></label>
         <label><span>Event date</span><input type="date" value={getPrimaryEventDate(config)} onChange={(event) => onEventDate(event.target.value)} /></label>
         <label><span>Order price (Rs)</span><input type="number" min="0" step="1" value={price} onChange={(event) => onPrice(Math.max(0, Math.round(Number(event.target.value) || 0)))} /></label>
@@ -803,18 +879,24 @@ function AdminOrderOverview({ order, config, price, slug, publicOrigin, onName, 
   );
 }
 
-function AdminDeployControls({ order, activeUntil, today, action, publicOrigin, onActiveUntil, onAction }: {
+function AdminDeployControls({ order, activeUntil, today, action, photosProcessing, publicOrigin, customerName, customerPhone, onActiveUntil, onAction }: {
   order: AdminInvitationOrder;
   activeUntil: string;
   today: string;
   action: "deploy" | "deactivate" | "review" | "";
+  photosProcessing: boolean;
   publicOrigin: string;
+  customerName: string;
+  customerPhone: string;
   onActiveUntil: (value: string) => void;
   onAction: (action: "deploy" | "deactivate" | "review") => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
   const publicPath = order.slug ? `/${order.slug}` : "";
+  const whatsappUrl = order.status === "active" && order.slug
+    ? customerWhatsAppUrl(customerPhone, customerName, invitationPublicUrl(publicOrigin, order.slug))
+    : "";
   async function copyLink() {
     if (!publicPath) return;
     try {
@@ -830,14 +912,14 @@ function AdminDeployControls({ order, activeUntil, today, action, publicOrigin, 
     <section className="order-deploy-bar admin-designer-deploy" id="admin-deploy-controls" aria-label="Invitation publishing controls">
       <div className="order-deploy-copy"><Rocket aria-hidden="true" /><div><strong>{order.status === "active" ? "This invitation is live" : order.status === "inactive" ? "Ready to publish again?" : "Ready after your review"}</strong><small>{order.status === "active" ? `Guests can open ${publicPath}` : "Choose the final active date, then publish in one tap."}</small></div></div>
       <label><span>Keep active until</span><input type="date" value={activeUntil} min={today} onChange={(event) => onActiveUntil(event.target.value)} /></label>
-      {order.status !== "active" && <button className="order-primary-action" type="button" onClick={() => onAction("deploy")} disabled={Boolean(action) || !activeUntil}>
+      {order.status !== "active" && <button className="order-primary-action" type="button" onClick={() => onAction("deploy")} disabled={Boolean(action) || photosProcessing || !activeUntil}>
         {action === "deploy" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <Rocket aria-hidden="true" />}
         {order.status === "pending" ? "Deploy invitation" : "Redeploy invitation"}
       </button>}
       {order.status === "active" && <button className="order-review-action" type="button" onClick={() => onAction("review")} disabled={Boolean(action)}>{action === "review" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <RotateCcw aria-hidden="true" />} Move to review</button>}
-      {order.status === "active" && <button className="order-danger-action" type="button" onClick={() => onAction("deactivate")} disabled={Boolean(action)}>{action === "deactivate" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <span aria-hidden="true">×</span>} Take offline</button>}
+      {order.status === "active" && <button className="order-danger-action is-undeploy" type="button" onClick={() => onAction("deactivate")} disabled={Boolean(action)}>{action === "deactivate" ? <Loader2 className="is-spinning" aria-hidden="true" /> : <Rocket aria-hidden="true" />} Undeploy</button>}
       {order.status === "active" && <p className="order-deploy-tip">Use Update live invitation at the bottom to publish your edits and apply this active-until date together.</p>}
-      {publicPath && <div className="order-public-link"><span>{order.status === "active" ? "Live invitation link" : "Saved link (currently offline)"}</span><strong>{publicPath}</strong><button type="button" onClick={() => void copyLink()}>{copied ? <Check /> : <Copy />}<span className="sr-only">Copy invitation link</span></button>{order.status === "active" && <a href={publicPath} target="_blank" rel="noreferrer"><ExternalLink /><span className="sr-only">Open live invitation</span></a>}</div>}
+      {publicPath && <div className="order-public-link"><span>{order.status === "active" ? "Live invitation link" : "Saved link (currently offline)"}</span><strong>{publicPath}</strong><button type="button" onClick={() => void copyLink()} title="Copy invitation link">{copied ? <Check /> : <Copy />}<span className="sr-only">Copy invitation link</span></button>{order.status === "active" && <a href={publicPath} target="_blank" rel="noreferrer" title="Open live invitation"><ExternalLink /><span className="sr-only">Open live invitation</span></a>}{whatsappUrl && <a href={whatsappUrl} target="_blank" rel="noreferrer" title="Send invitation link on WhatsApp" aria-label={`Send ${customerName} the invitation link on WhatsApp`}><MessageCircle aria-hidden="true" /></a>}</div>}
       {copyError && <p className="order-deploy-tip" role="alert">{copyError}</p>}
     </section>
   );
@@ -1090,8 +1172,8 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
           {headingField}
           <TextArea label="Gallery introduction" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} />
           <label className="designer-inline-upload">
-            <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG or WebP photos. Each photo can be up to 5 MB.</small></span>
-            <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => { onPhotos(event.target.files); event.currentTarget.value = ""; }} />
+            <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG, WebP or HEIC photos. Each photo can be up to 20 MB before compression.</small></span>
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple onChange={(event) => { onPhotos(event.target.files); event.currentTarget.value = ""; }} />
           </label>
           {section.images.length > 0 && (
             <div className="designer-uploaded-strip">
@@ -1122,44 +1204,42 @@ function TextArea({ label, hint, value, onChange, full = false, rows = 3 }: { la
   return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{label}</span><textarea value={value ?? ""} rows={rows} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
 }
 
-async function createInvitation(config: InvitationConfig, expectsMedia: boolean): Promise<SubmissionIdentity> {
+async function createInvitation(config: InvitationConfig, slots: string[]): Promise<SubmissionIdentity> {
   const response = await fetch("/api/invitations", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ config, expectsMedia }),
+    body: JSON.stringify({ config, ...(slots.length ? { slots } : {}) }),
   });
   const result = await response.json() as { id?: string; uploadToken?: string; error?: string };
-  if (!response.ok || !result.id || (expectsMedia && !result.uploadToken)) throw new Error(result.error || "Your invitation could not be sent.");
+  if (!response.ok || !result.id || (slots.length > 0 && !result.uploadToken)) throw new Error(result.error || "Your invitation could not be sent.");
   return { id: result.id, uploadToken: result.uploadToken };
 }
 
-async function finalizeInvitationMedia(config: InvitationConfig, submission: SubmissionIdentity) {
+async function finalizeInvitationMedia(config: InvitationConfig, submission: SubmissionIdentity, media: UploadedPhoto[]) {
   const response = await fetch("/api/invitations", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ operation: "finalize-media", id: submission.id, uploadToken: submission.uploadToken, config }),
+    body: JSON.stringify({ operation: "finalize-media", id: submission.id, uploadToken: submission.uploadToken, config, media }),
   });
   const result = await response.json() as { id?: string; error?: string };
   if (!response.ok || !result.id) throw new Error(result.error || "Your photo submission could not be completed.");
 }
 
-async function uploadPendingPhotos(invitationId: string, pendingFiles: Record<string, File[]>, endpoint: string, uploadToken?: string) {
-  const uploadedBySlot: Record<string, string[]> = {};
-  for (const [slot, files] of Object.entries(pendingFiles)) {
-    uploadedBySlot[slot] = [];
-    for (let index = 0; index < files.length; index += 1) {
-      const form = new FormData();
-      form.set("file", files[index]);
-      form.set("invitationId", invitationId);
-      if (uploadToken) form.set("uploadToken", uploadToken);
-      form.set("slot", `${slot}:${index}`);
-      const response = await fetch(endpoint, { method: "POST", body: form });
-      const result = await response.json() as { url?: string; error?: string };
-      if (!response.ok || !result.url) throw new Error(result.error || "A photo could not be uploaded.");
-      uploadedBySlot[slot].push(result.url);
-    }
+async function cleanupUploadedPhotos(endpoint: string, invitationId: string, media: UploadedPhoto[], uploadToken?: string) {
+  try {
+    const response = await fetch(endpoint, {
+      method: uploadToken ? "POST" : "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(uploadToken
+        ? { operation: "cancel-media", id: invitationId, uploadToken, media }
+        : { invitationId, media }),
+    });
+    const result = await response.json() as { committed?: boolean };
+    return response.ok && result.committed === true;
+  } catch (cause) {
+    console.warn("Uploaded photo cleanup could not be completed", cause);
+    return false;
   }
-  return uploadedBySlot;
 }
 
 async function updateAdminOrder(id: string, action: "save" | "deploy" | "deactivate" | "review", values: Record<string, unknown>) {

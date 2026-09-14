@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { issuePhotoReceipt, validSlot, verifyUploadCapability } from "@/lib/media-submission";
+import { getInvitationOrder } from "@/lib/invitation-orders-server";
 import {
   getSupabaseEnvironment,
-  invitationAcceptsUpload,
   publicStorageUrl,
   supabaseRequest,
 } from "@/lib/supabase-server";
@@ -25,42 +26,36 @@ export async function POST(request: Request) {
     if (!(file instanceof File) || typeof invitationId !== "string" || typeof uploadToken !== "string" || typeof slot !== "string") {
       return NextResponse.json({ error: "The photo upload is incomplete." }, { status: 400 });
     }
-    if (!/^[0-9a-f-]{36}$/i.test(invitationId) || !/^[a-z0-9:_-]{1,120}$/i.test(slot)) {
+    if (!validSlot(slot)) {
       return NextResponse.json({ error: "The photo destination is invalid." }, { status: 400 });
     }
     const extension = allowedTypes.get(file.type);
     if (!extension) return NextResponse.json({ error: "Please use a JPG, PNG or WebP photo." }, { status: 415 });
     if (file.size > 5 * 1024 * 1024) return NextResponse.json({ error: "Each photo must be 5 MB or smaller." }, { status: 413 });
-    if (!(await invitationAcceptsUpload(invitationId, uploadToken))) {
+    const capability = await verifyUploadCapability(uploadToken, invitationId);
+    if (!capability || !capability.slots.includes(slot)) {
       return NextResponse.json({ error: "This submission cannot accept photo uploads." }, { status: 403 });
     }
-
+    if (await getInvitationOrder(invitationId)) {
+      return NextResponse.json({ error: "This invitation has already been submitted and cannot be edited." }, { status: 409 });
+    }
     const { bucket } = getSupabaseEnvironment();
-    const storagePath = `${invitationId}/${slot}-${crypto.randomUUID()}.${extension}`;
+    const storagePath = `${capability.folder}/${slot}-${crypto.randomUUID()}.${extension}`;
     const encodedPath = storagePath.split("/").map(encodeURIComponent).join("/");
     await supabaseRequest(`/storage/v1/object/${encodeURIComponent(bucket)}/${encodedPath}`, {
       method: "POST",
-      headers: { "Content-Type": file.type, "x-upsert": "false" },
+      headers: { "Content-Type": file.type, "x-upsert": "false", "cache-control": "31536000" },
       body: await file.arrayBuffer(),
     });
 
     const url = publicStorageUrl(storagePath);
-    await supabaseRequest("/rest/v1/invitation_media", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Prefer: "return=minimal" },
-      body: JSON.stringify({
-        invitation_id: invitationId,
-        storage_path: storagePath,
-        public_url: url,
-        slot,
-        mime_type: file.type,
-        size_bytes: file.size,
-      }),
-    });
-
-    return NextResponse.json({ url, path: storagePath }, { status: 201 });
+    const receipt = await issuePhotoReceipt({ id: invitationId, path: storagePath, slot, mimeType: file.type, sizeBytes: file.size });
+    return NextResponse.json({ url, path: storagePath, slot, mimeType: file.type, sizeBytes: file.size, receipt }, { status: 201 });
   } catch (error) {
     console.error("Unable to upload invitation photo", error);
+    if (error instanceof Error && /request failed \(413\)/.test(error.message)) {
+      return NextResponse.json({ error: "This optimized photo exceeded the storage limit. Please choose a smaller photo." }, { status: 413 });
+    }
     return NextResponse.json({ error: "This photo could not be uploaded. Your preview has not been changed." }, { status: 503 });
   }
 }

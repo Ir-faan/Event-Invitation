@@ -221,10 +221,13 @@ test("renders admin orders in the shared designer with collapsed editing steps",
   const liveHtml = renderToStaticMarkup(React.createElement(InvitationDesigner, { adminOrder: { ...liveRecord, summary: summarizeOrder(liveRecord) }, today: "2026-09-12" }));
   assert.match(liveHtml, /Update live invitation/);
   assert.doesNotMatch(liveHtml, />Save edits</);
+  assert.doesNotMatch(liveHtml, /Preview saved invitation/);
+  assert.match(liveHtml, /Undeploy/);
+  assert.match(liveHtml, /Send .* the invitation link on WhatsApp/);
   assert.equal((liveHtml.match(/Update live invitation</g) ?? []).length, 1);
 });
 
-test("published invitations use the browser width while editor previews keep their phone frame", async () => {
+test("public invitations fill desktop browsers; private desktop previews keep the original centred canvas", async () => {
   const [css, designerCss, { PublishedInvitation }, { createInitialInvitation }] = await Promise.all([
     readFile(new URL("../app/[slug]/published-invitation.css", import.meta.url), "utf8"),
     readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
@@ -239,14 +242,19 @@ test("published invitations use the browser width while editor previews keep the
   assert.match(css, /@media \(min-width: 48rem\)/);
   assert.match(css, /@media \(min-width: 64rem\)/);
   assert.match(css, /\.published-invitation \.preview-opening \{ position: fixed/);
-  assert.match(css, /\.published-invitation \.preview-event-list \{[^}]*grid-template-columns:/);
+  assert.match(css, /\.published-invitation:not\(\.is-private\) \.preview-event-list \{[^}]*grid-template-columns:/);
   assert.match(css, /font-size: clamp\(4\.5rem, 26vw, 7rem\)/);
-  assert.match(css, /\.published-invitation \.invite-preview-hero-image \{ scale: 1\.08/);
-  assert.match(css, /\.published-invitation \.journey-timeline::before \{ left: 50%/);
+  assert.match(css, /\.published-invitation \.invite-preview-hero-image \{ scale: 1;/);
+  assert.match(css, /\.published-invitation:not\(\.is-private\) \.journey-timeline::before \{ left: 50%/);
+  assert.match(css, /calc\(100vw \* 656 \/ 333\)/);
+  const privateCss = await readFile(new URL("../app/dashboard/preview.css", import.meta.url), "utf8");
+  assert.match(privateCss, /\.admin-private-preview \.published-invitation-screen \{ width: min\(30rem,100%\)/);
   assert.match(css, /minmax\(min\(100%, 16rem\), 22rem\)/);
   assert.match(designerCss, /\.designer-phone-screen \{[^}]*height: clamp\(22rem/);
   assert.match(designerCss, /\.journey-timeline article p \{[^}]*italic \.98rem\/1\.75/);
-  assert.match(designerCss, /\.designer-header \.admin-designer-back \{[^}]*display: inline-flex/);
+  assert.match(designerCss, /\.designer-header \.designer-back \{[^}]*display: inline-flex/);
+  assert.match(designerCss, /\.designer-steps \{ width: 100%; margin: 0 0 \.8rem; grid-template-columns: repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(designerCss, /\.designer-opening-images \{ grid-template-columns: repeat\(2,minmax\(0,1fr\)\)/);
 });
 
 test("the dashboard has mobile cards, expiring feedback, and a WhatsApp publishing action", async () => {
@@ -259,10 +267,11 @@ test("the dashboard has mobile cards, expiring feedback, and a WhatsApp publishi
   assert.match(dashboard, /data-label="Actions"/);
   assert.match(dashboard, /setActionNotice\(""\); \}, 5000\)/);
   assert.match(dashboard, /Send via WhatsApp/);
-  assert.match(dashboard, /wa\.me\/230\$\{phone\}\?text=/);
+  assert.match(dashboard, /customerWhatsAppUrl\(order\.phone/);
+  assert.match(css, /\.order-danger-action\.is-undeploy svg:not\(\.is-spinning\)/);
 });
 
-test("duplicates review orders with independent photo storage and rejects live orders", async () => {
+test("duplicates review orders with independent photo storage and an atomic DB commit", async () => {
   const [{ POST }, { createInitialInvitation, createSection }] = await Promise.all([
     vite.ssrLoadModule("/app/api/dashboard/orders/route.ts"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
@@ -286,7 +295,7 @@ test("duplicates review orders with independent photo storage and rejects live o
   process.env.SUPABASE_URL = storageOrigin;
   process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
   const posts = [];
-  let failMediaInsert = false;
+  let failAtomicCommit = false;
   const response = (value, status = 200) => Response.json(value, { status });
   const endpoint = "/api/dashboard/orders";
   try {
@@ -294,7 +303,7 @@ test("duplicates review orders with independent photo storage and rejects live o
       const url = String(input);
       if (url.includes("/rest/v1/invitations?") && (!init.method || init.method === "GET")) {
         if (new URL(url).searchParams.get("select") === "id") return response([]);
-        return response([original]);
+        return new URL(url).searchParams.get("id") === `eq.${originalId}` || !new URL(url).searchParams.has("id") ? response([original]) : response([]);
       }
       if (url.includes("/rest/v1/invitation_media?") && (!init.method || init.method === "GET")) {
         return response([{ storage_path: `${originalId}/photo.jpg`, public_url: oldUrl, slot: "hero", mime_type: "image/jpeg", size_bytes: 3 }]);
@@ -304,14 +313,10 @@ test("duplicates review orders with independent photo storage and rejects live o
         posts.push({ type: "photo", url });
         return response({});
       }
-      if (init.method === "POST" && url.includes("/rest/v1/invitations?")) {
+      if (init.method === "POST" && url.endsWith("/rest/v1/rpc/create_invitation_with_media")) {
         const values = JSON.parse(init.body);
-        posts.push({ type: "order", values });
-        return response([{ ...original, ...values, active_until: null, deployed_at: null, inactive_at: null }], 201);
-      }
-      if (init.method === "POST" && url.endsWith("/rest/v1/invitation_media")) {
-        posts.push({ type: "media", values: JSON.parse(init.body) });
-        return failMediaInsert ? response({ message: "Insert failed" }, 500) : response({}, 201);
+        posts.push({ type: "atomic", values });
+        return failAtomicCommit ? response({ message: "Insert failed" }, 500) : response([{ ...original, id: values.p_id, slug: values.p_slug, config: values.p_config, total_price: values.p_total_price }], 201);
       }
       if (init.method === "DELETE" && url.includes("/rest/v1/invitations?")) {
         posts.push({ type: "order-rollback", url });
@@ -331,22 +336,22 @@ test("duplicates review orders with independent photo storage and rejects live o
     assert.equal(order.slug, "custom-link-copy");
     assert.equal(order.total_price, 1730);
     assert.notEqual(order.id, originalId);
-    assert.deepEqual(posts.map((item) => item.type), ["photo", "order", "media"]);
-    const photoUrl = posts[2].values[0].public_url;
-    assert.match(photoUrl, new RegExp(`/${order.id}/`));
-    assert.equal(posts[1].values.config.hero.uploadedUrl, photoUrl);
+    assert.deepEqual(posts.map((item) => item.type), ["photo", "atomic"]);
+    const photoUrl = posts[1].values.p_media[0].public_url;
+    assert.match(photoUrl, new RegExp(`/${order.id}-customer-custom-link-copy/`));
+    assert.equal(posts[1].values.p_config.hero.uploadedUrl, photoUrl);
     assert.equal(order.config.hero.uploadedUrl, photoUrl);
-    assert.equal(posts[1].values.config.sections.at(-1).images[0], photoUrl);
-    assert.equal(posts[2].values[0].invitation_id, order.id);
+    assert.equal(posts[1].values.p_config.sections.at(-1).images[0], photoUrl);
+    assert.equal(posts[1].values.p_media[0].storage_path.startsWith(`${order.id}-`), true);
     assert.notEqual(photoUrl, oldUrl);
 
     original.status = "active";
     const denied = await POST(new Request(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
     assert.equal(denied.status, 409);
-    assert.equal(posts.length, 3);
+    assert.equal(posts.length, 2);
 
     original.status = "pending";
-    failMediaInsert = true;
+    failAtomicCommit = true;
     const previousConsoleError = console.error;
     const expectedErrors = [];
     let unsuccessful;
@@ -358,17 +363,315 @@ test("duplicates review orders with independent photo storage and rejects live o
     }
     assert.match(expectedErrors[0][0], /Unable to duplicate invitation order/);
     assert.equal(unsuccessful.status, 503);
-    assert.deepEqual(posts.slice(3).map((item) => item.type), ["photo", "order", "media", "order-rollback", "photo-rollback"]);
-    assert.match(posts[6].url, new RegExp(`id=eq\\.${posts[4].values.id}`));
-    assert.deepEqual(posts[7].values.prefixes, [posts[5].values[0].storage_path]);
+    assert.deepEqual(posts.slice(2).map((item) => item.type), ["photo", "atomic", "photo-rollback"]);
+    assert.deepEqual(posts[4].values.prefixes, [posts[3].values.p_media[0].storage_path]);
 
     original.slug = null;
-    failMediaInsert = false;
+    failAtomicCommit = false;
     const withoutSlug = await POST(new Request(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
     assert.equal(withoutSlug.status, 201);
     assert.equal((await withoutSlug.json()).order.slug, "john-and-sameer-copy");
   } finally {
     globalThis.fetch = existingFetch;
+    if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
+    if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = previousKey;
+  }
+});
+
+test("new media folders include order id, customer name and link while old folders remain valid", async () => {
+  const [{ mediaFolderForOrder, belongsToOrder }, { createInitialInvitation }] = await Promise.all([
+    vite.ssrLoadModule("/lib/invitation-media-path.ts"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+  ]);
+  const config = createInitialInvitation();
+  config.contact.name = "Élodie & Aamir";
+  const id = "11111111-1111-4111-8111-111111111111";
+  const folder = mediaFolderForOrder({ id, slug: "john-and-sameer-copy", config });
+  assert.equal(folder, `${id}-elodie-aamir-john-and-sameer-copy`);
+  assert.ok(belongsToOrder(`${folder}/hero:0-example.webp`, id));
+  assert.ok(belongsToOrder(`${id}/old-photo.jpg`, id));
+  assert.equal(belongsToOrder("different-id/photo.jpg", id), false);
+});
+
+test("retries an interrupted batch without uploading successful files again and explains plain-text 413", async () => {
+  const { uploadPendingPhotos } = await vite.ssrLoadModule("/lib/photo-upload.ts");
+  const files = [new File(["one"], "one.jpg", { type: "image/jpeg" }), new File(["two"], "two.jpg", { type: "image/jpeg" })];
+  const pending = { "section:glimpse-included:images": files };
+  const prepared = new Map();
+  const uploaded = new Map();
+  files.forEach((file) => prepared.set(file, file));
+  const originalFetch = globalThis.fetch;
+  let requests = 0;
+  try {
+    globalThis.fetch = async (_url, init) => {
+      requests += 1;
+      assert.equal(init.body.get("file").name, files[requests - 1].name);
+      return requests === 2
+        ? new Response("Payload Too Large", { status: 413 })
+        : Response.json({ url: `https://example.com/photo-${requests}.jpg`, path: `folder/photo-${requests}.jpg`, slot: "section:glimpse-included:images:0", mimeType: "image/jpeg", sizeBytes: 3, receipt: "signed" }, { status: 201 });
+    };
+    await assert.rejects(uploadPendingPhotos("order", pending, "/api/invitations/media", prepared, uploaded, "secret"), /two\.jpg exceeded the upload limit/);
+    assert.equal(uploaded.get(files[0]).url, "https://example.com/photo-1.jpg");
+    globalThis.fetch = async () => { requests += 1; return Response.json({ url: "https://example.com/photo-2.jpg", path: "folder/photo-2.jpg", slot: "section:glimpse-included:images:1", mimeType: "image/jpeg", sizeBytes: 3, receipt: "signed" }, { status: 201 }); };
+    const result = await uploadPendingPhotos("order", pending, "/api/invitations/media", prepared, uploaded, "secret");
+    assert.deepEqual(result["section:glimpse-included:images"], ["https://example.com/photo-1.jpg", "https://example.com/photo-2.jpg"]);
+    assert.equal(requests, 3);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("a failed six-photo submission creates no invitation or media rows and cleans up staged images", async () => {
+  const [{ POST: beginOrFinalize }, { POST: upload }, { createInitialInvitation, createSection }] = await Promise.all([
+    vite.ssrLoadModule("/app/api/invitations/route.ts"),
+    vite.ssrLoadModule("/app/api/invitations/media/route.ts"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+  ]);
+  const config = createInitialInvitation();
+  config.contact = { name: "John Client", phone: "58749327" };
+  const section = createSection("glimpse");
+  config.sections.push(section);
+  const slots = Array.from({ length: 6 }, (_, index) => `section:${section.id}:images:${index}`);
+  const previousUrl = process.env.SUPABASE_URL;
+  const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const originalFetch = globalThis.fetch;
+  process.env.SUPABASE_URL = "https://test-project.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
+  let uploadCount = 0;
+  let dbCommits = 0;
+  let lastCommit = null;
+  let committedId = "";
+  let removed = [];
+  try {
+    globalThis.fetch = async (input, init = {}) => {
+      const url = String(input);
+      if (url.includes("/rest/v1/invitations?")) return Response.json(committedId && new URL(url).searchParams.get("id") === `eq.${committedId}` ? [{ id: committedId }] : []);
+      if (init.method === "POST" && url.includes("/storage/v1/object/invitation-media/")) {
+        uploadCount += 1;
+        return uploadCount === 5 ? new Response("Payload Too Large", { status: 413 }) : Response.json({}, { status: 201 });
+      }
+      if (init.method === "DELETE" && url.endsWith("/storage/v1/object/invitation-media")) {
+        removed = JSON.parse(init.body).prefixes;
+        return Response.json({});
+      }
+      if (init.method === "POST" && url.endsWith("/rest/v1/rpc/create_invitation_with_media")) {
+        dbCommits += 1;
+        const body = JSON.parse(init.body);
+        lastCommit = body;
+        committedId = body.p_id;
+        return Response.json([{ id: body.p_id }]);
+      }
+      throw new Error(`Unexpected ${init.method ?? "GET"} request: ${url}`);
+    };
+    const begin = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+      method: "POST", body: JSON.stringify({ config, slots }),
+    }));
+    assert.equal(begin.status, 201);
+    const { id, uploadToken } = await begin.json();
+    const photos = [];
+    for (const slot of slots.slice(0, 5)) {
+      const form = new FormData();
+      form.set("invitationId", id);
+      form.set("uploadToken", uploadToken);
+      form.set("slot", slot);
+      form.set("file", new File(["small photo"], "memory.webp", { type: "image/webp" }));
+      const result = await upload(new Request("https://localhost/api/invitations/media", { method: "POST", body: form }));
+      if (photos.length === 4) {
+        assert.equal(result.status, 413);
+        assert.match((await result.json()).error, /storage limit/);
+      } else {
+        assert.equal(result.status, 201);
+        photos.push(await result.json());
+      }
+    }
+    assert.equal(dbCommits, 0);
+    const incomplete = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+      method: "POST", body: JSON.stringify({ operation: "finalize-media", id, uploadToken, config, media: photos }),
+    }));
+    assert.equal(incomplete.status, 400);
+    assert.equal(dbCommits, 0);
+    const cleanup = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+      method: "POST", body: JSON.stringify({ operation: "cancel-media", id, uploadToken, media: photos }),
+    }));
+    assert.equal(cleanup.status, 200);
+    assert.deepEqual(removed, photos.map((photo) => photo.path));
+    assert.equal(dbCommits, 0);
+
+    const retry = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+      method: "POST", body: JSON.stringify({ config, slots }),
+    }));
+    const submission = await retry.json();
+    const complete = [];
+    for (const slot of slots) {
+      const form = new FormData();
+      form.set("invitationId", submission.id);
+      form.set("uploadToken", submission.uploadToken);
+      form.set("slot", slot);
+      form.set("file", new File(["small photo"], "memory.webp", { type: "image/webp" }));
+      const result = await upload(new Request("https://localhost/api/invitations/media", { method: "POST", body: form }));
+      assert.equal(result.status, 201);
+      complete.push(await result.json());
+    }
+    section.images = complete.map((photo) => photo.url);
+    const committed = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+      method: "POST", body: JSON.stringify({ operation: "finalize-media", id: submission.id, uploadToken: submission.uploadToken, config, media: complete }),
+    }));
+    assert.equal(committed.status, 201);
+    assert.equal(dbCommits, 1);
+    assert.equal(lastCommit.p_media.length, 6);
+    assert.ok(lastCommit.p_media.every((photo) => photo.storage_path.startsWith(`${submission.id}-john-client-`)));
+    const savedFile = new FormData();
+    savedFile.set("invitationId", submission.id);
+    savedFile.set("uploadToken", submission.uploadToken);
+    savedFile.set("slot", slots[0]);
+    savedFile.set("file", new File(["small photo"], "extra.webp", { type: "image/webp" }));
+    assert.equal((await upload(new Request("https://localhost/api/invitations/media", { method: "POST", body: savedFile }))).status, 409);
+    assert.equal(uploadCount, 11);
+    const lateCancel = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+      method: "POST", body: JSON.stringify({ operation: "cancel-media", id: submission.id, uploadToken: submission.uploadToken, media: complete }),
+    }));
+    assert.equal((await lateCancel.json()).committed, true);
+    assert.deepEqual(removed, photos.map((photo) => photo.path));
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
+    if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = previousKey;
+  }
+});
+
+test("admin login issues a signed HttpOnly session and rejects invalid credentials", async () => {
+  const [{ POST, DELETE }, session, { default: LoginPage }] = await Promise.all([
+    vite.ssrLoadModule("/app/api/admin-session/route.ts"),
+    vite.ssrLoadModule("/lib/admin-session.ts"),
+    vite.ssrLoadModule("/app/dashboard/login/page.tsx"),
+  ]);
+  const keys = ["DASHBOARD_USERNAME", "DASHBOARD_PASSWORD", "DASHBOARD_SESSION_SECRET"];
+  const previous = keys.map((key) => process.env[key]);
+  try {
+    process.env.DASHBOARD_USERNAME = "admin";
+    process.env.DASHBOARD_PASSWORD = "correct horse battery staple!";
+    process.env.DASHBOARD_SESSION_SECRET = "long-independent-random-session-secret-0000000000000000000";
+    const loginRequest = (password, origin = "https://paperless.test") => new Request("https://paperless.test/api/admin-session", {
+      method: "POST", headers: { Origin: origin, "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "admin", password }),
+    });
+    assert.equal((await POST(loginRequest("wrong"))).status, 401);
+    assert.equal((await POST(loginRequest("correct horse battery staple!", "https://attacker.test"))).status, 403);
+    const ok = await POST(loginRequest("correct horse battery staple!"));
+    assert.equal(ok.status, 200);
+    const cookie = ok.headers.get("set-cookie");
+    assert.match(cookie, /HttpOnly/);
+    assert.match(cookie, /SameSite=Strict/i);
+    assert.match(cookie, /Secure/);
+    const token = cookie.match(/paperless_admin_session=([^;]+)/)[1];
+    assert.equal(await session.verifyAdminSession(token), true);
+    assert.equal(await session.verifyAdminSession(token.replace("v1.", "v2.")), false);
+    assert.equal((await DELETE(new Request("https://paperless.test/api/admin-session", { method: "DELETE", headers: { Origin: "https://paperless.test" } }))).status, 200);
+    const html = renderToStaticMarkup(React.createElement(LoginPage));
+    assert.match(html, /Welcome back/);
+    assert.match(html, /Sign in to orders/);
+  } finally { keys.forEach((key, index) => { if (previous[index] === undefined) delete process.env[key]; else process.env[key] = previous[index]; }); }
+});
+
+test("saving an admin edit prunes removed image metadata atomically and deletes its stored blob", async () => {
+  const [{ PATCH }, { createInitialInvitation }] = await Promise.all([
+    vite.ssrLoadModule("/app/api/dashboard/orders/route.ts"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+  ]);
+  const id = "11111111-1111-4111-8111-111111111111";
+  const storagePath = `${id}-customer-john-and-sameer/old-image.webp`;
+  const url = `https://test-project.supabase.co/storage/v1/object/public/invitation-media/${storagePath}`;
+  const config = createInitialInvitation();
+  config.contact = { name: "Customer", phone: "58749327" };
+  config.hero.type = "interactive";
+  config.hero.photoSource = "upload";
+  config.hero.uploadedUrl = url;
+  const newConfig = structuredClone(config);
+  newConfig.hero.photoSource = "preset";
+  newConfig.hero.uploadedUrl = "";
+  const order = { id, status: "pending", slug: "john-and-sameer", active_until: null, total_price: 1000, created_at: "2026-09-14T00:00:00Z", deployed_at: null, inactive_at: null, config };
+  const previousUrl = process.env.SUPABASE_URL;
+  const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const originalFetch = globalThis.fetch;
+  let update = null;
+  let removedPaths = [];
+  process.env.SUPABASE_URL = "https://test-project.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
+  try {
+    globalThis.fetch = async (input, init = {}) => {
+      const endpoint = String(input);
+      if (endpoint.includes("/rest/v1/invitations?") && (!init.method || init.method === "GET")) return Response.json([order]);
+      if (endpoint.includes("/rest/v1/invitation_media?") && (!init.method || init.method === "GET")) return Response.json([{ storage_path: storagePath, public_url: url }]);
+      if (endpoint.endsWith("/rest/v1/rpc/update_invitation_with_media")) {
+        update = JSON.parse(init.body);
+        return Response.json([{ ...order, config: newConfig }]);
+      }
+      if (init.method === "DELETE" && endpoint.endsWith("/storage/v1/object/invitation-media")) {
+        removedPaths = JSON.parse(init.body).prefixes;
+        return Response.json({});
+      }
+      throw new Error(`Unexpected ${init.method ?? "GET"} request: ${endpoint}`);
+    };
+    const result = await PATCH(new Request("https://localhost/api/dashboard/orders", {
+      method: "PATCH", body: JSON.stringify({ id, action: "save", config: newConfig, totalPrice: 1000 }),
+    }));
+    assert.equal(result.status, 200);
+    assert.equal(update.p_id, id);
+    assert.deepEqual(update.p_media, []);
+    assert.equal(update.p_values.config.hero.uploadedUrl, "");
+    assert.deepEqual(removedPaths, [storagePath]);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
+    if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = previousKey;
+  }
+});
+
+test("WhatsApp text distinguishes a plain customer chat from a live invitation; social image follows the opening", async () => {
+  const [{ customerWhatsAppUrl }, { invitationPreviewImage }, { createInitialInvitation, openingAssets }] = await Promise.all([
+    vite.ssrLoadModule("/lib/whatsapp-messages.ts"),
+    vite.ssrLoadModule("/lib/invitation-social.ts"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+  ]);
+  const chat = new URL(customerWhatsAppUrl("58749327", "Aisha"));
+  assert.equal(chat.pathname, "/23058749327");
+  assert.equal(chat.searchParams.get("text"), "Hello Aisha, this is paperless invite.");
+  const share = new URL(customerWhatsAppUrl("58749327", "Aisha", "https://www.paperless-invites.com/aisha-copy"));
+  assert.match(share.searchParams.get("text"), /Link: https:\/\/www\.paperless-invites\.com\/aisha-copy/);
+  assert.match(share.searchParams.get("text"), /share with your guests/);
+  assert.match(share.searchParams.get("text"), /leave a review/);
+  assert.equal(customerWhatsAppUrl("123", "Aisha"), "");
+  const config = createInitialInvitation();
+  config.opening = { type: "curtain", asset: "classic-curtain", initials: "A" };
+  const origin = "https://www.paperless-invites.com";
+  assert.equal(invitationPreviewImage(config, origin), `${origin}${openingAssets.curtain[0].urls[config.palette]}`);
+  const publicPage = await readFile(new URL("../app/[slug]/page.tsx", import.meta.url), "utf8");
+  assert.match(publicPage, /generateMetadata/);
+  assert.match(publicPage, /openGraph: \{ type: "website"/);
+});
+
+test("live invitation metadata advertises its opening artwork at the canonical public URL", async () => {
+  const [{ generateMetadata }, { createInitialInvitation }] = await Promise.all([
+    vite.ssrLoadModule("/app/[slug]/page.tsx"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+  ]);
+  const config = createInitialInvitation();
+  config.hero.firstName = "John";
+  config.hero.secondName = "Sameer";
+  config.opening.type = "envelope";
+  const originalFetch = globalThis.fetch;
+  const previousUrl = process.env.SUPABASE_URL;
+  const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  process.env.SUPABASE_URL = "https://test-project.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
+  try {
+    globalThis.fetch = async () => Response.json([{
+      id: "11111111-1111-4111-8111-111111111111", slug: "john-and-sameer", status: "active", active_until: "2099-12-31", config,
+    }]);
+    const metadata = await generateMetadata({ params: Promise.resolve({ slug: "john-and-sameer" }) });
+    assert.equal(metadata.openGraph.url, "https://www.paperless-invites.com/john-and-sameer");
+    assert.match(metadata.openGraph.images[0].url, /builder-envelope-classic-beige\.webp/);
+    assert.equal(metadata.openGraph.type, "website");
+  } finally {
+    globalThis.fetch = originalFetch;
     if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
     if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = previousKey;
   }
@@ -411,7 +714,7 @@ test("supports automatic invitation routes and order lifecycle storage", async (
   assert.match(migration, /active_until/);
   assert.match(migration, /invitations_slug_idx/);
   assert.match(migration, /drop column if exists updated_at/);
-  assert.match(proxy, /DASHBOARD_USERNAME/);
+  assert.match(proxy, /verifyAdminSession/);
   assert.match(proxy, /\/api\/dashboard/);
   assert.match(proxy, /\/dashboard\/:path\*/);
   assert.match(publicRoute, /getPublicInvitationBySlug/);
@@ -435,7 +738,7 @@ test("supports automatic invitation routes and order lifecycle storage", async (
   assert.match(dashboard, /orders-datatable/);
   assert.match(dashboard, /Custom part/);
   assert.match(dashboard, /\/dashboard\/preview\/\$\{order\.id\}/);
-  assert.match(dashboard, /wa\.me\/230/);
+  assert.match(dashboard, /customerWhatsAppUrl/);
   assert.doesNotMatch(dashboard, /window\.confirm/);
   assert.match(confirmation, /role="dialog"/);
 });

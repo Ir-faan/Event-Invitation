@@ -90,9 +90,9 @@ export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKe
 }
 
 /** The full invitation without the builder's decorative phone frame. */
-export function PublishedInvitation({ config }: { config: InvitationConfig }) {
+export function PublishedInvitation({ config, privatePreview = false }: { config: InvitationConfig; privatePreview?: boolean }) {
   return (
-    <main className="published-invitation" style={getThemeStyle(config)}>
+    <main className={`published-invitation${privatePreview ? " is-private" : ""}`} style={getThemeStyle(config)}>
       <div className="designer-phone-screen published-invitation-screen">
         <InvitationPreviewContent config={config} replayKey={0} />
       </div>
@@ -479,7 +479,7 @@ function SectionPreview({ section }: { section: InvitationSection }) {
           <p>{section.fields.message}</p>
           <div className={`preview-gallery ${section.images.length ? "has-photos" : ""}`}>
             {section.images.length
-              ? section.images.map((image, index) => <figure key={`${image}-${index}`}><img src={image} alt={`Uploaded couple memory ${index + 1}`} /></figure>)
+              ? section.images.map((image, index) => <figure key={`${image}-${index}`}><img src={image} alt={`Uploaded couple memory ${index + 1}`} loading="lazy" decoding="async" /></figure>)
               : Array.from({ length: 5 }, (_, index) => <span key={index}><ImageIcon aria-hidden="true" /><small>Your photo</small></span>)}
           </div>
         </PreviewSection>

@@ -19,18 +19,6 @@ export function getSupabaseEnvironment(): SupabaseEnvironment {
   };
 }
 
-export async function hashSubmissionToken(token: string) {
-  const bytes = new TextEncoder().encode(token);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-export function createSubmissionToken() {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
 export async function supabaseRequest(path: string, init: RequestInit = {}) {
   const { url, serviceRoleKey } = getSupabaseEnvironment();
   const headers = new Headers(init.headers);
@@ -43,14 +31,6 @@ export async function supabaseRequest(path: string, init: RequestInit = {}) {
     throw new Error(`Supabase request failed (${response.status}): ${detail.slice(0, 300)}`);
   }
   return response;
-}
-
-export async function invitationAcceptsUpload(id: string, token: string) {
-  const hash = await hashSubmissionToken(token);
-  const params = new URLSearchParams({ select: "id", id: `eq.${id}`, edit_token_hash: `eq.${hash}`, limit: "1" });
-  const response = await supabaseRequest(`/rest/v1/invitations?${params.toString()}`);
-  const rows = (await response.json()) as Array<{ id: string }>;
-  return rows.length > 0;
 }
 
 export function publicStorageUrl(path: string) {

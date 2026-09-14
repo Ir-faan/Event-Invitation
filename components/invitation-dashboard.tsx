@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Files,
   Loader2,
+  LogOut,
   PackageCheck,
   PencilLine,
   Plus,
@@ -29,6 +30,7 @@ import {
 import { InvitationDesigner, type AdminInvitationOrder } from "@/components/invitation-designer";
 import { OrderConfirmationModal } from "@/components/order-confirmation-modal";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
+import { customerWhatsAppUrl } from "@/lib/whatsapp-messages";
 import type { InvitationOrderStatus, InvitationOrderSummary } from "@/lib/invitation-orders";
 
 type SortKey = "coupleName" | "customerName" | "eventDate" | "created_at" | "total_price" | "status";
@@ -307,7 +309,7 @@ export function InvitationDashboard() {
                       <SortableHeading label="Customer" sortKey="customerName" sort={sort} onSort={updateSort} />
                       <th scope="col">Link</th>
                       <SortableHeading label="Event date" sortKey="eventDate" sort={sort} onSort={updateSort} />
-                      <SortableHeading label="Created" sortKey="created_at" sort={sort} onSort={updateSort} />
+                      <SortableHeading label="Created (MUT)" sortKey="created_at" sort={sort} onSort={updateSort} />
                       <SortableHeading label="Price" sortKey="total_price" sort={sort} onSort={updateSort} />
                       <SortableHeading label="Status" sortKey="status" sort={sort} onSort={updateSort} />
                       <th scope="col"><span className="sr-only">Actions</span></th>
@@ -353,12 +355,17 @@ export function InvitationDashboard() {
 }
 
 function DashboardHeader({ onRefresh, loading }: { onRefresh: () => void; loading: boolean }) {
+  async function signOut() {
+    const response = await fetch("/api/admin-session", { method: "DELETE" });
+    if (response.ok) window.location.assign("/dashboard/login");
+  }
   return (
     <header className="orders-header">
       <Link className="orders-brand" href="/dashboard" aria-label="Paperless Invites dashboard"><span>PI</span><div><strong>Paperless Invites</strong><small>Private dashboard</small></div></Link>
       <div className="orders-header-actions">
         <Link href="/design-invitation"><Plus aria-hidden="true" /> Create invitation</Link>
         <button type="button" onClick={onRefresh} disabled={loading}><RefreshCcw className={loading ? "is-spinning" : ""} aria-hidden="true" /> Refresh</button>
+        <button type="button" onClick={() => void signOut()}><LogOut aria-hidden="true" /> Sign out</button>
       </div>
     </header>
   );
@@ -392,17 +399,14 @@ function OrderRow({ order, busy, onOpen, onDeploy, onDelete, onDuplicate, onDeac
 }) {
   const linkPath = `/${order.slug || order.suggestedSlug}`;
   const fullUrl = `${publicOrigin || "https://www.paperless-invites.com"}${linkPath}`;
-  const phone = order.phone.trim();
-  const whatsappUrl = /^5\d{7}$/.test(phone)
-    ? `https://wa.me/230${phone}${order.status === "active" && order.slug ? `?text=${encodeURIComponent(`Hi ${order.customerName}, your invitation is live! ${fullUrl}`)}` : ""}`
-    : "";
+  const whatsappUrl = customerWhatsAppUrl(order.phone, order.customerName, order.status === "active" && order.slug ? fullUrl : undefined);
   return (
     <tr>
       <td data-label="Invitation"><span className="orders-invitation-cell"><i>{initials(order.coupleName)}</i><span><strong>{order.coupleName}</strong><small title={order.id}>Order {order.id.slice(0, 8)}</small></span></span></td>
       <td data-label="Customer"><span className="orders-cell-stack"><strong>{order.customerName}</strong><small>{formatPhone(order.phone)}</small></span></td>
       <td data-label="Link"><button className="orders-link-button" type="button" onClick={onCopyLink} disabled={copying || busy} title={order.slug ? `Click to copy ${fullUrl}` : `Suggested ${fullUrl} · click to reserve and copy the exact link`} aria-label={`Copy ${order.coupleName}'s full invitation link`}>{copying ? <Loader2 className="is-spinning" aria-hidden="true" /> : copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}<span>{linkPath}</span></button>{order.slug?.includes("-copy") && <small className="orders-link-note is-full-url" title={fullUrl}>{fullUrl.replace(/^https?:\/\//, "")}</small>}{!order.slug && <small className="orders-link-note">Suggested · reserve on copy</small>}{copied && <small className="orders-link-note" role="status">Full link copied</small>}</td>
       <td data-label="Event date"><span className="orders-cell-stack"><strong>{formatDate(order.eventDate)}</strong><small>{order.sectionCount} invitation parts</small>{order.hasCustomPart && <span className="orders-custom-badge"><Sparkles aria-hidden="true" /> Custom part</span>}</span></td>
-      <td data-label="Created"><span className="orders-cell-stack"><strong>{formatCreatedDate(order.created_at)}</strong><small>{formatCreatedTime(order.created_at)}</small></span></td>
+      <td data-label="Created (Mauritius)" title={`Stored in database (UTC): ${order.created_at}`}><span className="orders-cell-stack"><strong>{formatCreatedDate(order.created_at)}</strong><small>{formatCreatedTime(order.created_at)} MUT</small></span></td>
       <td data-label="Price"><strong>{formatMoney(order.total_price)}</strong></td>
       <td data-label="Status"><span className="orders-cell-stack"><StatusChip status={order.status} />{order.status === "active" && <small>Until {formatDate(order.active_until)}</small>}</span></td>
       <td data-label="Actions"><div className="orders-row-actions">
@@ -454,10 +458,7 @@ function DeployModal({ order, value, today, busy, preparingLink, success, error,
   const dateRef = useRef<HTMLInputElement>(null);
   const copyRef = useRef<HTMLButtonElement>(null);
   const publicUrl = `${publicOrigin || "https://www.paperless-invites.com"}/${order.slug || order.suggestedSlug}`;
-  const phone = order.phone.trim();
-  const whatsappUrl = /^5\d{7}$/.test(phone)
-    ? `https://wa.me/230${phone}?text=${encodeURIComponent(`Hi ${order.customerName}, your invitation is live! ${publicUrl}`)}`
-    : "";
+  const whatsappUrl = customerWhatsAppUrl(order.phone, order.customerName, publicUrl);
 
   useEffect(() => { dateRef.current?.focus(); }, []);
   useEffect(() => { if (success) copyRef.current?.focus(); }, [success]);

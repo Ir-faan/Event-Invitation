@@ -1,23 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { adminCookieName, adminIsConfigured, isSameOrigin, verifyAdminSession } from "@/lib/admin-session";
 
-export function proxy(request: NextRequest) {
-  const username = process.env.DASHBOARD_USERNAME;
-  const password = process.env.DASHBOARD_PASSWORD;
-
-  if (!username || !password) {
-    if (process.env.NODE_ENV === "development") return NextResponse.next();
-    return new NextResponse("Dashboard access is not configured.", { status: 503 });
+export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname === "/dashboard/login") return NextResponse.next();
+  if (!adminIsConfigured()) return new NextResponse("Dashboard login is not configured.", { status: 503 });
+  const allowed = await verifyAdminSession(request.cookies.get(adminCookieName)?.value);
+  if (!allowed) {
+    if (request.nextUrl.pathname.startsWith("/api/")) return NextResponse.json({ error: "Please log in to the dashboard." }, { status: 401 });
+    const destination = new URL("/dashboard/login", request.url);
+    destination.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(destination);
   }
-
-  const authorization = request.headers.get("authorization");
-  const expected = `Basic ${btoa(`${username}:${password}`)}`;
-  if (authorization !== expected) {
-    return new NextResponse("Authentication required.", {
-      status: 401,
-      headers: { "WWW-Authenticate": 'Basic realm="Paperless Invites Dashboard", charset="UTF-8"' },
-    });
+  if (!["GET", "HEAD", "OPTIONS"].includes(request.method) && !isSameOrigin(request)) {
+    return NextResponse.json({ error: "This action must come from the dashboard." }, { status: 403 });
   }
-
   return NextResponse.next();
 }
 

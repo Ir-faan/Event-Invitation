@@ -22,25 +22,33 @@ The existing Coastal Reverie and Rose Afterglow invitations remain separate from
 ## Supabase setup
 
 1. Create a Supabase project.
-2. In **SQL Editor**, run [`supabase/setup.sql`](supabase/setup.sql). It creates the invitation tables, indexes, private row policies, and the public `invitation-media` image bucket.
+2. In **SQL Editor**, run [`supabase/setup.sql`](supabase/setup.sql) for a new project, then [`supabase/media-commit-migration.sql`](supabase/media-commit-migration.sql) to install the atomic order/media functions.
 3. Copy `.env.example` to `.env.local`.
 4. Add the project URL and the **service role key** from **Project Settings > API**. The service role key is server-only and must never be prefixed with `NEXT_PUBLIC_` or committed.
 
-Saved rows are protected by Row Level Security. Browser requests go through validated server routes. A one-time credential is used only while a new submission uploads photos and is invalidated immediately afterwards; it is never stored in the browser for later editing.
+Saved rows are protected by Row Level Security. Browser requests go through validated server routes. A signed, 30-minute upload permission exists only during a new submission; it is never saved in either database table and cannot edit an order. Images are staged in Storage first. Only after every image succeeds does a single PostgreSQL function insert the order and all of its photo rows together. A failed upload cannot leave a partial invitation or `invitation_media` entry. If an upload or save fails, the browser requests removal of staged blobs; exceptional network interruptions may leave unreferenced Storage objects, which should be reviewed periodically.
 
-If the original setup script was already run, run [`supabase/dashboard-migration.sql`](supabase/dashboard-migration.sql) again after pulling this version. It preserves existing invitations, removes the obsolete `updated_at` column, allows administrator price overrides, and keeps deployment status, public slugs, and active-until dates up to date.
+For an existing project, run [`supabase/dashboard-migration.sql`](supabase/dashboard-migration.sql) if it has not been applied already, then **run [`supabase/media-commit-migration.sql`](supabase/media-commit-migration.sql) before deploying this version**. It permits both the old and new code during rollout. Once the new code is deployed and working, run [`supabase/remove-obsolete-columns.sql`](supabase/remove-obsolete-columns.sql) to drop `edit_token_hash` and any remaining `updated_at` artifacts without altering existing orders. Keep `created_at`, `deployed_at`, and `inactive_at`: they still drive the dashboard and status history. Do not run the removal script before deployment; the old version still requires its edit-token column.
+
+If you saw old media rows without an actual image, the read-only [`supabase/audit-existing-media.sql`](supabase/audit-existing-media.sql) lists them for review. It intentionally does not delete historical orders or photos automatically.
+
+The browser converts iPhone HEIC/HEIF photos to JPEG for decoding, then encodes JPG, PNG, WebP and HEIC uploads to an optimized WebP (up to 1,800px, aiming below 900 KB). If an original JPG/WebP is already smaller than the optimized version, the smaller original is kept. New Storage object names are unique and immutable, with a one-year browser/CDN cache lifetime. Gallery photos load lazily. No paid image-transformation feature is required; customer images are already optimized before entering Storage. The public invitation itself is checked on each request so undeployment remains immediate, even though immutable image URLs can stay in a visitor's browser cache.
 
 ## Private order dashboard
 
-Open `/dashboard` directly. There is intentionally no login button or login page. Until database-backed administrator accounts are introduced, the route and its server API use the browser's native HTTP Basic Authentication prompt.
+Open `/dashboard` to be redirected to `/dashboard/login`. Sign in with the configured administrator username and password; the browser receives an HttpOnly, SameSite session cookie that expires after eight hours. Sign out from the dashboard header. The dashboard API and private previews require the same login, and modifications also check the request origin. There are no customer login or customer-edit credentials.
 
 Add these server-side values to `.env.local` and to the deployed environment:
 
 ```bash
 DASHBOARD_USERNAME=admin
 DASHBOARD_PASSWORD=use-a-long-unique-password
+# Optional (recommended): independent random secret, 32+ characters
+DASHBOARD_SESSION_SECRET=generate-a-random-secret-with-at-least-32-characters
 PUBLIC_SITE_URL=https://www.paperless-invites.com
 ```
+
+The existing `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD` work without further setup. Use a unique, strong password. An independent randomly generated `DASHBOARD_SESSION_SECRET` is recommended and rotates all existing sessions when changed; never expose either as a `NEXT_PUBLIC_` variable. Protect `/api/admin-session` with your hosting provider's IP-based login rate limit to discourage password guessing. For production, use HTTPS so the session cookie is Secure.
 
 The dashboard lets the administrator:
 
