@@ -198,17 +198,16 @@ button.orders-metric:hover { transform: translateY(-2px); border-color: #d9bcc6;
 .orders-deploy-modal .orders-modal-feedback small { color: #5f786a; font-size: .61rem; line-height: 1.35; }
 .orders-deploy-modal .orders-modal-error { margin: 0; color: #9a2940; font-size: .72rem; line-height: 1.4; }
 .orders-deploy-modal .orders-deploy-actions { width: 100%; min-width: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .6rem; }
+.orders-deploy-modal .orders-deploy-actions.has-whatsapp { grid-template-columns: repeat(3,minmax(0,1fr)); }
 .orders-deploy-modal .orders-deploy-actions button,
 .orders-deploy-modal .orders-deploy-actions a { min-width: 0; min-height: 3rem; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; padding: .5rem .7rem; border: 1px solid var(--orders-line); border-radius: .72rem; color: #6e5d63; background: #fff; font-size: .74rem; font-weight: 800; line-height: 1.3; text-align: center; white-space: normal; }
 .orders-deploy-modal .orders-deploy-actions button svg,
 .orders-deploy-modal .orders-deploy-actions a > svg { width: .95rem; height: .95rem; flex: 0 0 auto; }
 .orders-deploy-modal .orders-deploy-actions button:last-child { color: #fff; border-color: var(--orders-wine); background: var(--orders-wine); }
-.orders-deploy-modal .orders-deploy-actions.has-whatsapp a.is-whatsapp { grid-column: 1 / -1; min-height: 3.8rem; justify-content: flex-start; padding: .65rem .9rem; color: #fff; border-color: #217253; background: linear-gradient(135deg,#25845f,#196947); box-shadow: 0 .7rem 1.5rem rgba(31,115,81,.16); }
+.orders-deploy-modal .orders-deploy-actions.has-whatsapp a.is-whatsapp { min-height: 3rem; padding: .5rem .65rem; color: #fff; border-color: #217253; background: linear-gradient(135deg,#25845f,#196947); box-shadow: 0 .5rem 1rem rgba(31,115,81,.13); }
 .orders-deploy-modal .orders-deploy-actions a.is-whatsapp:hover { background: linear-gradient(135deg,#207755,#145d3f); }
-.orders-deploy-modal .orders-deploy-actions a.is-whatsapp > svg { width: 1.2rem; height: 1.2rem; }
-.orders-deploy-modal .orders-deploy-actions a.is-whatsapp > span { min-width: 0; display: grid; gap: .08rem; text-align: left; }
-.orders-deploy-modal .orders-deploy-actions a.is-whatsapp strong { font-size: .76rem; }
-.orders-deploy-modal .orders-deploy-actions a.is-whatsapp small { color: rgba(255,255,255,.76); font-size: .61rem; font-weight: 500; }
+.orders-deploy-modal .orders-deploy-actions a.is-whatsapp > svg { width: .78rem; min-width: .78rem; max-width: .78rem; height: .78rem; flex-basis: .78rem; }
+.orders-deploy-modal .orders-deploy-actions a.is-whatsapp > span { min-width: 0; font-size: .7rem; text-align: center; }
 .orders-confirm-modal { position: relative; width: min(31rem,calc(100% - 2rem)); display: grid; justify-items: center; gap: .45rem; padding: 2.2rem 2rem 1.6rem; border: 1px solid #f7e7ec; border-radius: 1.35rem; color: var(--orders-ink); background: radial-gradient(circle at 50% 0,#fff 0,#fffaf8 60%,#f8f1ef 100%); box-shadow: 0 2rem 6rem rgba(20,10,15,.35); text-align: center; }
 .orders-modal-close { position: absolute; top: .8rem; right: .8rem; width: 2rem; height: 2rem; display: grid; place-items: center; border: 0; border-radius: .5rem; color: #816f75; background: transparent; }
 .orders-modal-close:hover { background: #f5e9ed; }
@@ -363,6 +362,7 @@ button.orders-metric:hover { transform: translateY(-2px); border-color: #d9bcc6;
 
 @media (max-width: 340px) {
   .orders-deploy-modal .orders-deploy-actions { grid-template-columns: minmax(0,1fr); }
+  .orders-deploy-modal .orders-deploy-actions.has-whatsapp { grid-template-columns: minmax(0,1fr); }
   .orders-deploy-modal .orders-deploy-actions.has-whatsapp a.is-whatsapp { grid-column: auto; grid-row: auto; }
 }
 

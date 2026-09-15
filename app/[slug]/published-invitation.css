@@ -31,7 +31,7 @@
 
 @media (max-width: 47.99rem) {
   /* Match the phone-frame composition at the real device's viewport width. */
-  .published-invitation .invite-preview-hero-copy h2 { font-size: clamp(4.5rem, 26vw, 7rem); }
+  .published-invitation .invite-preview-hero-copy h2[data-name-fit="standard"] { font-size: clamp(4.5rem, 26vw, 7rem); }
   .published-invitation .invite-preview-hero-image { scale: 1; }
   .published-invitation .preview-gallery { max-width: 29rem; }
 }

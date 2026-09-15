@@ -19,12 +19,17 @@ export async function POST(request: Request) {
     const file = form.get("file");
     const invitationId = form.get("invitationId");
     const slot = form.get("slot");
+    const link = form.get("link");
+    const customerName = form.get("customerName");
 
     if (!(file instanceof File) || typeof invitationId !== "string" || typeof slot !== "string") {
       return NextResponse.json({ error: "The photo upload is incomplete." }, { status: 400 });
     }
     if (!validInvitationId(invitationId) || !validSlot(slot)) {
       return NextResponse.json({ error: "The photo destination is invalid." }, { status: 400 });
+    }
+    if ((link !== null && typeof link !== "string") || (customerName !== null && typeof customerName !== "string")) {
+      return NextResponse.json({ error: "The photo folder details are invalid." }, { status: 400 });
     }
     const extension = allowedTypes.get(file.type);
     if (!extension) return NextResponse.json({ error: "Please use a JPG, PNG or WebP photo." }, { status: 415 });
@@ -33,7 +38,10 @@ export async function POST(request: Request) {
     if (!order) return NextResponse.json({ error: "This order could not be found." }, { status: 404 });
 
     const { bucket } = getSupabaseEnvironment();
-    const storagePath = `${mediaFolderForOrder(order)}/${slot}-${crypto.randomUUID()}.${extension}`;
+    const storagePath = `${mediaFolderForOrder(order, {
+      ...(typeof link === "string" ? { link } : {}),
+      ...(typeof customerName === "string" ? { customerName } : {}),
+    })}/${slot}-${crypto.randomUUID()}.${extension}`;
     const encodedPath = storagePath.split("/").map(encodeURIComponent).join("/");
     await supabaseRequest(`/storage/v1/object/${encodeURIComponent(bucket)}/${encodedPath}`, {
       method: "POST",

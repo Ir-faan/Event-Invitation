@@ -49,7 +49,7 @@ export async function verifyUploadCapability(token: unknown, id: unknown): Promi
   const value = await verify<UploadCapability>("upload", token);
   if (!value || !validInvitationId(id) || value.id !== id || typeof value.folder !== "string" || value.folder.includes("/")
     || typeof value.slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.slug)
-    || !(value.folder.startsWith(`${value.slug}-${id}-`) || (value.folder.startsWith(`${id}-`) && value.folder.endsWith(`-${value.slug}`)))
+    || !value.folder.startsWith(`${value.slug}-${id}-`)
     || !Array.isArray(value.slots) || value.slots.length > 32 || !value.slots.every(validSlot)
     || !Number.isFinite(value.expires) || value.expires < Date.now() || value.expires > Date.now() + maxAge) return null;
   return value;

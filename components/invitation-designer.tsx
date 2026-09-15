@@ -92,6 +92,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   const [addType, setAddType] = useState<SectionType>("special-message");
   const [pendingFiles, setPendingFiles] = useState<Record<string, File[]>>({});
   const [photoProcessing, setPhotoProcessing] = useState(0);
+  const [photoProcessingTarget, setPhotoProcessingTarget] = useState<"" | "hero" | "save" | `section:${string}:images`>("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [saveError, setSaveError] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -128,6 +129,9 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
           : "Save my design";
   const hasCustomPart = config.sections.some((section) => section.type === "custom");
   const pendingPhotoCount = Object.values(pendingFiles).reduce((count, files) => count + files.length, 0);
+  const photoProgressLabel = photoProcessingTarget === "save"
+    ? photoProcessing > 0 ? "Optimizing…" : "Uploading…"
+    : "Preparing preview…";
   const whatsappSupportUrl = whatsappSupportNumber
     ? `https://wa.me/${whatsappSupportNumber}?text=${encodeURIComponent(whatsappSupportMessage)}`
     : "/#consultation";
@@ -351,7 +355,10 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     if (error) { setSaveError(error); return; }
     if (processingPhotosRef.current) { setSaveError("Please wait for your current photos to finish preparing before choosing more."); return; }
     const needsConversion = isHeicPhoto(file);
-    if (needsConversion) setProcessing(1);
+    if (needsConversion) {
+      setPhotoProcessingTarget("hero");
+      setProcessing(1);
+    }
     try {
       const preview = await preparePhotoPreview(file);
       if (config.hero.uploadedUrl.startsWith("blob:")) {
@@ -364,7 +371,12 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "upload", uploadedUrl: url } }));
       activatePreview("hero");
     } catch (cause) { setSaveError(cause instanceof Error ? cause.message : "This photo could not be read."); }
-    finally { if (needsConversion) setProcessing(-1); }
+    finally {
+      if (needsConversion) {
+        setProcessing(-1);
+        setPhotoProcessingTarget("");
+      }
+    }
   }
 
   function removeHeroPhoto() {
@@ -393,13 +405,16 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     if (error) { setSaveError(error); return; }
     if (processingPhotosRef.current) { setSaveError("Please wait for your current photos to finish preparing before choosing more."); return; }
     const needsConversion = files.some(isHeicPhoto);
+    const slot = `section:${sectionId}:images` as const;
     const urls: string[] = [];
-    if (needsConversion) setProcessing(1);
+    if (needsConversion) {
+      setPhotoProcessingTarget(slot);
+      setProcessing(1);
+    }
     try {
       const previews = await Promise.all(files.map(preparePhotoPreview));
       urls.push(...previews.map((preview) => URL.createObjectURL(preview)));
       objectUrls.current.push(...urls);
-      const slot = `section:${sectionId}:images`;
       setPendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), ...files] }));
       updateSection(sectionId, (section) => ({ ...section, images: [...section.images, ...urls].slice(0, 8) }));
       activatePreview(sectionId);
@@ -407,7 +422,10 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       urls.forEach((url) => URL.revokeObjectURL(url));
       setSaveError(cause instanceof Error ? cause.message : "These photos could not be read.");
     } finally {
-      if (needsConversion) setProcessing(-1);
+      if (needsConversion) {
+        setProcessing(-1);
+        setPhotoProcessingTarget("");
+      }
     }
   }
 
@@ -461,12 +479,16 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     setValidationErrors([]);
     setSaveState("saving");
     setSaveError("");
+    if (pendingPhotoCount) setPhotoProcessingTarget("save");
 
     try {
       let workingConfig = removeLocalPhotoUrls(config);
       await preparePhotosForSave();
       if (adminMode && currentAdminOrder) {
-        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
+        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current, undefined, {
+          link: normalizeInvitationLink(adminSlug) || makeInvitationSlug(config),
+          customerName: config.contact.name,
+        });
         if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
         const updated = await updateAdminOrder(currentAdminOrder.id, currentAdminOrder.status === "active" ? "deploy" : "save", {
           config: workingConfig,
@@ -524,6 +546,8 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       console.error(adminMode ? "Unable to update invitation order" : "Unable to send invitation design", error);
       setSaveState("error");
       setSaveError(error instanceof Error ? error.message : "An error happened while saving your design. If it persists, please contact us on WhatsApp or social media.");
+    } finally {
+      setPhotoProcessingTarget("");
     }
   }
 
@@ -538,11 +562,15 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     setAdminConfirmationError("");
     setAdminNotice("");
     setSaveError("");
+    if (nextAction === "deploy" && pendingPhotoCount) setPhotoProcessingTarget("save");
     try {
       let workingConfig = removeLocalPhotoUrls(config);
       if (nextAction === "deploy") {
         await preparePhotosForSave();
-        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
+        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current, undefined, {
+          link: normalizeInvitationLink(adminSlug) || makeInvitationSlug(config),
+          customerName: config.contact.name,
+        });
         if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
       }
       const updated = await updateAdminOrder(currentAdminOrder.id, nextAction, nextAction === "deploy" ? {
@@ -576,6 +604,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       setSaveError(message);
       setAdminConfirmationError(message);
     } finally {
+      setPhotoProcessingTarget("");
       setAdminAction("");
     }
   }
@@ -735,6 +764,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
                   <div className={`designer-upload-card ${config.hero.photoSource === "upload" ? "is-selected" : ""}`}>
                     <label className={`designer-upload-option ${config.hero.photoSource === "upload" ? "is-selected" : ""}`}>
                       {config.hero.photoSource === "upload" && config.hero.uploadedUrl ? <img src={config.hero.uploadedUrl} alt="Your uploaded hero preview" /> : <span><Upload aria-hidden="true" /><strong>Upload your photo</strong><small>JPG, PNG, WebP or HEIC · max 5 MB</small></span>}
+                      {(photoProcessingTarget === "hero" || (photoProcessingTarget === "save" && Boolean(pendingFiles.hero?.length))) && <PhotoUploadProgress label={photoProgressLabel} card />}
                       <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" onChange={(event) => { void selectHeroPhoto(event.target.files); event.currentTarget.value = ""; }} />
                     </label>
                     {config.hero.photoSource === "upload" && config.hero.uploadedUrl && <button type="button" className="designer-photo-remove" onClick={removeHeroPhoto} aria-label="Remove uploaded hero photo"><Trash2 aria-hidden="true" /></button>}
@@ -773,6 +803,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
                   onRemove={() => removeSection(section.id)}
                   onPhotos={(files) => selectGlimpsePhotos(section.id, files)}
                   onRemovePhoto={(imageIndex) => removeGlimpsePhoto(section.id, imageIndex)}
+                  photoProgressLabel={(photoProcessingTarget === `section:${section.id}:images` || (photoProcessingTarget === "save" && Boolean(pendingFiles[`section:${section.id}:images`]?.length))) ? photoProgressLabel : ""}
                   defaultOpen={!adminMode}
                 />
               ))}
@@ -823,8 +854,6 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
               {!adminMode && <a href={whatsappSupportUrl} target={whatsappSupportNumber ? "_blank" : undefined} rel={whatsappSupportNumber ? "noreferrer" : undefined}><WhatsAppIcon /> WhatsApp</a>}
             </div>
           )}
-          {photoProcessing > 0 && saveState !== "saving" && <div className="designer-notice designer-photo-save-progress" role="status"><Loader2 className="is-spinning" aria-hidden="true" /><span><strong>Preparing your iPhone photo preview</strong><small>HEIC photos need a short compatibility conversion; JPG, PNG and WebP previews appear immediately.</small></span></div>}
-          {saveState === "saving" && pendingPhotoCount > 0 && <div className="designer-notice designer-photo-save-progress" role="status"><Loader2 className="is-spinning" aria-hidden="true" /><span><strong>{photoProcessing > 0 ? "Preparing your photos" : "Saving your photos securely"}</strong><small>{photoProcessing > 0 ? "Optimization starts only now, after your instant preview." : "Your invitation will be ready as soon as every photo is safely stored."}</small></span></div>}
           <div className="designer-submit-panel">
             <button className={`designer-final-save ${saveState === "submitted" || saveState === "saved" ? "is-complete" : ""}`} type="submit" disabled={photoProcessing > 0 || saveState === "saving" || saveState === "submitted" || saveState === "saved"}>{saveState === "saving" ? <Loader2 className="is-spinning" aria-hidden="true" /> : saveState === "submitted" || saveState === "saved" ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}{saveButtonText}</button>
             <p>{adminMode
@@ -859,6 +888,10 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   );
 }
 
+function normalizeInvitationLink(value: string) {
+  return value.trim().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 90).replace(/-+$/g, "");
+}
+
 function AdminOrderOverview({ order, config, price, slug, publicOrigin, onName, onPhone, onEventDate, onPrice, onSlug }: {
   order: AdminInvitationOrder;
   config: InvitationConfig;
@@ -871,7 +904,7 @@ function AdminOrderOverview({ order, config, price, slug, publicOrigin, onName, 
   onPrice: (value: number) => void;
   onSlug: (value: string) => void;
 }) {
-  const proposedSlug = slug.trim().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 90) || makeInvitationSlug(config);
+  const proposedSlug = normalizeInvitationLink(slug) || makeInvitationSlug(config);
   const linkSaved = order.slug === proposedSlug;
   return (
     <section className="admin-order-overview" aria-labelledby="admin-order-overview-title">
@@ -1042,10 +1075,11 @@ type SectionEditorProps = {
   onRemove: () => void;
   onPhotos: (files: FileList | null) => void;
   onRemovePhoto: (imageIndex: number) => void;
+  photoProgressLabel?: string;
   defaultOpen?: boolean;
 };
 
-function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto, defaultOpen = true }: SectionEditorProps) {
+function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto, photoProgressLabel = "", defaultOpen = true }: SectionEditorProps) {
   const definition = sectionDefinitions[section.type];
   const [isOpen, setIsOpen] = useState(defaultOpen && (section.type === "event-details" || (!section.included && index === total - 1)));
   return (
@@ -1057,7 +1091,7 @@ function SectionEditor({ section, index, total, onActivate, onField, onItem, onA
         <ChevronDown aria-hidden="true" />
       </summary>
       <div className="designer-section-body">
-        <SectionFields section={section} onTitle={onTitle} onField={onField} onItem={onItem} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onPhotos={onPhotos} onRemovePhoto={onRemovePhoto} />
+        <SectionFields section={section} onTitle={onTitle} onField={onField} onItem={onItem} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onPhotos={onPhotos} onRemovePhoto={onRemovePhoto} photoProgressLabel={photoProgressLabel} />
         <div className="designer-section-actions">
           <button type="button" onClick={() => onMove(-1)} disabled={index === 0}><MoveUp aria-hidden="true" /> Move up</button>
           <button type="button" onClick={() => onMove(1)} disabled={index === total - 1}><MoveDown aria-hidden="true" /> Move down</button>
@@ -1069,7 +1103,7 @@ function SectionEditor({ section, index, total, onActivate, onField, onItem, onA
   );
 }
 
-function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveItem, onPhotos, onRemovePhoto }: {
+function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveItem, onPhotos, onRemovePhoto, photoProgressLabel }: {
   section: InvitationSection;
   onTitle: (value: string) => void;
   onField: (field: string, value: string) => void;
@@ -1078,6 +1112,7 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
   onRemoveItem: (itemIndex: number) => void;
   onPhotos: (files: FileList | null) => void;
   onRemovePhoto: (imageIndex: number) => void;
+  photoProgressLabel: string;
 }) {
   const items = getSectionItems(section);
   const headingField = <TextField label="Section heading" value={section.title} onChange={onTitle} full />;
@@ -1185,6 +1220,7 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
           <TextArea label="Gallery introduction" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} />
           <label className="designer-inline-upload">
             <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG, WebP or HEIC photos. Each photo can be up to 5 MB.</small></span>
+            {photoProgressLabel && <PhotoUploadProgress label={photoProgressLabel} />}
             <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple onChange={(event) => { onPhotos(event.target.files); event.currentTarget.value = ""; }} />
           </label>
           {section.images.length > 0 && (
@@ -1206,6 +1242,10 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
 
 function AddItemButton({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
   return <button type="button" className="designer-add-item" onClick={onClick}>{icon}{label}</button>;
+}
+
+function PhotoUploadProgress({ label, card = false }: { label: string; card?: boolean }) {
+  return <div className={`designer-photo-inline-progress ${card ? "is-card" : ""}`} role="status" aria-live="polite"><Loader2 aria-hidden="true" /><span>{label}</span></div>;
 }
 
 function TextField({ label, hint, placeholder, value, onChange, full = false, type = "text", minLength, maxLength, pattern, title, icon, autoComplete, inputMode, required = false }: { label: string; hint?: string; placeholder?: string; value: string; onChange: (value: string) => void; full?: boolean; type?: string; minLength?: number; maxLength?: number; pattern?: string; title?: string; icon?: ReactNode; autoComplete?: string; inputMode?: "text" | "tel" | "email" | "numeric"; required?: boolean }) {

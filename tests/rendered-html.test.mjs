@@ -175,6 +175,27 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.doesNotMatch(designer, /20 MB/);
   assert.match(preview, /data-photo-count=\{section\.images\.length\}/);
   assert.match(styles, /data-photo-count="1"/);
+  assert.match(designer, /designer-photo-inline-progress/);
+  assert.doesNotMatch(designer, /designer-photo-save-progress/);
+  assert.match(styles, /\.designer-photo-inline-progress \{[^}]*margin-left: auto/);
+});
+
+test("long couple names scale and wrap safely in preview and published invitation", async () => {
+  const [{ PublishedInvitation }, { createInitialInvitation }, styles, publishedStyles] = await Promise.all([
+    vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+    readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/[slug]/published-invitation.css", import.meta.url), "utf8"),
+  ]);
+  const config = createInitialInvitation();
+  config.hero.firstName = "MichaelJohn";
+  config.hero.secondName = "AlexandraRose";
+  const html = renderToStaticMarkup(React.createElement(PublishedInvitation, { config }));
+  assert.match(html, /data-name-fit="long"/);
+  assert.match(html, /class="invite-preview-person-name">MichaelJohn/);
+  assert.match(styles, /h2\[data-name-fit="long"\]/);
+  assert.match(styles, /overflow-wrap: anywhere/);
+  assert.match(publishedStyles, /h2\[data-name-fit="standard"\]/);
 });
 
 test("renders the private order dashboard shell without a public login", async () => {
@@ -276,7 +297,8 @@ test("deployment modal remains readable and every WhatsApp contact uses the What
   ]);
   assert.match(styles, /\.orders-deploy-modal \{[^}]*max-height: calc\(100dvh - 1\.5rem\)/);
   assert.match(styles, /\.orders-deploy-modal \.orders-deploy-actions \{[^}]*repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(styles, /\.orders-deploy-modal \.orders-deploy-actions\.has-whatsapp a\.is-whatsapp \{ grid-column: 1 \/ -1; min-height: 3\.8rem;/);
+  assert.match(styles, /\.orders-deploy-modal \.orders-deploy-actions\.has-whatsapp \{ grid-template-columns: repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.orders-deploy-modal \.orders-deploy-actions\.has-whatsapp a\.is-whatsapp \{ min-height: 3rem;/);
   assert.match(styles, /\.orders-deploy-link > button span \{[^}]*overflow-wrap: anywhere/);
   assert.match(dashboard, /import \{ WhatsAppIcon \}/);
   assert.match(designer, /import \{ WhatsAppIcon \}/);
@@ -294,10 +316,10 @@ test("the dashboard has mobile cards, expiring feedback, and a WhatsApp publishi
   assert.match(css, /\.orders-datatable td::before \{ content: attr\(data-label\)/);
   assert.match(dashboard, /data-label="Actions"/);
   assert.match(dashboard, /setActionNotice\(""\); \}, 5000\)/);
-  assert.match(dashboard, /Send via WhatsApp/);
+  assert.match(dashboard, /<span>WhatsApp<\/span>/);
   assert.match(dashboard, /customerWhatsAppUrl\(order\.phone/);
   assert.match(css, /\.order-danger-action\.is-undeploy svg:not\(\.is-spinning\)/);
-  assert.match(css, /a\.is-whatsapp > svg \{ width: 1\.2rem; height: 1\.2rem/);
+  assert.match(css, /a\.is-whatsapp > svg \{ width: \.78rem; min-width: \.78rem; max-width: \.78rem; height: \.78rem/);
 });
 
 test("duplicates review orders with independent photo storage and an atomic DB commit", async () => {
@@ -408,7 +430,7 @@ test("duplicates review orders with independent photo storage and an atomic DB c
 });
 
 test("new media folders use slug, order id and customer name while old folders remain valid", async () => {
-  const [{ mediaFolderForOrder, belongsToOrder }, { createInitialInvitation }] = await Promise.all([
+  const [{ mediaFolderForIdentity, mediaFolderForOrder, belongsToOrder }, { createInitialInvitation }] = await Promise.all([
     vite.ssrLoadModule("/lib/invitation-media-path.ts"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
   ]);
@@ -417,10 +439,73 @@ test("new media folders use slug, order id and customer name while old folders r
   const id = "11111111-1111-4111-8111-111111111111";
   const folder = mediaFolderForOrder({ id, slug: "john-and-sameer-copy", config });
   assert.equal(folder, `john-and-sameer-copy-${id}-elodie-aamir`);
+  assert.equal(mediaFolderForIdentity({ link: "Current Custom Link", id, customerName: "Current Customer" }), `current-custom-link-${id}-current-customer`);
   assert.ok(belongsToOrder(`${folder}/hero:0-example.webp`, id));
   assert.ok(belongsToOrder(`${id}/old-photo.jpg`, id));
   assert.ok(belongsToOrder(`${id}-elodie-aamir-john-and-sameer-copy/previous-photo.webp`, id));
   assert.equal(belongsToOrder("different-id/photo.jpg", id), false);
+});
+
+test("administrator photo uploads use the currently edited link and customer name", async () => {
+  const [{ POST }, { createInitialInvitation }] = await Promise.all([
+    vite.ssrLoadModule("/app/api/dashboard/orders/media/route.ts"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+  ]);
+  const id = "11111111-1111-4111-8111-111111111111";
+  const config = createInitialInvitation();
+  config.contact.name = "Previously Saved Customer";
+  const order = { id, status: "pending", slug: "previous-link", active_until: null, total_price: 1000, created_at: "2026-09-15T00:00:00Z", deployed_at: null, inactive_at: null, config };
+  const previousUrl = process.env.SUPABASE_URL;
+  const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const originalFetch = globalThis.fetch;
+  process.env.SUPABASE_URL = "https://test-project.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
+  let storedAt = "";
+  try {
+    globalThis.fetch = async (input, init = {}) => {
+      const endpoint = String(input);
+      if (endpoint.includes("/rest/v1/invitations?") && (!init.method || init.method === "GET")) return Response.json([order]);
+      if (init.method === "POST" && endpoint.includes("/storage/v1/object/invitation-media/")) {
+        storedAt = endpoint;
+        return Response.json({});
+      }
+      throw new Error(`Unexpected ${init.method ?? "GET"} request: ${endpoint}`);
+    };
+    const form = new FormData();
+    form.set("invitationId", id);
+    form.set("slot", "hero:0");
+    form.set("link", "Current Custom Link");
+    form.set("customerName", "Élodie Aamir");
+    form.set("file", new File(["photo"], "portrait.webp", { type: "image/webp" }));
+    const response = await POST(new Request("https://localhost/api/dashboard/orders/media", { method: "POST", body: form }));
+    assert.equal(response.status, 201);
+    const photo = await response.json();
+    assert.match(photo.path, new RegExp(`^current-custom-link-${id}-elodie-aamir/hero:0-`));
+    assert.match(storedAt, new RegExp(`current-custom-link-${id}-elodie-aamir/hero%3A0-`));
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
+    if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = previousKey;
+  }
+});
+
+test("administrator upload requests carry the current folder identity", async () => {
+  const { uploadPendingPhotos } = await vite.ssrLoadModule("/lib/photo-upload.ts");
+  const file = new File(["photo"], "portrait.webp", { type: "image/webp" });
+  const pending = { hero: [file] };
+  const prepared = new Map([[file, file]]);
+  const uploaded = new Map();
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async (_input, init) => {
+      assert.equal(init.body.get("link"), "current-link");
+      assert.equal(init.body.get("customerName"), "Current Customer");
+      return Response.json({ url: "https://example.com/photo.webp", path: "current-link/id/current.webp", slot: "hero:0", mimeType: "image/webp", sizeBytes: 5, receipt: "signed" }, { status: 201 });
+    };
+    await uploadPendingPhotos("order-id", pending, "/api/dashboard/orders/media", prepared, uploaded, undefined, { link: "current-link", customerName: "Current Customer" });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("retries an interrupted batch without uploading successful files again and explains plain-text 413", async () => {

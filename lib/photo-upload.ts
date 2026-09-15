@@ -2,6 +2,7 @@ import type { UploadedPhoto } from "@/lib/media-submission";
 
 export const maxOriginalImageBytes = 5 * 1024 * 1024;
 const targetUploadBytes = 900 * 1024;
+export type UploadFolderIdentity = { link: string; customerName: string };
 
 export function isHeicPhoto(file: File) {
   return ["image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence"].includes(file.type.toLowerCase())
@@ -78,6 +79,7 @@ export async function uploadPendingPhotos(
   prepared: Map<File, File>,
   uploaded: Map<File, UploadedPhoto>,
   uploadToken?: string,
+  folderIdentity?: UploadFolderIdentity,
 ) {
   const uploadedBySlot: Record<string, string[]> = {};
   for (const [slot, files] of Object.entries(pendingFiles)) {
@@ -91,6 +93,10 @@ export async function uploadPendingPhotos(
         form.set("file", prepared.get(file) ?? file);
         form.set("invitationId", invitationId);
         if (uploadToken) form.set("uploadToken", uploadToken);
+        if (folderIdentity) {
+          form.set("link", folderIdentity.link);
+          form.set("customerName", folderIdentity.customerName);
+        }
         form.set("slot", currentSlot);
         const response = await fetch(endpoint, { method: "POST", body: form });
         // An upstream 413 may be plain text ("Payload Too Large"), not JSON.

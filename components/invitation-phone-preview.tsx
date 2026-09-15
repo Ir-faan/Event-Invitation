@@ -102,6 +102,7 @@ export function PublishedInvitation({ config, privatePreview = false }: { config
 
 function InvitationPreviewContent({ config, replayKey }: { config: InvitationConfig; replayKey: number }) {
   const footerDate = formatDate(config.hero.date);
+  const nameFit = invitationNameFit(config.hero.firstName, config.hero.secondName);
   return (
     <>
       <OpeningPreview config={config} replayKey={replayKey} />
@@ -110,7 +111,7 @@ function InvitationPreviewContent({ config, replayKey }: { config: InvitationCon
       {config.sections.map((section) => <SectionPreview key={section.id} section={section} />)}
       <footer className="invite-preview-footer">
         <div className="invite-preview-footer-monogram">{config.hero.firstName.charAt(0)}<Heart aria-hidden="true" />{config.hero.secondName.charAt(0)}</div>
-        <strong>{config.hero.firstName} &amp; {config.hero.secondName}</strong>
+        <strong data-name-fit={nameFit}>{config.hero.firstName} &amp; {config.hero.secondName}</strong>
         <time>{footerDate}</time>
         <span>Made with <Heart aria-hidden="true" /> by Paperless Invites</span>
       </footer>
@@ -179,6 +180,7 @@ function HeroPreview({ config, replayKey }: { config: InvitationConfig; replayKe
   const imageStyle = config.hero.photoSource === "preset"
     ? { objectPosition: preset.objectPosition, transform: `scale(${preset.zoom})` }
     : undefined;
+  const nameFit = invitationNameFit(config.hero.firstName, config.hero.secondName);
 
   if (config.hero.type === "interactive") {
     return <InteractiveHeroPreview key={`${image}-${config.palette}-${replayKey}`} config={config} image={image} imageStyle={imageStyle} formattedDate={formattedDate} />;
@@ -191,7 +193,7 @@ function HeroPreview({ config, replayKey }: { config: InvitationConfig; replayKe
       {config.bismillah.enabled && <BismillahArtwork config={config} />}
       <div className="invite-preview-hero-copy">
         <span>{config.hero.eyebrow}</span>
-        <h2>{config.hero.firstName}<i>&amp;</i>{config.hero.secondName}</h2>
+        <h2 data-name-fit={nameFit}><span className="invite-preview-person-name">{config.hero.firstName}</span><i>&amp;</i><span className="invite-preview-person-name">{config.hero.secondName}</span></h2>
         <div className="invite-preview-hero-rule"><i /><Heart aria-hidden="true" /><i /></div>
         <p>{config.hero.message}</p>
         <time>{formattedDate}</time>
@@ -211,6 +213,7 @@ function BismillahArtwork({ config }: { config: InvitationConfig }) {
 
 function InteractiveHeroPreview({ config, image, imageStyle, formattedDate }: { config: InvitationConfig; image: string; imageStyle?: CSSProperties; formattedDate: string }) {
   const [revealed, setRevealed] = useState(false);
+  const nameFit = invitationNameFit(config.hero.firstName, config.hero.secondName);
   return (
     <section className={`invite-preview-hero is-interactive ${revealed ? "is-revealed" : ""} ${config.bismillah.enabled ? "has-bismillah" : ""}`} data-preview-section="hero">
       <div className="interactive-hero-glow" aria-hidden="true" />
@@ -231,12 +234,21 @@ function InteractiveHeroPreview({ config, image, imageStyle, formattedDate }: { 
       </div>
       <div className="interactive-hero-copy" aria-live="polite">
         <span>{config.hero.eyebrow}</span>
-        <h2>{config.hero.firstName}<i>&amp;</i>{config.hero.secondName}</h2>
+        <h2 data-name-fit={nameFit}><span className="invite-preview-person-name">{config.hero.firstName}</span><i>&amp;</i><span className="invite-preview-person-name">{config.hero.secondName}</span></h2>
         <p className="interactive-hero-message">{config.hero.message}</p>
         <time className="interactive-hero-date">{formattedDate}</time>
       </div>
     </section>
   );
+}
+
+function invitationNameFit(firstName: string, secondName: string): "standard" | "long" | "very-long" {
+  const lengths = [firstName, secondName].map((name) => Array.from(name.trim()).length);
+  const longest = Math.max(...lengths);
+  const combined = lengths[0] + lengths[1];
+  if (longest > 16 || combined > 28) return "very-long";
+  if (longest > 9 || combined > 15) return "long";
+  return "standard";
 }
 
 function ScratchPhoto({ color, onReveal }: { color: string; onReveal: () => void }) {
