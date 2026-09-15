@@ -242,12 +242,15 @@ function InteractiveHeroPreview({ config, image, imageStyle, formattedDate }: { 
   );
 }
 
-function invitationNameFit(firstName: string, secondName: string): "standard" | "long" | "very-long" {
+type InvitationNameFit = "standard" | "long" | "very-long" | "extra-long";
+
+function invitationNameFit(firstName: string, secondName: string): InvitationNameFit {
   const lengths = [firstName, secondName].map((name) => Array.from(name.trim()).length);
   const longest = Math.max(...lengths);
   const combined = lengths[0] + lengths[1];
-  if (longest > 16 || combined > 28) return "very-long";
-  if (longest > 9 || combined > 15) return "long";
+  if (longest > 20 || combined > 34) return "extra-long";
+  if (longest > 13 || combined > 24) return "very-long";
+  if (longest > 8 || combined > 14) return "long";
   return "standard";
 }
 

@@ -28,12 +28,13 @@
 .published-invitation .invite-preview-hero:not(.is-interactive) { min-height: 100svh; }
 .published-invitation .invite-preview-hero.is-interactive { min-height: 100svh; }
 .published-invitation .invite-preview-hero-copy h2 { max-width: 100%; overflow-wrap: anywhere; }
+/* Keep the scattered-photo geometry identical to the editor phone's usable section width. */
+.published-invitation .preview-gallery { width: min(100%,18.25rem); max-width: 18.25rem; }
 
 @media (max-width: 47.99rem) {
   /* Match the phone-frame composition at the real device's viewport width. */
   .published-invitation .invite-preview-hero-copy h2[data-name-fit="standard"] { font-size: clamp(4.5rem, 26vw, 7rem); }
   .published-invitation .invite-preview-hero-image { scale: 1; }
-  .published-invitation .preview-gallery { max-width: 29rem; }
 }
 
 @media (max-width: 30rem) {

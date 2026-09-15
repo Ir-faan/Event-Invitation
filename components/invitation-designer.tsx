@@ -90,6 +90,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   const adminMode = Boolean(adminOrder);
   const [config, setConfig] = useState<InvitationConfig>(() => adminOrder ? normalizeInvitationConfig(adminOrder.config) : createInitialInvitation());
   const [addType, setAddType] = useState<SectionType>("special-message");
+  const [newlyAddedSectionId, setNewlyAddedSectionId] = useState("");
   const [pendingFiles, setPendingFiles] = useState<Record<string, File[]>>({});
   const [photoProcessing, setPhotoProcessing] = useState(0);
   const [photoProcessingTarget, setPhotoProcessingTarget] = useState<"" | "hero" | "save" | `section:${string}:images`>("");
@@ -276,6 +277,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
 
   function addSection(type = addType) {
     const section = createSection(type, false);
+    setNewlyAddedSectionId(section.id);
     updateConfig((current) => ({ ...current, sections: [...current.sections, section] }));
     activatePreview(section.id);
     window.setTimeout(() => document.getElementById(`editor-${section.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
@@ -290,6 +292,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       items: getSectionItems(section).map((item) => ({ ...item })),
       images: section.images.filter((url) => !url.startsWith("blob:")),
     };
+    setNewlyAddedSectionId(copy.id);
     updateConfig((current) => {
       const index = current.sections.findIndex((item) => item.id === section.id);
       const sections = [...current.sections];
@@ -805,6 +808,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
                   onRemovePhoto={(imageIndex) => removeGlimpsePhoto(section.id, imageIndex)}
                   photoProgressLabel={(photoProcessingTarget === `section:${section.id}:images` || (photoProcessingTarget === "save" && Boolean(pendingFiles[`section:${section.id}:images`]?.length))) ? photoProgressLabel : ""}
                   defaultOpen={!adminMode}
+                  openWhenAdded={newlyAddedSectionId === section.id}
                 />
               ))}
             </div>
@@ -1077,11 +1081,12 @@ type SectionEditorProps = {
   onRemovePhoto: (imageIndex: number) => void;
   photoProgressLabel?: string;
   defaultOpen?: boolean;
+  openWhenAdded?: boolean;
 };
 
-function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto, photoProgressLabel = "", defaultOpen = true }: SectionEditorProps) {
+function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto, photoProgressLabel = "", defaultOpen = true, openWhenAdded = false }: SectionEditorProps) {
   const definition = sectionDefinitions[section.type];
-  const [isOpen, setIsOpen] = useState(defaultOpen && (section.type === "event-details" || (!section.included && index === total - 1)));
+  const [isOpen, setIsOpen] = useState(openWhenAdded || (defaultOpen && (section.type === "event-details" || (!section.included && index === total - 1))));
   return (
     <details className="designer-section-editor" id={`editor-${section.id}`} open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)} onFocusCapture={onActivate}>
       <summary onClick={onActivate}>

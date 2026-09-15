@@ -177,9 +177,13 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.match(designer, /designer-photo-inline-progress/);
   assert.doesNotMatch(designer, /designer-photo-save-progress/);
   assert.match(styles, /\.designer-photo-inline-progress \{[^}]*margin-left: auto/);
+  assert.match(designer, /setNewlyAddedSectionId\(section\.id\)/);
+  assert.match(designer, /setNewlyAddedSectionId\(copy\.id\)/);
+  assert.match(designer, /openWhenAdded=\{newlyAddedSectionId === section\.id\}/);
+  assert.match(designer, /useState\(openWhenAdded \|\| \(defaultOpen/);
 });
 
-test("long couple names scale and wrap safely in preview and published invitation", async () => {
+test("long couple names shrink together without splitting inside either name", async () => {
   const [{ PublishedInvitation }, { createInitialInvitation }, styles, publishedStyles] = await Promise.all([
     vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
@@ -193,7 +197,8 @@ test("long couple names scale and wrap safely in preview and published invitatio
   assert.match(html, /data-name-fit="long"/);
   assert.match(html, /class="invite-preview-person-name">MichaelJohn/);
   assert.match(styles, /h2\[data-name-fit="long"\]/);
-  assert.match(styles, /overflow-wrap: anywhere/);
+  assert.match(styles, /\.invite-preview-person-name \{[^}]*white-space: nowrap;[^}]*overflow-wrap: normal;[^}]*word-break: normal/);
+  assert.match(styles, /h2\[data-name-fit="extra-long"\]/);
   assert.match(publishedStyles, /h2\[data-name-fit="standard"\]/);
 });
 
@@ -271,6 +276,8 @@ test("live desktop invitations match the centred private preview while mobile st
   assert.doesNotMatch(css, /\.published-invitation:not\(\.is-private\)/);
   assert.match(css, /font-size: clamp\(4\.5rem, 26vw, 7rem\)/);
   assert.match(css, /\.published-invitation \.invite-preview-hero-image \{ scale: 1;/);
+  assert.match(css, /\.published-invitation \.preview-gallery \{ width: min\(100%,18\.25rem\); max-width: 18\.25rem; \}/);
+  assert.doesNotMatch(css, /\.published-invitation \.preview-gallery \{ max-width: 29rem; \}/);
   assert.match(css, /calc\(100vw \* 656 \/ 333\)/);
   const privateCss = await readFile(new URL("../app/dashboard/preview.css", import.meta.url), "utf8");
   assert.match(privateCss, /\.admin-private-preview \.published-invitation-screen \{ width: min\(30rem,100%\)/);
