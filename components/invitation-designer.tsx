@@ -1221,7 +1221,6 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
           <label className="designer-inline-upload">
             <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG, WebP or HEIC photos. Each photo can be up to 5 MB.</small></span>
             {photoProgressLabel && <PhotoUploadProgress label={photoProgressLabel} />}
-            <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG, WebP or HEIC photos. Each photo can be up to 5 MB.</small></span>
             <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple onChange={(event) => { onPhotos(event.target.files); event.currentTarget.value = ""; }} />
           </label>
           {section.images.length > 0 && (
