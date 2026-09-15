@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   CalendarDays,
   Clock3,
@@ -180,8 +180,6 @@ function HeroPreview({ config, replayKey }: { config: InvitationConfig; replayKe
   const imageStyle = config.hero.photoSource === "preset"
     ? { objectPosition: preset.objectPosition, transform: `scale(${preset.zoom})` }
     : undefined;
-  const nameFit = invitationNameFit(config.hero.firstName, config.hero.secondName);
-
   if (config.hero.type === "interactive") {
     return <InteractiveHeroPreview key={`${image}-${config.palette}-${replayKey}`} config={config} image={image} imageStyle={imageStyle} formattedDate={formattedDate} />;
   }
@@ -193,7 +191,7 @@ function HeroPreview({ config, replayKey }: { config: InvitationConfig; replayKe
       {config.bismillah.enabled && <BismillahArtwork config={config} />}
       <div className="invite-preview-hero-copy">
         <span>{config.hero.eyebrow}</span>
-        <h2 data-name-fit={nameFit}><span className="invite-preview-person-name">{config.hero.firstName}</span><i>&amp;</i><span className="invite-preview-person-name">{config.hero.secondName}</span></h2>
+        <FittedCoupleNames firstName={config.hero.firstName} secondName={config.hero.secondName} />
         <div className="invite-preview-hero-rule"><i /><Heart aria-hidden="true" /><i /></div>
         <p>{config.hero.message}</p>
         <time>{formattedDate}</time>
@@ -213,7 +211,6 @@ function BismillahArtwork({ config }: { config: InvitationConfig }) {
 
 function InteractiveHeroPreview({ config, image, imageStyle, formattedDate }: { config: InvitationConfig; image: string; imageStyle?: CSSProperties; formattedDate: string }) {
   const [revealed, setRevealed] = useState(false);
-  const nameFit = invitationNameFit(config.hero.firstName, config.hero.secondName);
   return (
     <section className={`invite-preview-hero is-interactive ${revealed ? "is-revealed" : ""} ${config.bismillah.enabled ? "has-bismillah" : ""}`} data-preview-section="hero">
       <div className="interactive-hero-glow" aria-hidden="true" />
@@ -234,7 +231,7 @@ function InteractiveHeroPreview({ config, image, imageStyle, formattedDate }: { 
       </div>
       <div className="interactive-hero-copy" aria-live="polite">
         <span>{config.hero.eyebrow}</span>
-        <h2 data-name-fit={nameFit}><span className="invite-preview-person-name">{config.hero.firstName}</span><i>&amp;</i><span className="invite-preview-person-name">{config.hero.secondName}</span></h2>
+        <FittedCoupleNames firstName={config.hero.firstName} secondName={config.hero.secondName} />
         <p className="interactive-hero-message">{config.hero.message}</p>
         <time className="interactive-hero-date">{formattedDate}</time>
       </div>
@@ -252,6 +249,73 @@ function invitationNameFit(firstName: string, secondName: string): InvitationNam
   if (longest > 13 || combined > 24) return "very-long";
   if (longest > 8 || combined > 14) return "long";
   return "standard";
+}
+
+export function calculateFittedNameSize(baseFontSize: number, availableWidth: number, widestWord: number): number | null {
+  if (![baseFontSize, availableWidth, widestWord].every(Number.isFinite) || baseFontSize <= 0 || availableWidth <= 0 || widestWord <= availableWidth) return null;
+  return Math.max(6, Math.floor(baseFontSize * (availableWidth / widestWord) * .96 * 100) / 100);
+}
+
+function FittedCoupleNames({ firstName, secondName }: { firstName: string; secondName: string }) {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const [fontSize, setFontSize] = useState<number | null>(null);
+  const nameFit = invitationNameFit(firstName, secondName);
+
+  useLayoutEffect(() => {
+    const heading = headingRef.current;
+    if (!heading) return;
+    let disposed = false;
+
+    const fitToAvailableWidth = () => {
+      if (disposed) return;
+      const availableWidth = Math.max(0, heading.clientWidth - 8);
+      const words = [firstName, secondName]
+        .flatMap((name) => name.trim().split(/\s+/u))
+        .filter(Boolean);
+      const sizingProbe = heading.cloneNode(false) as HTMLHeadingElement;
+      sizingProbe.removeAttribute("style");
+      sizingProbe.setAttribute("aria-hidden", "true");
+      sizingProbe.style.position = "fixed";
+      sizingProbe.style.left = "-9999px";
+      sizingProbe.style.top = "0";
+      sizingProbe.style.width = `${availableWidth}px`;
+      sizingProbe.style.maxWidth = "none";
+      sizingProbe.style.visibility = "hidden";
+      sizingProbe.style.pointerEvents = "none";
+      const probe = document.createElement("span");
+      probe.style.display = "block";
+      probe.style.width = "max-content";
+      probe.style.maxWidth = "none";
+      probe.style.whiteSpace = "nowrap";
+      sizingProbe.appendChild(probe);
+      heading.parentElement?.appendChild(sizingProbe);
+      const baseFontSize = Number.parseFloat(window.getComputedStyle(sizingProbe).fontSize);
+      const widestWord = words.reduce((width, word) => {
+        probe.textContent = word;
+        return Math.max(width, probe.getBoundingClientRect().width);
+      }, 0);
+      sizingProbe.remove();
+      const nextSize = calculateFittedNameSize(baseFontSize, availableWidth, widestWord);
+      setFontSize((current) => current === nextSize ? current : nextSize);
+    };
+
+    fitToAvailableWidth();
+    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(fitToAvailableWidth);
+    resizeObserver?.observe(heading);
+    void document.fonts?.ready.then(fitToAvailableWidth);
+    return () => {
+      disposed = true;
+      resizeObserver?.disconnect();
+    };
+  }, [firstName, secondName]);
+
+  return (
+    <h2 ref={headingRef} data-name-fit={nameFit} data-name-autofit="width" style={fontSize === null ? undefined : { fontSize: `${fontSize}px` }}>
+      <span className="invite-preview-person-name">{firstName}</span>
+      <i>&amp;</i>
+      <span className="invite-preview-person-name">{secondName}</span>
+    </h2>
+  );
 }
 
 function ScratchPhoto({ color, onReveal }: { color: string; onReveal: () => void }) {

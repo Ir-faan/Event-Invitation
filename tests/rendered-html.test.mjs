@@ -183,23 +183,30 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.match(designer, /useState\(openWhenAdded \|\| \(defaultOpen/);
 });
 
-test("long couple names shrink together without splitting inside either name", async () => {
-  const [{ PublishedInvitation }, { createInitialInvitation }, styles, publishedStyles] = await Promise.all([
+test("long couple names use measured shared sizing and wrap only at spaces", async () => {
+  const [{ PublishedInvitation, calculateFittedNameSize }, { createInitialInvitation }, styles, publishedStyles, previewSource] = await Promise.all([
     vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
     readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
     readFile(new URL("../app/[slug]/published-invitation.css", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation-phone-preview.tsx", import.meta.url), "utf8"),
   ]);
   const config = createInitialInvitation();
   config.hero.firstName = "MichaelJohn";
   config.hero.secondName = "AlexandraRose";
   const html = renderToStaticMarkup(React.createElement(PublishedInvitation, { config }));
   assert.match(html, /data-name-fit="long"/);
+  assert.match(html, /data-name-autofit="width"/);
   assert.match(html, /class="invite-preview-person-name">MichaelJohn/);
   assert.match(styles, /h2\[data-name-fit="long"\]/);
-  assert.match(styles, /\.invite-preview-person-name \{[^}]*white-space: nowrap;[^}]*overflow-wrap: normal;[^}]*word-break: normal/);
+  assert.match(styles, /\.invite-preview-person-name \{[^}]*white-space: normal;[^}]*overflow-wrap: normal;[^}]*word-break: normal;[^}]*hyphens: none/);
   assert.match(styles, /h2\[data-name-fit="extra-long"\]/);
   assert.match(publishedStyles, /h2\[data-name-fit="standard"\]/);
+  assert.equal(calculateFittedNameSize(48, 280, 360), 35.84);
+  assert.equal(calculateFittedNameSize(48, 280, 240), null);
+  assert.match(previewSource, /new ResizeObserver\(fitToAvailableWidth\)/);
+  assert.match(previewSource, /name\.trim\(\)\.split\(\/\\s\+\/u\)/);
+  assert.match(previewSource, /fontSize: `\$\{fontSize\}px`/);
 });
 
 test("renders the private order dashboard shell without a public login", async () => {

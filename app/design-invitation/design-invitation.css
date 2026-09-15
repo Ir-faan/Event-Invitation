@@ -386,7 +386,7 @@
 .interactive-hero-copy > span { display: block; margin-bottom: .35rem; text-transform: uppercase; letter-spacing: .22em; font: 700 .48rem var(--sans); }
 .interactive-hero-copy h2 { margin: 0; font: 400 3.45rem/.86 var(--script); }
 .interactive-hero-copy h2 i { display: inline; margin: 0 .25rem; color: color-mix(in srgb,var(--preview-accent) 55%,#fff); font: 400 .7em var(--script); }
-.invite-preview-person-name { min-width: 0; max-width: 100%; white-space: nowrap; overflow-wrap: normal; word-break: normal; }
+.invite-preview-person-name { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: normal; word-break: normal; hyphens: none; }
 .interactive-hero-copy h2[data-name-fit="long"], .interactive-hero-copy h2[data-name-fit="very-long"], .interactive-hero-copy h2[data-name-fit="extra-long"] { width: 100%; display: flex; flex-direction: column; align-items: center; }
 .interactive-hero-copy h2[data-name-fit="long"] { font-size: 2.55rem; line-height: .92; }
 .interactive-hero-copy h2[data-name-fit="very-long"] { font-size: 1.95rem; line-height: 1; }
