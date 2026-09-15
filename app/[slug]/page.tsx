@@ -3,6 +3,7 @@ import { PublishedInvitation } from "@/components/invitation-phone-preview";
 import { normalizeInvitationConfig } from "@/lib/invitation-designer";
 import { getPublicInvitationBySlug } from "@/lib/invitation-orders-server";
 import { invitationPreviewImage } from "@/lib/invitation-social";
+import { sanitizeInvitationCustomSections } from "@/lib/custom-sections";
 import type { Metadata } from "next";
 import "@/app/design-invitation/design-invitation.css";
 import "./published-invitation.css";
@@ -12,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const order = await getPublicInvitationBySlug(slug).catch(() => null);
   if (!order) return { robots: { index: false, follow: false } };
-  const config = normalizeInvitationConfig(order.config);
+  const config = sanitizeInvitationCustomSections(normalizeInvitationConfig(order.config));
   const configuredOrigin = process.env.PUBLIC_SITE_URL?.replace(/\/$/, "");
   const origin = configuredOrigin && /^https?:\/\//i.test(configuredOrigin) ? configuredOrigin : "https://www.paperless-invites.com";
   const url = `${origin}/${slug}`;
@@ -36,5 +37,5 @@ export default async function PublishedInvitationPage({ params }: { params: Prom
     return null;
   });
   if (!order) notFound();
-  return <PublishedInvitation config={normalizeInvitationConfig(order.config)} />;
+  return <PublishedInvitation config={sanitizeInvitationCustomSections(normalizeInvitationConfig(order.config))} />;
 }

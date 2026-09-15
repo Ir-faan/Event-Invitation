@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { belongsToOrder, mediaFolderForOrder } from "@/lib/invitation-media-path";
 import { calculateInvitationPrice, normalizeInvitationConfig, type InvitationConfig } from "@/lib/invitation-designer";
+import { sanitizeInvitationCustomSections } from "@/lib/custom-sections";
 import {
   createUniqueInvitationSlug,
   expirePastInvitations,
@@ -91,10 +92,11 @@ export async function POST(request: Request) {
         }
         return url;
       };
+      const originalConfig = normalizeAndSanitizeConfig(original.config);
       const config = {
-        ...original.config,
-        hero: { ...original.config.hero, uploadedUrl: replacePhotoUrl(original.config.hero.uploadedUrl) },
-        sections: original.config.sections.map((section) => ({
+        ...originalConfig,
+        hero: { ...originalConfig.hero, uploadedUrl: replacePhotoUrl(originalConfig.hero.uploadedUrl) },
+        sections: originalConfig.sections.map((section) => ({
           ...section,
           images: section.images.map(replacePhotoUrl),
         })),
@@ -167,6 +169,9 @@ export async function PATCH(request: Request) {
     };
     if (!validInvitationId(body.id)) return NextResponse.json({ error: "The order number is invalid." }, { status: 400 });
     if (!isOrderAction(body.action)) return NextResponse.json({ error: "Choose a valid order action." }, { status: 400 });
+    if (body.config !== undefined && JSON.stringify(body.config).length > 750_000) {
+      return NextResponse.json({ error: "This design is too large to save." }, { status: 413 });
+    }
 
     const existing = await getInvitationOrder(body.id);
     if (!existing) return NextResponse.json({ error: "This order could not be found." }, { status: 404 });
@@ -184,7 +189,7 @@ export async function PATCH(request: Request) {
     if (body.action === "save") {
       if (existing.status === "active") return NextResponse.json({ error: "Use Update live invitation to apply edits to a live order." }, { status: 409 });
       if (!isInvitationConfig(body.config)) return NextResponse.json({ error: "Please check the edited invitation values." }, { status: 400 });
-      const config = normalizeInvitationConfig(body.config);
+      const config = normalizeAndSanitizeConfig(body.config);
       if (!photosMatchConfig(config, photos, false)) return NextResponse.json({ error: "The edited design is missing an uploaded photo." }, { status: 400 });
       const requestedPrice = adminPrice(body.totalPrice);
       if (requestedPrice === null) return NextResponse.json({ error: "Enter a valid order price." }, { status: 400 });
@@ -220,13 +225,13 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: `Choose an active-until date on or after ${todayInMauritius()}.` }, { status: 400 });
     }
 
-    let config: InvitationConfig = normalizeInvitationConfig(existing.config);
+    let config: InvitationConfig = normalizeAndSanitizeConfig(existing.config);
     let totalPrice = existing.total_price;
     const requestedPrice = adminPrice(body.totalPrice);
     if (requestedPrice === null) return NextResponse.json({ error: "Enter a valid order price." }, { status: 400 });
     if (body.config !== undefined) {
       if (!isInvitationConfig(body.config)) return NextResponse.json({ error: "Please check the edited invitation values." }, { status: 400 });
-      config = normalizeInvitationConfig(body.config);
+      config = normalizeAndSanitizeConfig(body.config);
       totalPrice = requestedPrice ?? calculateInvitationPrice(config).total;
     }
     if (!photosMatchConfig(config, photos, false)) return NextResponse.json({ error: "The edited design is missing an uploaded photo." }, { status: 400 });
@@ -298,8 +303,12 @@ function isOrderAction(value: unknown): value is "save" | "deploy" | "deactivate
 }
 
 function normalizeOrder(order: InvitationOrderRecord) {
-  const normalized = { ...order, config: normalizeInvitationConfig(order.config) };
+  const normalized = { ...order, config: normalizeAndSanitizeConfig(order.config) };
   return { ...normalized, summary: summarizeOrder(normalized) };
+}
+
+function normalizeAndSanitizeConfig(config: InvitationConfig) {
+  return sanitizeInvitationCustomSections(normalizeInvitationConfig(config));
 }
 
 async function patchOrder(id: string, values: Record<string, unknown>, photos: UploadedPhoto[] = []) {

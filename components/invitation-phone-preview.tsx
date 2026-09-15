@@ -24,6 +24,8 @@ import {
   type InvitationSection,
   type InvitationSectionItem,
 } from "@/lib/invitation-designer";
+import { CustomSectionRenderer } from "@/components/custom-section-renderer";
+import { getCustomSectionSource } from "@/lib/custom-sections";
 
 type PreviewProps = {
   config: InvitationConfig;
@@ -564,7 +566,11 @@ function SectionPreview({ section }: { section: InvitationSection }) {
         </PreviewSection>
       );
     case "custom":
-      return <PreviewSection section={section} className="preview-custom"><Sparkles aria-hidden="true" /><p>This custom part will be discussed and designed with you during a video consultation or by message.</p><small>Your final preview will be prepared after we discuss it together.</small></PreviewSection>;
+      const customSource = getCustomSectionSource(section);
+      if (!customSource.html.trim()) {
+        return <PreviewSection section={section} className="preview-custom"><Sparkles aria-hidden="true" /><p>This custom part will be discussed and designed with you during a video consultation or by message.</p><small>Your final preview will be prepared after we discuss it together.</small></PreviewSection>;
+      }
+      return <CustomSectionRenderer sectionId={section.id} sectionName={section.title} html={customSource.html} css={customSource.css} />;
   }
 }
 

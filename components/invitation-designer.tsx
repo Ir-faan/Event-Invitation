@@ -8,6 +8,7 @@ import {
   Check,
   ChevronDown,
   CircleDollarSign,
+  Code2,
   Clock3,
   Copy,
   Eye,
@@ -41,6 +42,12 @@ import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { isHeicPhoto, maxOriginalImageBytes, preparePendingPhotos, preparePhotoPreview, selectedUploadedPhotos, uploadPendingPhotos } from "@/lib/photo-upload";
 import type { UploadedPhoto } from "@/lib/media-submission";
 import { customerWhatsAppUrl, invitationPublicUrl } from "@/lib/whatsapp-messages";
+import {
+  customSectionCssField,
+  customSectionHtmlField,
+  maxCustomSectionCssLength,
+  maxCustomSectionHtmlLength,
+} from "@/lib/custom-sections";
 import {
   calculateInvitationPrice,
   createInitialInvitation,
@@ -277,6 +284,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
 
   function addSection(type = addType) {
     const section = createSection(type, false);
+    if (adminMode && type === "custom") section.title = "Custom Section";
     setNewlyAddedSectionId(section.id);
     updateConfig((current) => ({ ...current, sections: [...current.sections, section] }));
     activatePreview(section.id);
@@ -809,13 +817,14 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
                   photoProgressLabel={(photoProcessingTarget === `section:${section.id}:images` || (photoProcessingTarget === "save" && Boolean(pendingFiles[`section:${section.id}:images`]?.length))) ? photoProgressLabel : ""}
                   defaultOpen={!adminMode}
                   openWhenAdded={newlyAddedSectionId === section.id}
+                  adminMode={adminMode}
                 />
               ))}
             </div>
 
             <div className="designer-add-section">
               <div><Plus aria-hidden="true" /><span><strong>Add another part</strong><small>You can add the same part more than once.</small></span></div>
-              <SectionPicker value={addType} onChange={setAddType} />
+              <SectionPicker value={addType} onChange={setAddType} adminMode={adminMode} />
               <button type="button" onClick={() => addSection()}><Plus aria-hidden="true" /> Add this part</button>
             </div>
           </MainStep>
@@ -1026,17 +1035,19 @@ function ChoiceButton({ selected, title, description, price, onClick }: { select
   );
 }
 
-function SectionPicker({ value, onChange }: { value: SectionType; onChange: (value: SectionType) => void }) {
+function SectionPicker({ value, onChange, adminMode }: { value: SectionType; onChange: (value: SectionType) => void; adminMode: boolean }) {
   const pickerRef = useRef<HTMLDetailsElement>(null);
   const selected = sectionDefinitions[value];
   const options = Object.entries(sectionDefinitions) as Array<[SectionType, (typeof sectionDefinitions)[SectionType]]>;
+  const selectedName = adminMode && value === "custom" ? "Custom Section" : selected.name;
+  const selectedDescription = adminMode && value === "custom" ? "Paste isolated HTML and CSS for this invitation." : selected.description;
 
   return (
     <div className="designer-part-picker">
       <span>Choose an additional part</span>
       <details ref={pickerRef}>
         <summary>
-          <span><strong>{selected.name}</strong><small>{selected.description}</small></span>
+          <span><strong>{selectedName}</strong><small>{selectedDescription}</small></span>
           <b>+ Rs {selected.price}</b>
           <ChevronDown aria-hidden="true" />
         </summary>
@@ -1053,7 +1064,7 @@ function SectionPicker({ value, onChange }: { value: SectionType; onChange: (val
                 if (pickerRef.current) pickerRef.current.open = false;
               }}
             >
-              <span><strong>{definition.name}</strong><small>{definition.description}</small></span>
+              <span><strong>{adminMode && type === "custom" ? "Custom Section" : definition.name}</strong><small>{adminMode && type === "custom" ? "Paste isolated HTML and CSS for this invitation." : definition.description}</small></span>
               <b>+ Rs {definition.price}</b>
               {value === type && <Check aria-hidden="true" />}
             </button>
@@ -1082,21 +1093,23 @@ type SectionEditorProps = {
   photoProgressLabel?: string;
   defaultOpen?: boolean;
   openWhenAdded?: boolean;
+  adminMode: boolean;
 };
 
-function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto, photoProgressLabel = "", defaultOpen = true, openWhenAdded = false }: SectionEditorProps) {
+function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto, photoProgressLabel = "", defaultOpen = true, openWhenAdded = false, adminMode }: SectionEditorProps) {
   const definition = sectionDefinitions[section.type];
   const [isOpen, setIsOpen] = useState(openWhenAdded || (defaultOpen && (section.type === "event-details" || (!section.included && index === total - 1))));
+  const isAdminCustomSection = adminMode && section.type === "custom";
   return (
     <details className="designer-section-editor" id={`editor-${section.id}`} open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)} onFocusCapture={onActivate}>
       <summary onClick={onActivate}>
         <span className="designer-section-order">{String(index + 1).padStart(2, "0")}</span>
-        <span><strong>{definition.name}</strong><small>{definition.description}</small></span>
+        <span><strong>{isAdminCustomSection ? "Custom Section" : definition.name}</strong><small>{isAdminCustomSection ? section.title || "Untitled custom section" : definition.description}</small></span>
         <b className={section.included ? "is-included" : ""}>{section.included ? "Included" : `+ Rs ${definition.price}`}</b>
         <ChevronDown aria-hidden="true" />
       </summary>
       <div className="designer-section-body">
-        <SectionFields section={section} onTitle={onTitle} onField={onField} onItem={onItem} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onPhotos={onPhotos} onRemovePhoto={onRemovePhoto} photoProgressLabel={photoProgressLabel} />
+        <SectionFields section={section} onTitle={onTitle} onField={onField} onItem={onItem} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onPhotos={onPhotos} onRemovePhoto={onRemovePhoto} photoProgressLabel={photoProgressLabel} adminMode={adminMode} />
         <div className="designer-section-actions">
           <button type="button" onClick={() => onMove(-1)} disabled={index === 0}><MoveUp aria-hidden="true" /> Move up</button>
           <button type="button" onClick={() => onMove(1)} disabled={index === total - 1}><MoveDown aria-hidden="true" /> Move down</button>
@@ -1108,7 +1121,7 @@ function SectionEditor({ section, index, total, onActivate, onField, onItem, onA
   );
 }
 
-function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveItem, onPhotos, onRemovePhoto, photoProgressLabel }: {
+function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveItem, onPhotos, onRemovePhoto, photoProgressLabel, adminMode }: {
   section: InvitationSection;
   onTitle: (value: string) => void;
   onField: (field: string, value: string) => void;
@@ -1118,6 +1131,7 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
   onPhotos: (files: FileList | null) => void;
   onRemovePhoto: (imageIndex: number) => void;
   photoProgressLabel: string;
+  adminMode: boolean;
 }) {
   const items = getSectionItems(section);
   const headingField = <TextField label="Section heading" value={section.title} onChange={onTitle} full />;
@@ -1241,7 +1255,21 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
         </div>
       );
     case "custom":
-      return <div className="designer-custom-consultation"><Video aria-hidden="true" /><div><strong>Your custom part will be designed with you.</strong><p>We will contact you. You do not have to edit anything here.</p></div></div>;
+      if (!adminMode) return <div className="designer-custom-consultation"><Video aria-hidden="true" /><div><strong>Your custom part will be designed with you.</strong><p>We will contact you. You do not have to edit anything here.</p></div></div>;
+      return (
+        <div className="designer-custom-editor">
+          <div className="designer-custom-editor-heading">
+            <Code2 aria-hidden="true" />
+            <div><strong>Custom section source</strong><p>Paste HTML and CSS below. The phone preview updates as you type, and scripts are never executed.</p></div>
+          </div>
+          <div className="designer-fields-grid">
+            <TextField label="Section Name" hint="Used to identify this section in the admin dashboard." value={section.title} onChange={onTitle} full maxLength={200} />
+            <TextArea label="HTML" hint={`Safe HTML only · up to ${maxCustomSectionHtmlLength.toLocaleString("en-US")} characters`} value={section.fields[customSectionHtmlField] ?? ""} onChange={(value) => onField(customSectionHtmlField, value)} full rows={12} code maxLength={maxCustomSectionHtmlLength} />
+            <TextArea label="CSS" hint={`Scoped to this section · responsive @media rules are supported · up to ${maxCustomSectionCssLength.toLocaleString("en-US")} characters`} value={section.fields[customSectionCssField] ?? ""} onChange={(value) => onField(customSectionCssField, value)} full rows={12} code maxLength={maxCustomSectionCssLength} />
+          </div>
+          <div className="designer-custom-security"><LockKeyhole aria-hidden="true" /><span>HTML is sanitized before previewing and saving. JavaScript, event handlers, embedded frames and objects are blocked.</span></div>
+        </div>
+      );
   }
 }
 
@@ -1257,8 +1285,8 @@ function TextField({ label, hint, placeholder, value, onChange, full = false, ty
   return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{icon}{label}</span><input type={type} lang={type === "time" ? "en-GB" : undefined} value={value ?? ""} placeholder={placeholder} minLength={minLength} maxLength={maxLength} pattern={pattern} title={title} autoComplete={autoComplete} inputMode={inputMode} required={required} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
 }
 
-function TextArea({ label, hint, value, onChange, full = false, rows = 3 }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; rows?: number }) {
-  return <label className={`designer-field ${full ? "is-full" : ""}`}><span>{label}</span><textarea value={value ?? ""} rows={rows} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
+function TextArea({ label, hint, value, onChange, full = false, rows = 3, code = false, maxLength }: { label: string; hint?: string; value: string; onChange: (value: string) => void; full?: boolean; rows?: number; code?: boolean; maxLength?: number }) {
+  return <label className={`designer-field ${full ? "is-full" : ""} ${code ? "is-code" : ""}`}><span>{label}</span><textarea value={value ?? ""} rows={rows} maxLength={maxLength} spellCheck={!code} autoCapitalize={code ? "off" : undefined} autoCorrect={code ? "off" : undefined} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
 }
 
 async function createInvitation(config: InvitationConfig, slots: string[]): Promise<SubmissionIdentity> {

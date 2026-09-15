@@ -989,3 +989,148 @@ test("keeps both invitation templates structurally independent", async () => {
   assert.doesNotMatch(roseComponent, /Your invitation is revealed/);
   assert.match(roseComponent, /rose-afterglow\.module\.css/);
 });
+
+test("custom sections preserve order and responsive CSS while removing dangerous HTML", async () => {
+  const [designer, customSections, validation] = await Promise.all([
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+    vite.ssrLoadModule("/lib/custom-sections.ts"),
+    vite.ssrLoadModule("/lib/invitation-validation.ts"),
+  ]);
+  const config = designer.createInitialInvitation();
+  config.contact = { name: "Admin Customer", phone: "58749327" };
+  const custom = designer.createSection("custom");
+  custom.id = "custom-accommodation";
+  custom.title = "Accommodation Information";
+  custom.fields.html = `<section class="hotel-section"><h2>Where to Stay</h2><img src="https://example.com/hotel.jpg" onerror="alert('test')"><script>alert("test")</script><iframe src="https://example.com"></iframe><object data="x"></object><embed src="x"><a href="javascript:alert('x')" onclick="alert('x')">Book</a></section>`;
+  custom.fields.css = `.hotel-section { padding: 60px 20px; }\nh2 { font-size: 80px; }\n@media (max-width: 600px) { .hotel-section { padding: 40px 16px; } }\n</style><script>alert('css')</script>`;
+  config.sections.splice(1, 0, custom);
+
+  assert.equal(validation.isInvitationConfig(config), true);
+  const safe = customSections.sanitizeInvitationCustomSections(config);
+  assert.deepEqual(safe.sections.map((section) => section.id), config.sections.map((section) => section.id));
+  assert.equal(safe.sections[1].title, "Accommodation Information");
+  assert.match(safe.sections[1].fields.html, /hotel-section/);
+  assert.match(safe.sections[1].fields.html, /Where to Stay/);
+  assert.doesNotMatch(safe.sections[1].fields.html, /<script|onerror|onclick|<iframe|<object|<embed|javascript:/i);
+  assert.match(safe.sections[1].fields.css, /h2 \{ font-size: 80px; \}/);
+  assert.match(safe.sections[1].fields.css, /@media \(max-width: 600px\)/);
+  assert.doesNotMatch(safe.sections[1].fields.css, /<\/?(?:style|script)/i);
+
+  const normalized = designer.normalizeInvitationConfig(safe);
+  assert.equal(normalized.sections[1].fields.html, safe.sections[1].fields.html);
+  assert.equal(normalized.sections[1].fields.css, safe.sections[1].fields.css);
+  const oversized = structuredClone(config);
+  oversized.sections[1].fields.html = "x".repeat(customSections.maxCustomSectionHtmlLength + 1);
+  assert.equal(validation.isInvitationConfig(oversized), false);
+});
+
+test("one isolated custom renderer serves live preview and published invitation in array order", async () => {
+  const [{ PublishedInvitation }, { InvitationDesigner }, { buildCustomSectionDocument }, designer, orders] = await Promise.all([
+    vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
+    vite.ssrLoadModule("/components/invitation-designer.tsx"),
+    vite.ssrLoadModule("/components/custom-section-renderer.tsx"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+    vite.ssrLoadModule("/lib/invitation-orders.ts"),
+  ]);
+  const config = designer.createInitialInvitation();
+  config.contact = { name: "Admin Customer", phone: "58749327" };
+  const custom = designer.createSection("custom");
+  custom.id = "custom-hotel";
+  custom.title = "Accommodation Information";
+  custom.fields.html = `<section class="hotel-section" data-order-marker="custom-first"><h2>Where to Stay</h2></section>`;
+  custom.fields.css = `h2 { font-size: 80px; }\n@media (max-width: 600px) { h2 { font-size: 24px; } }`;
+  config.sections.unshift(custom);
+
+  const documentHtml = buildCustomSectionDocument(custom.fields.html, custom.fields.css);
+  assert.match(documentHtml, /Content-Security-Policy/);
+  assert.match(documentHtml, /script-src 'none'/);
+  assert.match(documentHtml, /@media \(max-width: 600px\)/);
+  assert.match(documentHtml, /h2 \{ font-size: 80px; \}/);
+  const published = renderToStaticMarkup(React.createElement(PublishedInvitation, { config }));
+  assert.match(published, /custom-section-frame/);
+  assert.match(published, /sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"/);
+  assert.doesNotMatch(published, /allow-scripts/);
+  assert.ok(published.indexOf("custom-first") < published.indexOf("Counting the days"));
+
+  const updatedConfig = structuredClone(config);
+  updatedConfig.sections[0].fields.html = `<section data-order-marker="custom-edited">Edited accommodation</section>`;
+  const updated = renderToStaticMarkup(React.createElement(PublishedInvitation, { config: updatedConfig }));
+  assert.match(updated, /custom-edited/);
+  assert.doesNotMatch(updated, /custom-first/);
+  const withoutCustom = { ...updatedConfig, sections: updatedConfig.sections.filter((section) => section.id !== custom.id) };
+  assert.doesNotMatch(renderToStaticMarkup(React.createElement(PublishedInvitation, { config: withoutCustom })), /custom-section-frame|custom-edited/);
+
+  const order = { id: "11111111-1111-4111-8111-111111111111", status: "pending", slug: "admin-customer", active_until: null, total_price: 1500, created_at: "2026-09-15T00:00:00Z", deployed_at: null, inactive_at: null, config };
+  const admin = renderToStaticMarkup(React.createElement(InvitationDesigner, { adminOrder: { ...order, summary: orders.summarizeOrder(order) }, today: "2026-09-15" }));
+  assert.match(admin, /Custom Section/);
+  assert.match(admin, /Custom section source/);
+  assert.match(admin, /Section Name/);
+  assert.match(admin, />HTML</);
+  assert.match(admin, />CSS</);
+  assert.match(admin, /hotel-section/);
+  const customer = renderToStaticMarkup(React.createElement(InvitationDesigner));
+  assert.doesNotMatch(customer, /Custom section source|Section Name/);
+});
+
+test("customer API rejects custom source and admin saves persist only sanitized source", async () => {
+  const [{ POST: customerPost }, { PATCH: adminPatch }, designer] = await Promise.all([
+    vite.ssrLoadModule("/app/api/invitations/route.ts"),
+    vite.ssrLoadModule("/app/api/dashboard/orders/route.ts"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+  ]);
+  const id = "11111111-1111-4111-8111-111111111111";
+  const config = designer.createInitialInvitation();
+  config.contact = { name: "Admin Customer", phone: "58749327" };
+  const custom = designer.createSection("custom");
+  custom.title = "Accommodation Information";
+  custom.fields.html = `<section class="hotel-section" onclick="alert('x')"><h2>Where to Stay</h2><script>alert('x')</script></section>`;
+  custom.fields.css = `h2 { font-size: 80px; } @media (max-width: 600px) { h2 { font-size: 24px; } }`;
+  config.sections.push(custom);
+
+  const customerResponse = await customerPost(new Request("https://localhost/api/invitations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ config }),
+  }));
+  assert.equal(customerResponse.status, 403);
+  assert.match((await customerResponse.json()).error, /only be added by an administrator/);
+
+  const order = { id, status: "pending", slug: "admin-customer", active_until: null, total_price: 1500, created_at: "2026-09-15T00:00:00Z", deployed_at: null, inactive_at: null, config: designer.createInitialInvitation() };
+  order.config.contact = config.contact;
+  const previousUrl = process.env.SUPABASE_URL;
+  const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const originalFetch = globalThis.fetch;
+  let savedConfig = null;
+  process.env.SUPABASE_URL = "https://test-project.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
+  try {
+    globalThis.fetch = async (input, init = {}) => {
+      const endpoint = String(input);
+      if (endpoint.includes("/rest/v1/invitations?") && (!init.method || init.method === "GET")) return Response.json([order]);
+      if (endpoint.includes("/rest/v1/invitation_media?") && (!init.method || init.method === "GET")) return Response.json([]);
+      if (endpoint.endsWith("/rest/v1/rpc/update_invitation_with_media")) {
+        const update = JSON.parse(init.body);
+        savedConfig = update.p_values.config;
+        return Response.json([{ ...order, ...update.p_values }]);
+      }
+      throw new Error(`Unexpected ${init.method ?? "GET"} request: ${endpoint}`);
+    };
+    const adminResponse = await adminPatch(new Request("https://localhost/api/dashboard/orders", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, action: "save", config, totalPrice: 1500 }),
+    }));
+    assert.equal(adminResponse.status, 200);
+    assert.ok(savedConfig);
+    const savedCustom = savedConfig.sections.find((section) => section.type === "custom");
+    assert.match(savedCustom.fields.html, /hotel-section/);
+    assert.doesNotMatch(savedCustom.fields.html, /<script|onclick/i);
+    assert.match(savedCustom.fields.css, /@media \(max-width: 600px\)/);
+    const responseCustom = (await adminResponse.json()).order.config.sections.find((section) => section.type === "custom");
+    assert.deepEqual(responseCustom, savedCustom);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
+    if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = previousKey;
+  }
+});

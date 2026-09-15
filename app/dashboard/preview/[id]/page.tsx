@@ -6,6 +6,7 @@ import { PublishedInvitation } from "@/components/invitation-phone-preview";
 import { normalizeInvitationConfig } from "@/lib/invitation-designer";
 import { getInvitationOrder } from "@/lib/invitation-orders-server";
 import { validInvitationId } from "@/lib/invitation-validation";
+import { sanitizeInvitationCustomSections } from "@/lib/custom-sections";
 import "@/app/design-invitation/design-invitation.css";
 import "@/app/[slug]/published-invitation.css";
 import "../../preview.css";
@@ -28,7 +29,7 @@ export default async function AdminOrderPreviewPage({ params }: { params: Promis
         <div><LockKeyhole aria-hidden="true" /><span><strong>Private preview</strong><small>{order.status === "active" ? "This order is currently live" : "Guests cannot access this invitation until it is deployed"}</small></span></div>
         <Link href="/dashboard"><ArrowLeft aria-hidden="true" /> Back to orders</Link>
       </header>
-      <PublishedInvitation config={normalizeInvitationConfig(order.config)} privatePreview />
+      <PublishedInvitation config={sanitizeInvitationCustomSections(normalizeInvitationConfig(order.config))} privatePreview />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { createUniqueInvitationSlug, getInvitationOrder } from "@/lib/invitation
 import { issueUploadCapability, mediaRows, photosMatchConfig, removeStoredPhotos, validSlot, verifyPhotos, verifyUploadCapability } from "@/lib/media-submission";
 import { supabaseRequest } from "@/lib/supabase-server";
 import { isInvitationConfig } from "@/lib/invitation-validation";
+import { hasCustomSectionSource } from "@/lib/custom-sections";
 
 export const runtime = "edge";
 
@@ -26,6 +27,9 @@ export async function POST(request: Request) {
     if (!isInvitationConfig(body.config)) return NextResponse.json({ error: "Please check your name, phone number and invitation details." }, { status: 400 });
     if (JSON.stringify(body.config).length > 750_000) {
       return NextResponse.json({ error: "This design is too large to save." }, { status: 413 });
+    }
+    if (hasCustomSectionSource(body.config)) {
+      return NextResponse.json({ error: "Custom section HTML and CSS can only be added by an administrator." }, { status: 403 });
     }
     const price = calculateInvitationPrice(body.config);
 

@@ -267,7 +267,7 @@ export function createSection(type: SectionType, included = false): InvitationSe
     case "glimpse":
       return { ...common, title: "A Glimpse Of Us", fields: { message: "A few favourite memories from the story that brought us here." }, items: [] };
     case "custom":
-      return { ...common, title: "Custom Part", fields: {}, items: [] };
+      return { ...common, title: "Custom Part", fields: { html: "", css: "" }, items: [] };
   }
 }
 

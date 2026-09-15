@@ -3,6 +3,19 @@ import {
   sectionDefinitions,
   type InvitationConfig,
 } from "@/lib/invitation-designer";
+import {
+  customSectionCssField,
+  customSectionHtmlField,
+  maxCustomSectionCssLength,
+  maxCustomSectionHtmlLength,
+} from "@/lib/custom-sections";
+
+function validSectionField(type: string, key: string, value: unknown) {
+  if (typeof value !== "string") return false;
+  if (type === "custom" && key === customSectionHtmlField) return value.length <= maxCustomSectionHtmlLength;
+  if (type === "custom" && key === customSectionCssField) return value.length <= maxCustomSectionCssLength;
+  return value.length <= 5_000;
+}
 
 export function isInvitationConfig(value: unknown): value is InvitationConfig {
   if (!value || typeof value !== "object") return false;
@@ -60,7 +73,8 @@ export function isInvitationConfig(value: unknown): value is InvitationConfig {
           && section.title.length <= 200
           && section.fields
           && typeof section.fields === "object"
-          && Object.values(section.fields).every((entry) => typeof entry === "string" && entry.length <= 5_000)
+          && !Array.isArray(section.fields)
+          && Object.entries(section.fields).every(([key, entry]) => validSectionField(section.type, key, entry))
           && Array.isArray(section.images)
           && section.images.length <= 8
           && section.images.every((image) => typeof image === "string" && image.length <= 2_000)
