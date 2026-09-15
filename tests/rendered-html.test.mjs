@@ -169,6 +169,12 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.match(designer, /Small dedication label/);
   assert.match(designer, /Closing words/);
   assert.match(styles, /@keyframes designer-petal-fall/);
+  assert.match(designer, /preparePhotosForSave/);
+  assert.match(designer, /URL\.createObjectURL\(preview\)/);
+  assert.match(designer, /max 5 MB/);
+  assert.doesNotMatch(designer, /20 MB/);
+  assert.match(preview, /data-photo-count=\{section\.images\.length\}/);
+  assert.match(styles, /data-photo-count="1"/);
 });
 
 test("renders the private order dashboard shell without a public login", async () => {
@@ -270,7 +276,7 @@ test("deployment modal remains readable and every WhatsApp contact uses the What
   ]);
   assert.match(styles, /\.orders-deploy-modal \{[^}]*max-height: calc\(100dvh - 1\.5rem\)/);
   assert.match(styles, /\.orders-deploy-modal \.orders-deploy-actions \{[^}]*repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(styles, /\.orders-deploy-modal \.orders-deploy-actions\.has-whatsapp a\.is-whatsapp \{ grid-column: 1 \/ -1; grid-row: 2;/);
+  assert.match(styles, /\.orders-deploy-modal \.orders-deploy-actions\.has-whatsapp a\.is-whatsapp \{ grid-column: 1 \/ -1; min-height: 3\.8rem;/);
   assert.match(styles, /\.orders-deploy-link > button span \{[^}]*overflow-wrap: anywhere/);
   assert.match(dashboard, /import \{ WhatsAppIcon \}/);
   assert.match(designer, /import \{ WhatsAppIcon \}/);
@@ -291,6 +297,7 @@ test("the dashboard has mobile cards, expiring feedback, and a WhatsApp publishi
   assert.match(dashboard, /Send via WhatsApp/);
   assert.match(dashboard, /customerWhatsAppUrl\(order\.phone/);
   assert.match(css, /\.order-danger-action\.is-undeploy svg:not\(\.is-spinning\)/);
+  assert.match(css, /a\.is-whatsapp > svg \{ width: 1\.2rem; height: 1\.2rem/);
 });
 
 test("duplicates review orders with independent photo storage and an atomic DB commit", async () => {
@@ -360,11 +367,11 @@ test("duplicates review orders with independent photo storage and an atomic DB c
     assert.notEqual(order.id, originalId);
     assert.deepEqual(posts.map((item) => item.type), ["photo", "atomic"]);
     const photoUrl = posts[1].values.p_media[0].public_url;
-    assert.match(photoUrl, new RegExp(`/${order.id}-customer-custom-link-copy/`));
+    assert.match(photoUrl, new RegExp(`/custom-link-copy-${order.id}-customer/`));
     assert.equal(posts[1].values.p_config.hero.uploadedUrl, photoUrl);
     assert.equal(order.config.hero.uploadedUrl, photoUrl);
     assert.equal(posts[1].values.p_config.sections.at(-1).images[0], photoUrl);
-    assert.equal(posts[1].values.p_media[0].storage_path.startsWith(`${order.id}-`), true);
+    assert.equal(posts[1].values.p_media[0].storage_path.startsWith(`custom-link-copy-${order.id}-customer/`), true);
     assert.notEqual(photoUrl, oldUrl);
 
     original.status = "active";
@@ -400,7 +407,7 @@ test("duplicates review orders with independent photo storage and an atomic DB c
   }
 });
 
-test("new media folders include order id, customer name and link while old folders remain valid", async () => {
+test("new media folders use slug, order id and customer name while old folders remain valid", async () => {
   const [{ mediaFolderForOrder, belongsToOrder }, { createInitialInvitation }] = await Promise.all([
     vite.ssrLoadModule("/lib/invitation-media-path.ts"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
@@ -409,14 +416,18 @@ test("new media folders include order id, customer name and link while old folde
   config.contact.name = "Élodie & Aamir";
   const id = "11111111-1111-4111-8111-111111111111";
   const folder = mediaFolderForOrder({ id, slug: "john-and-sameer-copy", config });
-  assert.equal(folder, `${id}-elodie-aamir-john-and-sameer-copy`);
+  assert.equal(folder, `john-and-sameer-copy-${id}-elodie-aamir`);
   assert.ok(belongsToOrder(`${folder}/hero:0-example.webp`, id));
   assert.ok(belongsToOrder(`${id}/old-photo.jpg`, id));
+  assert.ok(belongsToOrder(`${id}-elodie-aamir-john-and-sameer-copy/previous-photo.webp`, id));
   assert.equal(belongsToOrder("different-id/photo.jpg", id), false);
 });
 
 test("retries an interrupted batch without uploading successful files again and explains plain-text 413", async () => {
-  const { uploadPendingPhotos } = await vite.ssrLoadModule("/lib/photo-upload.ts");
+  const { maxOriginalImageBytes, preparePhotoPreview, uploadPendingPhotos } = await vite.ssrLoadModule("/lib/photo-upload.ts");
+  assert.equal(maxOriginalImageBytes, 5 * 1024 * 1024);
+  const previewFile = new File(["preview"], "preview.jpg", { type: "image/jpeg" });
+  assert.equal(await preparePhotoPreview(previewFile), previewFile);
   const files = [new File(["one"], "one.jpg", { type: "image/jpeg" }), new File(["two"], "two.jpg", { type: "image/jpeg" })];
   const pending = { "section:glimpse-included:images": files };
   const prepared = new Map();
@@ -539,7 +550,7 @@ test("a failed six-photo submission creates no invitation or media rows and clea
     assert.equal(committed.status, 201);
     assert.equal(dbCommits, 1);
     assert.equal(lastCommit.p_media.length, 6);
-    assert.ok(lastCommit.p_media.every((photo) => photo.storage_path.startsWith(`${submission.id}-john-client-`)));
+    assert.ok(lastCommit.p_media.every((photo) => photo.storage_path.startsWith(`sara-and-sameer-${submission.id}-john-client/`)));
     const savedFile = new FormData();
     savedFile.set("invitationId", submission.id);
     savedFile.set("uploadToken", submission.uploadToken);
@@ -793,7 +804,7 @@ test("supports automatic invitation routes and order lifecycle storage", async (
   assert.match(migration, /active_until/);
   assert.match(migration, /invitations_slug_idx/);
   assert.match(migration, /drop column if exists updated_at/);
-  assert.match(proxy, /verifyAdminSession/);
+  assert.match(proxy, /getAdminSession/);
   assert.match(proxy, /\/api\/dashboard/);
   assert.match(proxy, /\/dashboard\/:path\*/);
   assert.match(publicRoute, /getPublicInvitationBySlug/);

@@ -1,4 +1,5 @@
 import { getSupabaseEnvironment, publicStorageUrl, supabaseRequest } from "@/lib/supabase-server";
+import { belongsToOrder } from "@/lib/invitation-media-path";
 import { validInvitationId } from "@/lib/invitation-validation";
 import type { InvitationConfig } from "@/lib/invitation-designer";
 
@@ -46,8 +47,9 @@ export async function issueUploadCapability(capability: Omit<UploadCapability, "
 
 export async function verifyUploadCapability(token: unknown, id: unknown): Promise<UploadCapability | null> {
   const value = await verify<UploadCapability>("upload", token);
-  if (!value || !validInvitationId(id) || value.id !== id || !value.folder.startsWith(`${id}-`) || value.folder.includes("/")
-    || typeof value.slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.slug) || !value.folder.endsWith(`-${value.slug}`)
+  if (!value || !validInvitationId(id) || value.id !== id || typeof value.folder !== "string" || value.folder.includes("/")
+    || typeof value.slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.slug)
+    || !(value.folder.startsWith(`${value.slug}-${id}-`) || (value.folder.startsWith(`${id}-`) && value.folder.endsWith(`-${value.slug}`)))
     || !Array.isArray(value.slots) || value.slots.length > 32 || !value.slots.every(validSlot)
     || !Number.isFinite(value.expires) || value.expires < Date.now() || value.expires > Date.now() + maxAge) return null;
   return value;
@@ -68,7 +70,7 @@ export async function verifyPhotos(id: string, input: unknown, capability?: Uplo
       || !validSlot(photo.slot) || !mimeTypes.has(photo.mimeType ?? "") || !Number.isInteger(photo.sizeBytes)
       || Number(photo.sizeBytes) < 1 || Number(photo.sizeBytes) > 5 * 1024 * 1024
       || seen.has(photo.path) || photo.url !== publicStorageUrl(photo.path)
-      || !photo.path.startsWith(capability ? `${capability.folder}/` : `${id}-`)
+      || !(capability ? photo.path.startsWith(`${capability.folder}/`) : belongsToOrder(photo.path, id))
       || (capability && !capability.slots.includes(photo.slot))) return null;
     const signed = await verify<{ id: string; path: string; slot: string; mimeType: string; sizeBytes: number; expires: number }>("receipt", photo.receipt);
     if (!signed || signed.id !== id || signed.path !== photo.path || signed.slot !== photo.slot

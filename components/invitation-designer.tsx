@@ -38,7 +38,7 @@ import { InvitationPhonePreview } from "@/components/invitation-phone-preview";
 import { OrderConfirmationModal } from "@/components/order-confirmation-modal";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
-import { isHeicPhoto, maxOriginalImageBytes, preparePendingPhotos, preparePhoto, selectedUploadedPhotos, uploadPendingPhotos } from "@/lib/photo-upload";
+import { isHeicPhoto, maxOriginalImageBytes, preparePendingPhotos, preparePhotoPreview, selectedUploadedPhotos, uploadPendingPhotos } from "@/lib/photo-upload";
 import type { UploadedPhoto } from "@/lib/media-submission";
 import { customerWhatsAppUrl, invitationPublicUrl } from "@/lib/whatsapp-messages";
 import {
@@ -127,6 +127,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
           ? currentAdminOrder?.status === "active" ? "Update live invitation" : "Save edits"
           : "Save my design";
   const hasCustomPart = config.sections.some((section) => section.type === "custom");
+  const pendingPhotoCount = Object.values(pendingFiles).reduce((count, files) => count + files.length, 0);
   const whatsappSupportUrl = whatsappSupportNumber
     ? `https://wa.me/${whatsappSupportNumber}?text=${encodeURIComponent(whatsappSupportMessage)}`
     : "/#consultation";
@@ -324,7 +325,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
 
   function validateFiles(files: File[]) {
     if (files.find((file) => !acceptedImageTypes.has(file.type) && !isHeicPhoto(file))) return "Please choose JPG, PNG, WebP or iPhone HEIC photos.";
-    if (files.find((file) => file.size > maxOriginalImageBytes)) return "Each photo must be 20 MB or smaller before compression.";
+    if (files.find((file) => file.size > maxOriginalImageBytes)) return "Each photo must be 5 MB or smaller.";
     return "";
   }
 
@@ -333,27 +334,37 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     setPhotoProcessing(processingPhotosRef.current);
   }
 
+  async function preparePhotosForSave() {
+    if (!pendingPhotoCount) return;
+    setProcessing(1);
+    try {
+      await preparePendingPhotos(pendingFiles, preparedPhotoRef.current);
+    } finally {
+      setProcessing(-1);
+    }
+  }
+
   async function selectHeroPhoto(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
     const error = validateFiles([file]);
     if (error) { setSaveError(error); return; }
     if (processingPhotosRef.current) { setSaveError("Please wait for your current photos to finish preparing before choosing more."); return; }
-    setProcessing(1);
+    const needsConversion = isHeicPhoto(file);
+    if (needsConversion) setProcessing(1);
     try {
-      const prepared = await preparePhoto(file);
-      preparedPhotoRef.current.set(file, prepared);
+      const preview = await preparePhotoPreview(file);
       if (config.hero.uploadedUrl.startsWith("blob:")) {
         URL.revokeObjectURL(config.hero.uploadedUrl);
         objectUrls.current = objectUrls.current.filter((item) => item !== config.hero.uploadedUrl);
       }
-      const url = URL.createObjectURL(prepared);
+      const url = URL.createObjectURL(preview);
       objectUrls.current.push(url);
       setPendingFiles((current) => ({ ...current, hero: [file] }));
       updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "upload", uploadedUrl: url } }));
       activatePreview("hero");
     } catch (cause) { setSaveError(cause instanceof Error ? cause.message : "This photo could not be read."); }
-    finally { setProcessing(-1); }
+    finally { if (needsConversion) setProcessing(-1); }
   }
 
   function removeHeroPhoto() {
@@ -381,14 +392,12 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     const error = validateFiles(files);
     if (error) { setSaveError(error); return; }
     if (processingPhotosRef.current) { setSaveError("Please wait for your current photos to finish preparing before choosing more."); return; }
+    const needsConversion = files.some(isHeicPhoto);
     const urls: string[] = [];
-    setProcessing(1);
+    if (needsConversion) setProcessing(1);
     try {
-      for (const file of files) {
-        const prepared = await preparePhoto(file);
-        preparedPhotoRef.current.set(file, prepared);
-        urls.push(URL.createObjectURL(prepared));
-      }
+      const previews = await Promise.all(files.map(preparePhotoPreview));
+      urls.push(...previews.map((preview) => URL.createObjectURL(preview)));
       objectUrls.current.push(...urls);
       const slot = `section:${sectionId}:images`;
       setPendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), ...files] }));
@@ -397,7 +406,9 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     } catch (cause) {
       urls.forEach((url) => URL.revokeObjectURL(url));
       setSaveError(cause instanceof Error ? cause.message : "These photos could not be read.");
-    } finally { setProcessing(-1); }
+    } finally {
+      if (needsConversion) setProcessing(-1);
+    }
   }
 
   function removeGlimpsePhoto(sectionId: string, imageIndex: number) {
@@ -453,7 +464,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
 
     try {
       let workingConfig = removeLocalPhotoUrls(config);
-      await preparePendingPhotos(pendingFiles, preparedPhotoRef.current);
+      await preparePhotosForSave();
       if (adminMode && currentAdminOrder) {
         const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
         if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
@@ -530,7 +541,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     try {
       let workingConfig = removeLocalPhotoUrls(config);
       if (nextAction === "deploy") {
-        await preparePendingPhotos(pendingFiles, preparedPhotoRef.current);
+        await preparePhotosForSave();
         const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
         if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
       }
@@ -723,7 +734,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
                 {config.hero.type === "interactive" && (
                   <div className={`designer-upload-card ${config.hero.photoSource === "upload" ? "is-selected" : ""}`}>
                     <label className={`designer-upload-option ${config.hero.photoSource === "upload" ? "is-selected" : ""}`}>
-                      {config.hero.photoSource === "upload" && config.hero.uploadedUrl ? <img src={config.hero.uploadedUrl} alt="Your uploaded hero preview" /> : <span><Upload aria-hidden="true" /><strong>Upload your photo</strong><small>JPG, PNG, WebP or HEIC · max 20 MB</small></span>}
+                      {config.hero.photoSource === "upload" && config.hero.uploadedUrl ? <img src={config.hero.uploadedUrl} alt="Your uploaded hero preview" /> : <span><Upload aria-hidden="true" /><strong>Upload your photo</strong><small>JPG, PNG, WebP or HEIC · max 5 MB</small></span>}
                       <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" onChange={(event) => { void selectHeroPhoto(event.target.files); event.currentTarget.value = ""; }} />
                     </label>
                     {config.hero.photoSource === "upload" && config.hero.uploadedUrl && <button type="button" className="designer-photo-remove" onClick={removeHeroPhoto} aria-label="Remove uploaded hero photo"><Trash2 aria-hidden="true" /></button>}
@@ -812,9 +823,10 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
               {!adminMode && <a href={whatsappSupportUrl} target={whatsappSupportNumber ? "_blank" : undefined} rel={whatsappSupportNumber ? "noreferrer" : undefined}><WhatsAppIcon /> WhatsApp</a>}
             </div>
           )}
-          {photoProcessing > 0 && <p className="designer-notice" role="status"><Loader2 className="is-spinning" aria-hidden="true" /> Optimizing your photos for the invitation…</p>}
+          {photoProcessing > 0 && saveState !== "saving" && <div className="designer-notice designer-photo-save-progress" role="status"><Loader2 className="is-spinning" aria-hidden="true" /><span><strong>Preparing your iPhone photo preview</strong><small>HEIC photos need a short compatibility conversion; JPG, PNG and WebP previews appear immediately.</small></span></div>}
+          {saveState === "saving" && pendingPhotoCount > 0 && <div className="designer-notice designer-photo-save-progress" role="status"><Loader2 className="is-spinning" aria-hidden="true" /><span><strong>{photoProcessing > 0 ? "Preparing your photos" : "Saving your photos securely"}</strong><small>{photoProcessing > 0 ? "Optimization starts only now, after your instant preview." : "Your invitation will be ready as soon as every photo is safely stored."}</small></span></div>}
           <div className="designer-submit-panel">
-            <button className={`designer-final-save ${saveState === "submitted" || saveState === "saved" ? "is-complete" : ""}`} type="submit" disabled={photoProcessing > 0 || saveState === "saving" || saveState === "submitted" || saveState === "saved"}>{saveState === "submitted" || saveState === "saved" ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}{saveButtonText}</button>
+            <button className={`designer-final-save ${saveState === "submitted" || saveState === "saved" ? "is-complete" : ""}`} type="submit" disabled={photoProcessing > 0 || saveState === "saving" || saveState === "submitted" || saveState === "saved"}>{saveState === "saving" ? <Loader2 className="is-spinning" aria-hidden="true" /> : saveState === "submitted" || saveState === "saved" ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}{saveButtonText}</button>
             <p>{adminMode
               ? currentAdminOrder?.status === "active"
                 ? "Updating publishes these edits and the active-until date above to the live invitation, then returns you to the orders table."
@@ -1172,7 +1184,7 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
           {headingField}
           <TextArea label="Gallery introduction" value={section.fields.message ?? ""} onChange={(value) => onField("message", value)} full rows={2} />
           <label className="designer-inline-upload">
-            <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG, WebP or HEIC photos. Each photo can be up to 20 MB before compression.</small></span>
+            <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG, WebP or HEIC photos. Each photo can be up to 5 MB.</small></span>
             <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple onChange={(event) => { onPhotos(event.target.files); event.currentTarget.value = ""; }} />
           </label>
           {section.images.length > 0 && (

@@ -477,7 +477,7 @@ function SectionPreview({ section }: { section: InvitationSection }) {
       return (
         <PreviewSection section={section} className="preview-glimpse" eyebrow="A few favourite memories">
           <p>{section.fields.message}</p>
-          <div className={`preview-gallery ${section.images.length ? "has-photos" : ""}`}>
+          <div className={`preview-gallery ${section.images.length ? "has-photos" : ""}`} data-photo-count={section.images.length}>
             {section.images.length
               ? section.images.map((image, index) => <figure key={`${image}-${index}`}><img src={image} alt={`Uploaded couple memory ${index + 1}`} loading="lazy" decoding="async" /></figure>)
               : Array.from({ length: 5 }, (_, index) => <span key={index}><ImageIcon aria-hidden="true" /><small>Your photo</small></span>)}

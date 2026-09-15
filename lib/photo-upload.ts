@@ -1,6 +1,6 @@
 import type { UploadedPhoto } from "@/lib/media-submission";
 
-export const maxOriginalImageBytes = 20 * 1024 * 1024;
+export const maxOriginalImageBytes = 5 * 1024 * 1024;
 const targetUploadBytes = 900 * 1024;
 
 export function isHeicPhoto(file: File) {
@@ -8,18 +8,28 @@ export function isHeicPhoto(file: File) {
     || /\.(heic|heif)$/i.test(file.name);
 }
 
+async function convertHeicPhoto(file: File) {
+  try {
+    const { heicTo } = await import("heic-to");
+    return await heicTo({ blob: file, type: "image/jpeg", quality: .92 });
+  } catch {
+    throw new Error(`${file.name} could not be converted from iPhone HEIC. Try exporting it as a JPG.`);
+  }
+}
+
+/** Standard browser images can preview immediately; HEIC needs a compatibility conversion first. */
+export async function preparePhotoPreview(file: File): Promise<Blob> {
+  if (file.size > maxOriginalImageBytes) throw new Error(`${file.name} is over 5 MB. Please choose a smaller photo.`);
+  return isHeicPhoto(file) ? convertHeicPhoto(file) : file;
+}
+
 /** Keep each request below small edge/proxy body limits, including multipart overhead. */
 export async function preparePhoto(file: File): Promise<File> {
-  if (file.size > maxOriginalImageBytes) throw new Error(`${file.name} is over 20 MB. Please choose a smaller photo.`);
+  if (file.size > maxOriginalImageBytes) throw new Error(`${file.name} is over 5 MB. Please choose a smaller photo.`);
   if (typeof document === "undefined") throw new Error("Photo optimization is unavailable here. Please use a smaller photo.");
 
   let imageSource: Blob = file;
-  if (isHeicPhoto(file)) {
-    try {
-      const { heicTo } = await import("heic-to");
-      imageSource = await heicTo({ blob: file, type: "image/jpeg", quality: .92 });
-    } catch { throw new Error(`${file.name} could not be converted from iPhone HEIC. Try exporting it as a JPG.`); }
-  }
+  if (isHeicPhoto(file)) imageSource = await convertHeicPhoto(file);
   const objectUrl = URL.createObjectURL(imageSource);
   const image = new Image();
   try {

@@ -26,6 +26,7 @@ import {
   Search,
   Sparkles,
   Trash2,
+  X,
 } from "lucide-react";
 import { InvitationDesigner, type AdminInvitationOrder } from "@/components/invitation-designer";
 import { OrderConfirmationModal } from "@/components/order-confirmation-modal";
@@ -310,7 +311,7 @@ export function InvitationDashboard() {
                       <SortableHeading label="Customer" sortKey="customerName" sort={sort} onSort={updateSort} />
                       <th scope="col">Link</th>
                       <SortableHeading label="Event date" sortKey="eventDate" sort={sort} onSort={updateSort} />
-                      <SortableHeading label="Created (MUT)" sortKey="created_at" sort={sort} onSort={updateSort} />
+                      <SortableHeading label="Created (Mauritius)" sortKey="created_at" sort={sort} onSort={updateSort} />
                       <SortableHeading label="Price" sortKey="total_price" sort={sort} onSort={updateSort} />
                       <SortableHeading label="Status" sortKey="status" sort={sort} onSort={updateSort} />
                       <th scope="col"><span className="sr-only">Actions</span></th>
@@ -407,7 +408,7 @@ function OrderRow({ order, busy, onOpen, onDeploy, onDelete, onDuplicate, onDeac
       <td data-label="Customer"><span className="orders-cell-stack"><strong>{order.customerName}</strong><small>{formatPhone(order.phone)}</small></span></td>
       <td data-label="Link"><button className="orders-link-button" type="button" onClick={onCopyLink} disabled={copying || busy} title={order.slug ? `Click to copy ${fullUrl}` : `Suggested ${fullUrl} · click to reserve and copy the exact link`} aria-label={`Copy ${order.coupleName}'s full invitation link`}>{copying ? <Loader2 className="is-spinning" aria-hidden="true" /> : copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}<span>{linkPath}</span></button>{order.slug?.includes("-copy") && <small className="orders-link-note is-full-url" title={fullUrl}>{fullUrl.replace(/^https?:\/\//, "")}</small>}{!order.slug && <small className="orders-link-note">Suggested · reserve on copy</small>}{copied && <small className="orders-link-note" role="status">Full link copied</small>}</td>
       <td data-label="Event date"><span className="orders-cell-stack"><strong>{formatDate(order.eventDate)}</strong><small>{order.sectionCount} invitation parts</small>{order.hasCustomPart && <span className="orders-custom-badge"><Sparkles aria-hidden="true" /> Custom part</span>}</span></td>
-      <td data-label="Created (Mauritius)" title={`Stored in database (UTC): ${order.created_at}`}><span className="orders-cell-stack"><strong>{formatCreatedDate(order.created_at)}</strong><small>{formatCreatedTime(order.created_at)} MUT</small></span></td>
+      <td data-label="Created (Mauritius)" title={`Supabase created_at stores this same moment in UTC: ${order.created_at}`}><span className="orders-cell-stack"><strong>{formatCreatedDate(order.created_at)}</strong><small>{formatCreatedTime(order.created_at)} · UTC+4</small></span></td>
       <td data-label="Price"><strong>{formatMoney(order.total_price)}</strong></td>
       <td data-label="Status"><span className="orders-cell-stack"><StatusChip status={order.status} />{order.status === "active" && <small>Until {formatDate(order.active_until)}</small>}</span></td>
       <td data-label="Actions"><div className="orders-row-actions">
@@ -479,15 +480,22 @@ function DeployModal({ order, value, today, busy, preparingLink, success, error,
 
   return (
     <div className="orders-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="orders-deploy-modal" role="dialog" aria-modal="true" aria-labelledby="orders-deploy-title">
-        <span>{success ? <Check aria-hidden="true" /> : <Rocket aria-hidden="true" />}</span><p>{success ? "Invitation published" : "Publish invitation"}</p><h2 id="orders-deploy-title">{success ? `${order.coupleName} is live` : `Make ${order.coupleName} live`}</h2>
-        <p className="orders-modal-description">{success ? "The public link is ready to share with your customer." : "Choose when it goes offline and copy the link whenever you are ready."}</p>
+      <section className={`orders-deploy-modal ${success ? "is-success" : ""}`} role="dialog" aria-modal="true" aria-labelledby="orders-deploy-title" aria-describedby="orders-deploy-description">
+        <button className="orders-deploy-close" type="button" onClick={onClose} disabled={busy} aria-label="Close publish invitation dialog"><X aria-hidden="true" /></button>
+        <header className="orders-deploy-heading">
+          <span className="orders-deploy-status-icon">{success ? <Check aria-hidden="true" /> : <Rocket aria-hidden="true" />}</span>
+          <div>
+            <p className="orders-deploy-eyebrow">{success ? "Invitation published" : "Publish invitation"}</p>
+            <h2 id="orders-deploy-title">{success ? `${order.coupleName} is live` : `Make ${order.coupleName} live`}</h2>
+            <p id="orders-deploy-description" className="orders-modal-description">{success ? "Everything is ready. Copy the public link or share it with your customer in one tap." : "Choose when it goes offline and review the public link before publishing."}</p>
+          </div>
+        </header>
         {!success && <label><span>Keep the invitation active until</span><input ref={dateRef} type="date" min={today} value={value} onChange={(event) => onValue(event.target.value)} /></label>}
-        <div className="orders-deploy-link"><span>{success ? "Live invitation link" : "Invitation link"}</span><button ref={copyRef} type="button" onClick={() => void copyLink()} disabled={preparingLink || !order.slug} title={order.slug ? `Copy ${publicUrl}` : "Preparing an available link"}><span>{preparingLink ? "Preparing your link…" : publicUrl}</span>{copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}</button><small>{copied ? "Full link copied to clipboard" : !order.slug ? "The suggested address will be reserved before you can copy or deploy it." : !success ? "The link starts working when you deploy the invitation." : "You can now send this link to your customer."}</small></div>
+        <div className="orders-deploy-link"><span>{success ? "Live invitation link" : "Invitation link"}</span><button ref={copyRef} type="button" onClick={() => void copyLink()} disabled={preparingLink || !order.slug} title={order.slug ? `Copy ${publicUrl}` : "Preparing an available link"}><span>{preparingLink ? "Preparing your link…" : publicUrl}</span>{copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}</button><small>{copied ? "Full link copied to clipboard" : !order.slug ? "The suggested address will be reserved before you can copy or deploy it." : !success ? "The link starts working when you deploy the invitation." : "Select the link above to copy it to your clipboard."}</small></div>
         {(error || copyError) && <p className="orders-modal-error" role="alert">{error || copyError}</p>}
         {copyError && <input className="orders-deploy-manual-copy" readOnly value={publicUrl} aria-label="Select the full invitation URL to copy manually" onFocus={(event) => event.currentTarget.select()} />}
-        {success && <p className="orders-modal-feedback"><Check aria-hidden="true" /> The invitation is available to guests now.</p>}
-        <div className={`orders-deploy-actions ${success && whatsappUrl ? "has-whatsapp" : ""}`}>{success ? <><a href={`/${order.slug}`} target="_blank" rel="noreferrer"><ExternalLink aria-hidden="true" /> Open invitation</a>{whatsappUrl && <a className="is-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" aria-label={`Send ${order.customerName} the invitation link on WhatsApp`}><WhatsAppIcon /> Send via WhatsApp</a>}<button type="button" onClick={onClose}>Done</button></> : <><button type="button" onClick={onClose} disabled={busy}>Cancel</button><button type="button" onClick={onDeploy} disabled={busy || preparingLink || !order.slug || !value}>{busy ? <Loader2 className="is-spinning" /> : <Rocket />} Deploy invitation</button></>}</div>
+        {success && <div className="orders-modal-feedback"><Check aria-hidden="true" /><span><strong>Available to guests now</strong><small>The invitation stays live until the date you selected.</small></span></div>}
+        <div className={`orders-deploy-actions ${success && whatsappUrl ? "has-whatsapp" : ""}`}>{success ? <>{whatsappUrl && <a className="is-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" aria-label={`Send ${order.customerName} the invitation link on WhatsApp`}><WhatsAppIcon /><span><strong>Send via WhatsApp</strong><small>Share the live link with {order.customerName}</small></span></a>}<a href={`/${order.slug}`} target="_blank" rel="noreferrer"><ExternalLink aria-hidden="true" /> Open invitation</a><button type="button" onClick={onClose}><Check aria-hidden="true" /> Done</button></> : <><button type="button" onClick={onClose} disabled={busy}>Cancel</button><button type="button" onClick={onDeploy} disabled={busy || preparingLink || !order.slug || !value}>{busy ? <Loader2 className="is-spinning" /> : <Rocket />} Deploy invitation</button></>}</div>
       </section>
     </div>
   );
