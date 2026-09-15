@@ -74,8 +74,8 @@ const socialLinks = {
   tiktok: "",
 };
 
-const consultationMessage = "Hi, I would like some help designing my invitation and would like to arrange a free video consultation.";
-const customPartMessage = "Hi, I would like to add a custom part to my invitation and discuss it during the free video consultation.";
+const consultationMessage = "Hi, I would like some help designing my invitation.";
+const customPartMessage = "Hi, I would like to add a custom part to my invitation.";
 
 function getWhatsAppLink(message: string) {
   return whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}` : "#";
@@ -401,7 +401,7 @@ export function LandingExperience() {
               </div>
               <p>We can add one custom part made specially for your invitation. This is for something that is not already available in the choices above.</p>
               <div className="custom-part-consultation">
-                <span>Your custom part will be planned with you during a free video consultation. If you already have something in mind or a design readily available, share it with us.</span>
+                <span>Your custom part will be planned with you. If you already have something in mind or a design readily available, share it with us.</span>
                 <a
                   className="button button-wine"
                   href={customPartWhatsAppLink}
@@ -439,10 +439,10 @@ export function LandingExperience() {
             <Smartphone aria-hidden="true" />
             <div className="consultation-copy">
               <div className="consultation-title-row">
-                <strong>Free video consultation</strong>
+                <strong>Free Assistance</strong>
                 <span className="free-consultation-badge">Free</span>
               </div>
-              <p><b>Having trouble designing your invitation?</b> We can assist you through your choices and help you put the invitation together during a free video consultation.</p>
+              <p><b>Having trouble designing your invitation?</b> We can assist you through your choices and help you design the invitation.</p>
             </div>
             <div className="consultation-actions">
               <a

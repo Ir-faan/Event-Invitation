@@ -832,7 +832,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
               <div>
                 <p>Final step</p>
                 <h2 id="designer-contact-title">How can we contact you?</h2>
-                <span>We will contact you to share payment details or arrange a video consultation.</span>
+                <span>We will contact you to share payment details or assist you in the designing of your invitation.</span>
               </div>
             </div>
             <div className="designer-fields-grid">
@@ -861,7 +861,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
                 ? "Updating publishes these edits and the active-until date above to the live invitation, then returns you to the orders table."
                 : "Saving keeps this order ready for review and returns you to the orders table."
               : hasCustomPart
-                ? "We will contact you to discuss your custom part during a video consultation or by message, then share payment details when your order is ready."
+                ? "We will contact you to discuss your custom part, then share payment details when your order is ready."
                 : "Once your order is ready, we will contact you with the payment details."}</p>
           </div>
         </form>
@@ -1221,6 +1221,7 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
           <label className="designer-inline-upload">
             <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG, WebP or HEIC photos. Each photo can be up to 5 MB.</small></span>
             {photoProgressLabel && <PhotoUploadProgress label={photoProgressLabel} />}
+            <Upload aria-hidden="true" /><span><strong>Add photos</strong><small>Choose up to 8 JPG, PNG, WebP or HEIC photos. Each photo can be up to 5 MB.</small></span>
             <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple onChange={(event) => { onPhotos(event.target.files); event.currentTarget.value = ""; }} />
           </label>
           {section.images.length > 0 && (
@@ -1236,7 +1237,7 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
         </div>
       );
     case "custom":
-      return <div className="designer-custom-consultation"><Video aria-hidden="true" /><div><strong>Your custom part will be designed with you.</strong><p>We will discuss the custom part during a video consultation or by message. You do not have to edit anything here.</p></div></div>;
+      return <div className="designer-custom-consultation"><Video aria-hidden="true" /><div><strong>Your custom part will be designed with you.</strong><p>We will contact you. You do not have to edit anything here.</p></div></div>;
   }
 }
 

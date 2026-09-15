@@ -44,7 +44,6 @@ test("renders the guided invitation designer and mobile preview", async () => {
   assert.match(html, /Time to count down to/);
   assert.match(html, /Choose an additional part/);
   assert.match(html, /\+ Rs 150/);
-  assert.match(html, /video consultation or by message/);
   assert.match(html, /For the easiest design experience/);
   assert.match(html, /Your name/);
   assert.match(html, /Mauritian phone or WhatsApp number/);

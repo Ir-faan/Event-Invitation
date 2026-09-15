@@ -195,7 +195,7 @@ export const sectionDefinitions: Record<SectionType, { name: string; shortName: 
   seating: { name: "Seating Arrangement", shortName: "Seating", description: "List several families under each table.", price: 200 },
   "day-programme": { name: "Day Programme", shortName: "Programme", description: "Times, programme details and small notes.", price: 200 },
   glimpse: { name: "Glimpse Of Us", shortName: "Glimpse Of Us", description: "A scattered gallery of your photos.", price: 200 },
-  custom: { name: "Custom Part", shortName: "Custom Part", description: "Planned and designed with you by video consultation or by message.", price: 500 },
+  custom: { name: "Custom Part", shortName: "Custom Part", description: "Planned and designed with you.", price: 500 },
 };
 
 function makeId(type: SectionType) {
