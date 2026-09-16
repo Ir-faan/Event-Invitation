@@ -128,11 +128,12 @@ test("uses the revised hero, photo choices and additional-part prices", async ()
 });
 
 test("protects mobile preview interactions and layout regressions", async () => {
-  const [designer, preview, styles, setupPage] = await Promise.all([
+  const [designer, preview, styles, setupPage, examplePage] = await Promise.all([
     readFile(new URL("../components/invitation-designer.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/invitation-phone-preview.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
     readFile(new URL("../app/examples/[slug]/setup/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/examples/[slug]/page.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(designer, /function choosePalette\(id: PaletteId\) \{\s*updateConfig\(\(current\) => \(\{ \.\.\.current, palette: id \}\)\);\s*\}/);
@@ -159,6 +160,8 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.match(designer, /case "special-message":[\s\S]*?Small text above the heading[\s\S]*?\{headingField\}[\s\S]*?Your main message/);
   assert.doesNotMatch(styles, /designer-choice\.is-featured/);
   assert.match(styles, /\.preview-event-card \{ width: min\(16\.5rem,100%\)/);
+  assert.match(styles, /\.preview-message \{[^}]*display: flex;[^}]*align-items: center;[^}]*justify-content: center/);
+  assert.match(styles, /\.preview-memory-card \{[^}]*width: 100%;[^}]*max-width: 100%;[^}]*margin-inline: auto/);
   assert.match(styles, /\.preview-direction-options \{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(styles, /\.preview-table-list \{[^}]*grid-template-columns: repeat\(auto-fit,minmax\(min\(7\.25rem,100%\),1fr\)\)/);
   assert.match(styles, /\.designer-preview-price \{/);
@@ -194,6 +197,9 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.match(designer, /setIsOpen\(mobileInitialOpen\.current\)/);
   assert.doesNotMatch(designer, /querySelectorAll<HTMLDetailsElement>\("#designer-sections \.designer-section-editor"\)/);
   assert.doesNotMatch(setupPage, /DesignerMobileEnhancements|dynamic\(|React\.lazy/);
+  assert.match(setupPage, /export const dynamic = "force-dynamic"/);
+  assert.match(setupPage, /export const revalidate = 0/);
+  assert.match(examplePage, /href=\{`\/examples\/\$\{example\.slug\}\/setup`\} prefetch=\{false\}/);
 });
 
 test("example invitations are data-driven, varied, and priced by the shared calculator", async () => {
@@ -303,10 +309,11 @@ test("example mode labels every invitation part without affecting normal invitat
 });
 
 test("the existing designer renders exact example settings in a locked read-only mode", async () => {
-  const [{ InvitationDesigner }, { getInvitationExample, getInvitationExamplePrice }, readOnlyStyles] = await Promise.all([
+  const [{ InvitationDesigner }, { getInvitationExample, getInvitationExamplePrice }, readOnlyStyles, designerStyles] = await Promise.all([
     vite.ssrLoadModule("/components/invitation-designer.tsx"),
     vite.ssrLoadModule("/lib/invitation-examples.ts"),
     readFile(new URL("../app/examples/examples.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
   ]);
   const example = getInvitationExample("burgundy-romance");
   assert.ok(example);
@@ -325,8 +332,13 @@ test("the existing designer renders exact example settings in a locked read-only
   assert.match(html, new RegExp(`Rs ${getInvitationExamplePrice(example).toLocaleString("en-US")}`));
   assert.match(html, /href="\/examples\/burgundy-romance"/);
   assert.doesNotMatch(html, /Save my design|How can we contact you\?|Mauritian phone or WhatsApp number/);
-  assert.match(readOnlyStyles, /\.designer-readonly \.designer-mode-fields\[disabled\] \{[^}]*opacity: \.82;[^}]*filter: grayscale\(\.1\) saturate\(\.58\)/);
-  assert.match(readOnlyStyles, /\.designer-readonly \.designer-field input:disabled,[\s\S]*?background: #e9e6e4/);
+  assert.match(designerStyles, /\.designer-mode-fields \{[^}]*margin: 0;[^}]*padding: 0;[^}]*border: 0/);
+  assert.match(designerStyles, /\.designer-main-step > summary:focus-visible \{/);
+  assert.match(readOnlyStyles, /\.designer-readonly \.designer-mode-fields\[disabled\],[\s\S]*?opacity: 1/);
+  assert.match(readOnlyStyles, /\.designer-readonly \.designer-mode-fields\[disabled\] button,[\s\S]*?cursor: not-allowed/);
+  assert.match(readOnlyStyles, /\.designer-readonly \.designer-field input:disabled,[\s\S]*?background: #fff/);
+  assert.doesNotMatch(readOnlyStyles, /grayscale\(|opacity: \.82|#e9e6e4/);
+  assert.doesNotMatch(readOnlyStyles, /\.designer-readonly[^{}]*\{[^}]*filter:/);
   assert.doesNotMatch(readOnlyStyles, /\.designer-readonly \.designer-preview-panel/);
 });
 

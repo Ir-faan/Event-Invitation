@@ -47,7 +47,7 @@ export default async function InvitationExamplePage({ params }: { params: Promis
           <strong>{config.hero.firstName} &amp; {config.hero.secondName}</strong>
           <small><CircleDollarSign aria-hidden="true" /> Approx. Rs {price.toLocaleString("en-US")}</small>
         </div>
-        <Link href={`/examples/${example.slug}/setup`} className="example-toolbar-setup"><SlidersHorizontal aria-hidden="true" /> <span>View Design Setup</span></Link>
+        <Link href={`/examples/${example.slug}/setup`} prefetch={false} className="example-toolbar-setup"><SlidersHorizontal aria-hidden="true" /> <span>View Design Setup</span></Link>
       </header>
       <PublishedInvitation config={config} exampleMode />
     </div>

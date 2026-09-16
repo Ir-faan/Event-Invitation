@@ -8,6 +8,10 @@ import "@/app/design-invitation/designer-gradient-accents.css";
 import "../../examples.css";
 
 export const dynamicParams = false;
+// Setup pages carry client-module references for the full designer. Never let
+// an older RSC payload outlive the content-hashed client chunks it references.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export function generateStaticParams() {
   return invitationExamples.map((example) => ({ slug: example.slug }));
