@@ -16,6 +16,7 @@ import {
   bismillahAssets,
   getHeroImage,
   getHeroPreset,
+  getInvitationThemeVariables,
   getPalette,
   getSectionItems,
   interactiveFrameAssets,
@@ -24,6 +25,7 @@ import {
   type InvitationConfig,
   type InvitationSection,
   type InvitationSectionItem,
+  type PaletteId,
 } from "@/lib/invitation-designer";
 import { CustomSectionRenderer } from "@/components/custom-section-renderer";
 import { getCustomSectionSource } from "@/lib/custom-sections";
@@ -111,7 +113,7 @@ function InvitationPreviewContent({ config, replayKey, exampleMode = false }: { 
       <OpeningPreview config={config} replayKey={replayKey} exampleMode={exampleMode} />
       <PreviewAmbience />
       <HeroPreview config={config} replayKey={replayKey} exampleMode={exampleMode} />
-      {config.sections.map((section) => <SectionPreview key={section.id} section={section} exampleMode={exampleMode} />)}
+      {config.sections.map((section) => <SectionPreview key={section.id} section={section} palette={config.palette} exampleMode={exampleMode} />)}
       <footer className="invite-preview-footer">
         <div className="invite-preview-footer-monogram">{config.hero.firstName.charAt(0)}<Heart aria-hidden="true" />{config.hero.secondName.charAt(0)}</div>
         <strong data-name-fit={nameFit}>{config.hero.firstName} &amp; {config.hero.secondName}</strong>
@@ -141,6 +143,7 @@ function PreviewAmbience() {
 function getThemeStyle(config: InvitationConfig) {
   const palette = getPalette(config.palette);
   return {
+    ...getInvitationThemeVariables(config.palette),
     "--preview-bg": palette.theme.background,
     "--preview-surface": palette.theme.surface,
     "--preview-primary": palette.theme.primary,
@@ -462,7 +465,7 @@ function ScratchPhoto({ color, onReveal }: { color: string; onReveal: () => void
   );
 }
 
-function SectionPreview({ section, exampleMode = false }: { section: InvitationSection; exampleMode?: boolean }) {
+function SectionPreview({ section, palette, exampleMode = false }: { section: InvitationSection; palette: PaletteId; exampleMode?: boolean }) {
   const items = getSectionItems(section);
   switch (section.type) {
     case "countdown":
@@ -578,7 +581,7 @@ function SectionPreview({ section, exampleMode = false }: { section: InvitationS
       if (!customSource.html.trim()) {
         return <PreviewSection section={section} className="preview-custom" exampleMode={exampleMode}><Sparkles aria-hidden="true" /><p>This custom part will be discussed and designed with you during a video consultation or by message.</p><small>Your final preview will be prepared after we discuss it together.</small></PreviewSection>;
       }
-      return <div className="example-custom-section">{exampleMode && <ExampleSectionLabel>{sectionDefinitions[section.type].name}</ExampleSectionLabel>}<CustomSectionRenderer sectionId={section.id} sectionName={section.title} html={customSource.html} css={customSource.css} /></div>;
+      return <div className="example-custom-section">{exampleMode && <ExampleSectionLabel>{sectionDefinitions[section.type].name}</ExampleSectionLabel>}<CustomSectionRenderer sectionId={section.id} sectionName={section.title} html={customSource.html} css={customSource.css} palette={palette} /></div>;
   }
 }
 

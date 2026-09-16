@@ -57,6 +57,7 @@ import {
   getPalette,
   getHeroPresets,
   getSectionItems,
+  invitationThemeVariableDefinitions,
   normalizeInvitationConfig,
   openingAssets,
   openingOptions,
@@ -1321,6 +1322,19 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
           <div className="designer-fields-grid">
             <TextField label="Section Name" hint="Used to identify this section in the admin dashboard." value={section.title} onChange={onTitle} full maxLength={200} />
             <TextArea label="HTML" hint={`Safe HTML only · up to ${maxCustomSectionHtmlLength.toLocaleString("en-US")} characters`} value={section.fields[customSectionHtmlField] ?? ""} onChange={(value) => onField(customSectionHtmlField, value)} full rows={12} code maxLength={maxCustomSectionHtmlLength} />
+            <details className="designer-custom-theme-reference">
+              <summary>
+                <Palette aria-hidden="true" />
+                <span><strong>Invitation palette variables</strong><small>Automatically use this invitation&apos;s selected colour palette.</small></span>
+                <ChevronDown aria-hidden="true" />
+              </summary>
+              <div className="designer-custom-theme-tokens">
+                {invitationThemeVariableDefinitions.map((variable) => (
+                  <div key={variable.name}><code>{`var(${variable.name})`}</code><span>{variable.description}</span></div>
+                ))}
+              </div>
+              <p><strong>Example</strong><code>{`.custom-section { color: var(--invitation-text); background: var(--invitation-background); }`}</code></p>
+            </details>
             <TextArea label="CSS" hint={`Scoped to this section · responsive @media rules are supported · up to ${maxCustomSectionCssLength.toLocaleString("en-US")} characters`} value={section.fields[customSectionCssField] ?? ""} onChange={(value) => onField(customSectionCssField, value)} full rows={12} code maxLength={maxCustomSectionCssLength} />
           </div>
           <div className="designer-custom-security"><LockKeyhole aria-hidden="true" /><span>HTML is sanitized before previewing and saving. JavaScript, event handlers, embedded frames and objects are blocked.</span></div>

@@ -1110,6 +1110,10 @@ test("supports automatic invitation routes and order lifecycle storage", async (
   assert.match(dashboard, /new Set\(\["pending"\]\)/);
   assert.match(dashboard, /orders-datatable/);
   assert.match(dashboard, /Custom part/);
+  assert.match(dashboard, /data-label="Custom part"/);
+  assert.match(dashboard, /orders-custom-cell/);
+  const eventDateCell = dashboard.match(/<td data-label="Event date">.*?<\/td>/s)?.[0] ?? "";
+  assert.doesNotMatch(eventDateCell, /orders-custom-badge/);
   assert.match(dashboard, /\/dashboard\/preview\/\$\{order\.id\}/);
   assert.match(dashboard, /customerWhatsAppUrl/);
   assert.doesNotMatch(dashboard, /window\.confirm/);
@@ -1223,16 +1227,40 @@ test("one isolated custom renderer serves live preview and published invitation 
   custom.id = "custom-hotel";
   custom.title = "Accommodation Information";
   custom.fields.html = `<section class="hotel-section" data-order-marker="custom-first"><h2>Where to Stay</h2></section>`;
-  custom.fields.css = `h2 { font-size: 80px; }\n@media (max-width: 600px) { h2 { font-size: 24px; } }`;
+  custom.fields.css = `.hotel-section { color: var(--invitation-text); background: var(--invitation-card); border: 1px solid var(--invitation-border); box-shadow: 0 0 0 1px #345c42; }\nh2 { color: var(--invitation-primary); font-size: 80px; }\n@media (max-width: 600px) { h2 { font-size: 24px; } }`;
   config.sections.unshift(custom);
 
-  const documentHtml = buildCustomSectionDocument(custom.fields.html, custom.fields.css);
+  const paletteExpectations = {
+    beige: { primary: "#7a4326", background: "#f4dfc7" },
+    olive: { primary: "#485523", background: "#dfe5bd" },
+    "dusty-blue": { primary: "#315c7c", background: "#c9e1ed" },
+    burgundy: { primary: "#6d1735", background: "#e8aebf" },
+  };
+  for (const [palette, expected] of Object.entries(paletteExpectations)) {
+    const variables = designer.getInvitationThemeVariables(palette);
+    assert.equal(variables["--invitation-primary"], expected.primary);
+    assert.equal(variables["--invitation-background"], expected.background);
+    assert.equal(variables["--invitation-card"], designer.getPalette(palette).theme.surface);
+    const themedDocument = buildCustomSectionDocument(custom.fields.html, custom.fields.css, palette);
+    assert.match(themedDocument, new RegExp(`--invitation-primary: ${expected.primary}`));
+    assert.match(themedDocument, /color: var\(--invitation-text\)/);
+    assert.match(themedDocument, /background: var\(--invitation-card\)/);
+    assert.match(themedDocument, /#345c42/);
+  }
+
+  const documentHtml = buildCustomSectionDocument(custom.fields.html, custom.fields.css, "beige");
   assert.match(documentHtml, /Content-Security-Policy/);
   assert.match(documentHtml, /script-src 'none'/);
   assert.match(documentHtml, /@media \(max-width: 600px\)/);
-  assert.match(documentHtml, /h2 \{ font-size: 80px; \}/);
+  assert.match(documentHtml, /h2 \{ color: var\(--invitation-primary\); font-size: 80px; \}/);
+  assert.match(documentHtml, /--invitation-background-alt: #fff8ed/);
+  assert.match(documentHtml, /--invitation-text-muted: #765344/);
+  assert.match(documentHtml, /--invitation-border: #d9a56c/);
+  assert.match(documentHtml, /--invitation-card: #fff8ed/);
+  config.palette = "olive";
   const published = renderToStaticMarkup(React.createElement(PublishedInvitation, { config }));
   assert.match(published, /custom-section-frame/);
+  assert.match(published, /--invitation-primary: #485523/);
   assert.match(published, /sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"/);
   assert.doesNotMatch(published, /allow-scripts/);
   assert.ok(published.indexOf("custom-first") < published.indexOf("Counting the days"));
@@ -1252,6 +1280,9 @@ test("one isolated custom renderer serves live preview and published invitation 
   assert.match(admin, /Section Name/);
   assert.match(admin, />HTML</);
   assert.match(admin, />CSS</);
+  assert.match(admin, /Invitation palette variables/);
+  assert.match(admin, /Automatically use this invitation&#x27;s selected colour palette/);
+  for (const variable of designer.invitationThemeVariableDefinitions) assert.match(admin, new RegExp(`var\\(${variable.name}\\)`));
   assert.match(admin, /hotel-section/);
   const customer = renderToStaticMarkup(React.createElement(InvitationDesigner));
   assert.doesNotMatch(customer, /Custom section source|Section Name/);

@@ -230,6 +230,21 @@
 .designer-custom-editor-heading > div { display: grid; gap: .3rem; }
 .designer-custom-editor-heading strong { color: #38252a; font: 600 1.1rem var(--serif); }
 .designer-custom-editor-heading p { margin: 0; font-size: .75rem; line-height: 1.5; }
+.designer-custom-theme-reference { grid-column: 1 / -1; overflow: hidden; border: 1px solid color-mix(in srgb,var(--builder-accent) 18%,transparent); border-radius: .8rem; background: color-mix(in srgb,var(--builder-soft) 32%,#fff); }
+.designer-custom-theme-reference > summary { min-height: 3.3rem; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: .65rem; padding: .65rem .8rem; color: #554147; cursor: pointer; list-style: none; }
+.designer-custom-theme-reference > summary::-webkit-details-marker { display: none; }
+.designer-custom-theme-reference > summary > svg:first-child { width: 1rem; color: var(--builder-accent); }
+.designer-custom-theme-reference > summary > svg:last-child { width: .9rem; color: #8d767d; transition: transform .16s ease; }
+.designer-custom-theme-reference[open] > summary > svg:last-child { transform: rotate(180deg); }
+.designer-custom-theme-reference > summary > span { min-width: 0; display: grid; gap: .12rem; }
+.designer-custom-theme-reference > summary strong { font-size: .7rem; }
+.designer-custom-theme-reference > summary small { color: #806d73; font-size: .61rem; line-height: 1.4; }
+.designer-custom-theme-tokens { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .4rem; padding: .2rem .8rem .8rem; }
+.designer-custom-theme-tokens > div { min-width: 0; display: grid; gap: .14rem; padding: .55rem .6rem; border: 1px solid rgba(63,33,38,.08); border-radius: .55rem; background: rgba(255,255,255,.82); }
+.designer-custom-theme-tokens code { overflow-wrap: anywhere; color: var(--builder-accent); font: 700 .62rem/1.35 ui-monospace,SFMono-Regular,Consolas,monospace; }
+.designer-custom-theme-tokens span { color: #806d73; font-size: .58rem; }
+.designer-custom-theme-reference > p { display: grid; gap: .3rem; margin: 0; padding: .75rem .8rem; border-top: 1px solid rgba(63,33,38,.08); color: #6c585e; background: rgba(255,255,255,.55); font-size: .61rem; }
+.designer-custom-theme-reference > p code { overflow-wrap: anywhere; color: #49363b; font: 500 .59rem/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; }
 .designer-custom-security { display: flex; align-items: center; gap: .55rem; padding: .7rem .8rem; border-radius: .7rem; color: #66545a; background: color-mix(in srgb,var(--builder-soft) 40%,#fff); font-size: .65rem; line-height: 1.45; }
 .designer-custom-security svg { width: .9rem; flex: 0 0 auto; color: var(--builder-accent); }
 .designer-section-actions { display: flex; flex-wrap: wrap; gap: .45rem; padding-top: .2rem; }
@@ -780,6 +795,7 @@
   .designer-section-actions button { flex: 1 1 auto; justify-content: center; }
   .designer-section-actions button.is-remove { margin-left: 0; }
   .designer-uploaded-strip { grid-template-columns: repeat(4,1fr); }
+  .designer-custom-theme-tokens { grid-template-columns: 1fr; }
   .designer-add-section { grid-template-columns: 1fr; }
   .designer-add-section > button { grid-column: auto; }
   .designer-price-summary { grid-template-columns: 1fr; }

@@ -101,6 +101,25 @@ export const paletteOptions = [
   },
 ] as const;
 
+/**
+ * Public theme tokens available to admin-authored Custom Parts. Their values
+ * are always derived from the selected invitation palette below, so adding a
+ * palette does not require maintaining a second set of Custom Part colours.
+ */
+export const invitationThemeVariableDefinitions = [
+  { name: "--invitation-primary", description: "Primary colour" },
+  { name: "--invitation-secondary", description: "Secondary colour" },
+  { name: "--invitation-accent", description: "Accent colour" },
+  { name: "--invitation-background", description: "Invitation background" },
+  { name: "--invitation-background-alt", description: "Alternate background" },
+  { name: "--invitation-text", description: "Main text" },
+  { name: "--invitation-text-muted", description: "Muted text" },
+  { name: "--invitation-border", description: "Border colour" },
+  { name: "--invitation-card", description: "Card background" },
+] as const;
+
+export type InvitationThemeVariableName = (typeof invitationThemeVariableDefinitions)[number]["name"];
+
 type HeroPreset = { id: string; name: string; url: string; objectPosition: string; zoom: number; hidden?: boolean };
 
 /** Bump this value whenever the generated designer artwork changes. */
@@ -297,6 +316,21 @@ export function createInitialInvitation(): InvitationConfig {
 
 export function getPalette(id: PaletteId) {
   return paletteOptions.find((palette) => palette.id === id) ?? paletteOptions[0];
+}
+
+export function getInvitationThemeVariables(id: PaletteId) {
+  const { theme } = getPalette(id);
+  return {
+    "--invitation-primary": theme.primary,
+    "--invitation-secondary": theme.secondary,
+    "--invitation-accent": theme.accent,
+    "--invitation-background": theme.background,
+    "--invitation-background-alt": theme.surface,
+    "--invitation-text": theme.ink,
+    "--invitation-text-muted": theme.muted,
+    "--invitation-border": theme.secondary,
+    "--invitation-card": theme.surface,
+  } satisfies Record<InvitationThemeVariableName, string>;
 }
 
 export function getCoupleInitials(firstName = "", secondName = "") {

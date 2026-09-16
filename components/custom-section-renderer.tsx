@@ -2,16 +2,17 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { sanitizeCustomSectionCss, sanitizeCustomSectionHtml } from "@/lib/custom-sections";
+import { getInvitationThemeVariables, type PaletteId } from "@/lib/invitation-designer";
 
 type CustomSectionRendererProps = {
   sectionId: string;
   sectionName: string;
   html: string;
   css: string;
+  palette: PaletteId;
 };
 
 const customSectionBaseCss = `
-:root { color-scheme: light; }
 html, body { width: 100%; min-width: 0; margin: 0; padding: 0; background: transparent; }
 body { overflow: hidden; }
 *, *::before, *::after { box-sizing: border-box; }
@@ -20,16 +21,25 @@ img, picture, video, canvas { max-width: 100%; }
 img, video, canvas { height: auto; }
 `;
 
-export function buildCustomSectionDocument(html: string, css: string) {
+function buildThemeVariableCss(palette: PaletteId) {
+  const variables = getInvitationThemeVariables(palette);
+  return `:root {
+  color-scheme: light;
+${Object.entries(variables).map(([name, value]) => `  ${name}: ${value};`).join("\n")}
+}`;
+}
+
+export function buildCustomSectionDocument(html: string, css: string, palette: PaletteId = "beige") {
   const safeHtml = sanitizeCustomSectionHtml(html);
   const safeCss = sanitizeCustomSectionCss(css);
+  const themeVariableCss = buildThemeVariableCss(palette);
   return `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; frame-src 'none'; child-src 'none'; base-uri 'none'; form-action 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:; media-src https: data:" />
-    <style>${customSectionBaseCss}\n${safeCss}</style>
+    <style>${themeVariableCss}\n${customSectionBaseCss}\n${safeCss}</style>
   </head>
   <body><div id="custom-section-root">${safeHtml}</div></body>
 </html>`;
@@ -39,10 +49,10 @@ export function buildCustomSectionDocument(html: string, css: string) {
  * A sandboxed iframe is used instead of Shadow DOM because viewport media
  * queries must follow the simulated phone width in the editor.
  */
-export function CustomSectionRenderer({ sectionId, sectionName, html, css }: CustomSectionRendererProps) {
+export function CustomSectionRenderer({ sectionId, sectionName, html, css, palette }: CustomSectionRendererProps) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const documentHtml = useMemo(() => buildCustomSectionDocument(html, css), [html, css]);
+  const documentHtml = useMemo(() => buildCustomSectionDocument(html, css, palette), [html, css, palette]);
 
   function syncHeight() {
     const frame = frameRef.current;
