@@ -990,7 +990,7 @@ function SubmissionSuccessModal() {
         <span className="designer-success-check"><Check aria-hidden="true" /></span>
         <p>Design received</p>
         <h2 id="designer-success-title">Your invitation has been sent for processing</h2>
-        <span id="designer-success-description">We have safely received your choices. Our team will contact you when your invitation is ready to review.</span>
+        <span id="designer-success-description">We have safely received your design. Our team will contact you when your invitation is ready to review.</span>
         <div className="designer-success-progress"><i /></div>
         <small>Redirecting you to the home page…</small>
       </section>
