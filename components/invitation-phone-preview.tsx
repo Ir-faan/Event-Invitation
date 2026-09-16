@@ -113,7 +113,6 @@ function InvitationPreviewContent({ config, replayKey, exampleMode = false }: { 
       <HeroPreview config={config} replayKey={replayKey} exampleMode={exampleMode} />
       {config.sections.map((section) => <SectionPreview key={section.id} section={section} exampleMode={exampleMode} />)}
       <footer className="invite-preview-footer">
-        {exampleMode && <ExampleSectionLabel>Footer</ExampleSectionLabel>}
         <div className="invite-preview-footer-monogram">{config.hero.firstName.charAt(0)}<Heart aria-hidden="true" />{config.hero.secondName.charAt(0)}</div>
         <strong data-name-fit={nameFit}>{config.hero.firstName} &amp; {config.hero.secondName}</strong>
         <time>{footerDate}</time>
@@ -585,8 +584,14 @@ function SectionPreview({ section, exampleMode = false }: { section: InvitationS
 
 function EventCard({ event }: { event: InvitationSectionItem }) {
   const query = `${event.venue ?? ""} ${event.address ?? ""}`.trim();
-  const mapEmbed = `https://www.google.com/maps?q=${encodeURIComponent(query || "Mauritius")}&output=embed`;
-  const directions = event.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || "Mauritius")}`;
+  const encodedDestination = encodeURIComponent(query || "Mauritius");
+  const mapEmbed = `https://www.google.com/maps?q=${encodedDestination}&output=embed`;
+  const navigationOptions = [
+    ...(event.mapUrl ? [{ label: "Venue link", shortLabel: "Venue", href: event.mapUrl }] : []),
+    { label: "Google Maps", shortLabel: "Google", href: `https://www.google.com/maps/dir/?api=1&destination=${encodedDestination}` },
+    { label: "Apple Maps", shortLabel: "Apple", href: `https://maps.apple.com/?daddr=${encodedDestination}&dirflg=d` },
+    { label: "Waze", shortLabel: "Waze", href: `https://www.waze.com/ul?q=${encodedDestination}&navigate=yes` },
+  ];
   return (
     <article className="preview-event-card">
       <div className="preview-event-icon"><Sparkles aria-hidden="true" /></div>
@@ -598,7 +603,22 @@ function EventCard({ event }: { event: InvitationSectionItem }) {
         <span><MapPin aria-hidden="true" />{event.venue || "Choose a venue"}<small>{event.address}</small></span>
       </div>
       <div className="preview-map-frame"><iframe src={mapEmbed} title={`Map to ${event.venue || "event"}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /></div>
-      <a href={directions} target="_blank" rel="noreferrer">Open directions <Navigation aria-hidden="true" /></a>
+      <details className="preview-direction-picker">
+        <summary>Directions <Navigation aria-hidden="true" /></summary>
+        <div className="preview-direction-options" data-option-count={navigationOptions.length}>
+          {navigationOptions.map((option) => (
+            <a
+              href={option.href}
+              target="_blank"
+              rel="noreferrer"
+              key={option.label}
+              aria-label={`Open ${event.venue || "the venue"} in ${option.label}`}
+            >
+              {option.shortLabel}
+            </a>
+          ))}
+        </div>
+      </details>
     </article>
   );
 }

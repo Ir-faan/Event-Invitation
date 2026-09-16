@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { InvitationDesigner } from "@/components/invitation-designer";
-import { DesignerMobileEnhancements } from "@/components/designer-mobile-enhancements";
 import "./design-invitation.css";
 import "./mobile-ui-modifications.css";
 import "./designer-gradient-accents.css";
@@ -11,10 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function DesignInvitationPage() {
-  return (
-    <>
-      <DesignerMobileEnhancements />
-      <InvitationDesigner />
-    </>
-  );
+  return <InvitationDesigner />;
 }

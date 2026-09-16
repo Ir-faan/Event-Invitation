@@ -103,6 +103,9 @@ test("uses the revised hero, photo choices and additional-part prices", async ()
 
   assert.equal(sectionDefinitions.countdown.price, 150);
   assert.equal(sectionDefinitions.glimpse.price, 200);
+  const defaultSpecialMessage = createSection("special-message");
+  assert.equal(defaultSpecialMessage.title, "A Special Message");
+  assert.doesNotMatch(JSON.stringify(defaultSpecialMessage), /grandparent|remembered|memory/i);
   assert.equal(getCoupleInitials("  Salma", "Sam"), "S ♥ S");
   assert.equal(getCoupleInitials("123 Aisha", " Noor"), "A ♥ N");
   const basicUrls = new Set(Object.values(heroPresets).flat().map((preset) => preset.url));
@@ -125,10 +128,11 @@ test("uses the revised hero, photo choices and additional-part prices", async ()
 });
 
 test("protects mobile preview interactions and layout regressions", async () => {
-  const [designer, preview, styles] = await Promise.all([
+  const [designer, preview, styles, setupPage] = await Promise.all([
     readFile(new URL("../components/invitation-designer.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/invitation-phone-preview.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/examples/[slug]/setup/page.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(designer, /function choosePalette\(id: PaletteId\) \{\s*updateConfig\(\(current\) => \(\{ \.\.\.current, palette: id \}\)\);\s*\}/);
@@ -155,6 +159,8 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.match(designer, /case "special-message":[\s\S]*?Small text above the heading[\s\S]*?\{headingField\}[\s\S]*?Your main message/);
   assert.doesNotMatch(styles, /designer-choice\.is-featured/);
   assert.match(styles, /\.preview-event-card \{ width: min\(16\.5rem,100%\)/);
+  assert.match(styles, /\.preview-direction-options \{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.preview-table-list \{[^}]*grid-template-columns: repeat\(auto-fit,minmax\(min\(7\.25rem,100%\),1fr\)\)/);
   assert.match(styles, /\.designer-preview-price \{/);
   assert.match(styles, /\.designer-opening-thumb \{ height: auto; aspect-ratio: 2 \/ 3/);
   assert.match(styles, /\.invite-preview-hero-shade::after \{ content: none/);
@@ -184,6 +190,10 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.match(designer, /setNewlyAddedSectionId\(copy\.id\)/);
   assert.match(designer, /openWhenAdded=\{newlyAddedSectionId === section\.id\}/);
   assert.match(designer, /useState\(readOnlyMode \|\| openWhenAdded \|\| \(defaultOpen/);
+  assert.match(designer, /window\.matchMedia\("\(max-width: 900px\)"\)\.matches/);
+  assert.match(designer, /setIsOpen\(mobileInitialOpen\.current\)/);
+  assert.doesNotMatch(designer, /querySelectorAll<HTMLDetailsElement>\("#designer-sections \.designer-section-editor"\)/);
+  assert.doesNotMatch(setupPage, /DesignerMobileEnhancements|dynamic\(|React\.lazy/);
 });
 
 test("example invitations are data-driven, varied, and priced by the shared calculator", async () => {
@@ -201,12 +211,59 @@ test("example invitations are data-driven, varied, and priced by the shared calc
   assert.ok(invitationExamples.some((example) => example.config.hero.type === "basic"));
   assert.ok(invitationExamples.some((example) => example.config.sections.some((section) => section.type === "glimpse" && section.images.length >= 4)));
 
+  const seatingCounts = [];
+  const specialMessageTitles = new Set();
+  const nikkahVenues = [];
+  const eventRank = (name) => {
+    const normalized = name.toLowerCase();
+    if (normalized.includes("mehendi")) return 1;
+    if (normalized.includes("nikkah") || normalized.includes("nikah")) return 2;
+    if (normalized.includes("thank you")) return 5;
+    if (normalized.includes("walimah") || normalized.includes("dinner")) return 3;
+    if (normalized.includes("chawtari")) return 4;
+    return 99;
+  };
+
   for (const example of invitationExamples) {
     assert.ok(isInvitationConfig(example.config), `${example.slug} should be a valid invitation config`);
     assert.equal(getInvitationExamplePrice(example), calculateInvitationPrice(example.config).total);
     assert.ok(includedSectionTypes.every((type) => example.config.sections.some((section) => section.type === type && section.included)));
     assert.ok(example.thumbnail.startsWith("/images/examples/"));
+
+    const details = example.config.sections.find((section) => section.type === "event-details");
+    assert.ok(details, `${example.slug} should include event details`);
+    const ranks = details.items.map((item) => eventRank(item.name ?? ""));
+    assert.deepEqual(ranks, [...ranks].sort((a, b) => a - b), `${example.slug} event details should follow the Mauritian wedding sequence`);
+    const timestamps = details.items.map((item) => `${item.date ?? ""}T${item.time || "00:00"}`);
+    assert.deepEqual(timestamps, [...timestamps].sort(), `${example.slug} event details should be chronological`);
+    nikkahVenues.push(...details.items.filter((item) => /nik+ah/i.test(item.name ?? "")).map((item) => item.venue ?? ""));
+
+    const timelineSection = example.config.sections.find((section) => section.type === "journey");
+    assert.ok(timelineSection, `${example.slug} should include a timeline`);
+    const timelineRanks = timelineSection.items.map((item) => eventRank(item.title ?? ""));
+    assert.deepEqual(timelineRanks, [...timelineRanks].sort((a, b) => a - b), `${example.slug} timeline should follow the Mauritian wedding sequence`);
+    assert.deepEqual(timelineRanks, ranks, `${example.slug} timeline and event details should list the same event sequence`);
+    const timelineDates = timelineSection.items.map((item) => {
+      const humanDate = (item.date ?? "").split("·")[0].trim();
+      const timestamp = Date.parse(`${humanDate} UTC`);
+      assert.ok(Number.isFinite(timestamp), `${example.slug} should use readable timeline dates`);
+      return new Date(timestamp).toISOString().slice(0, 10);
+    });
+    assert.deepEqual(timelineDates, details.items.map((item) => item.date), `${example.slug} timeline and event details dates should agree`);
+
+    for (const section of example.config.sections.filter((item) => item.type === "day-programme")) {
+      assert.notEqual(section.title, "Day Programme");
+      assert.match(section.title, /Mehendi|Nikkah|Walimah|Dinner|Chawtari/i);
+    }
+    for (const section of example.config.sections.filter((item) => item.type === "seating")) seatingCounts.push(section.items.length);
+    for (const section of example.config.sections.filter((item) => item.type === "special-message")) specialMessageTitles.add(section.title);
   }
+
+  assert.ok(nikkahVenues.some((venue) => /masjid|mosque|quran house/i.test(venue)), "some Nikkahs should take place at mosques");
+  assert.ok(nikkahVenues.some((venue) => !/masjid|mosque|quran house/i.test(venue)), "not every Nikkah should take place at a mosque");
+  assert.ok(seatingCounts.some((count) => count >= 10 && count <= 12), "an example should show 10–12 tables");
+  assert.ok(seatingCounts.some((count) => count >= 15), "an example should show at least 15 tables");
+  assert.ok(specialMessageTitles.size >= 3, "special messages should demonstrate several purposes");
 
   const cards = getInvitationExampleCards();
   assert.equal(cards.length, invitationExamples.length);
@@ -215,7 +272,7 @@ test("example invitations are data-driven, varied, and priced by the shared calc
 });
 
 test("example mode labels every invitation part without affecting normal invitations", async () => {
-  const [{ PublishedInvitation }, { getInvitationExample }] = await Promise.all([
+  const [{ PublishedInvitation }, { getInvitationExample, invitationExamples }] = await Promise.all([
     vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
     vite.ssrLoadModule("/lib/invitation-examples.ts"),
   ]);
@@ -226,18 +283,30 @@ test("example mode labels every invitation part without affecting normal invitat
   const normalHtml = renderToStaticMarkup(React.createElement(PublishedInvitation, { config: example.config }));
   const labelCount = (demoHtml.match(/class="example-section-label/g) ?? []).length;
 
-  assert.equal(labelCount, example.config.sections.length + 3); // opening, hero, configured sections and footer
+  assert.equal(labelCount, example.config.sections.length + 2); // opening, hero and configured sections
   assert.match(demoHtml, /Section · Opening · Envelope/);
   assert.match(demoHtml, /Section · Main Area · Interactive Hero/);
   assert.match(demoHtml, /Section · Glimpse Of Us/);
-  assert.match(demoHtml, /Section · Footer/);
+  assert.doesNotMatch(demoHtml, /Section · Footer/);
+  assert.match(demoHtml, /maps\.apple\.com/);
+  assert.match(demoHtml, /www\.waze\.com/);
+  assert.match(demoHtml, /www\.google\.com\/maps\/dir/);
   assert.doesNotMatch(normalHtml, /example-section-label|Section · Main Area/);
+
+  for (const invitation of invitationExamples) {
+    const invitationHtml = renderToStaticMarkup(React.createElement(PublishedInvitation, { config: invitation.config, exampleMode: true }));
+    const labels = (invitationHtml.match(/class="example-section-label/g) ?? []).length;
+    const expectedLabels = invitation.config.sections.length + 1 + (invitation.config.opening.type === "none" ? 0 : 1);
+    assert.equal(labels, expectedLabels, `${invitation.slug} should label every rendered example section`);
+    assert.doesNotMatch(invitationHtml, /Section · Footer/);
+  }
 });
 
 test("the existing designer renders exact example settings in a locked read-only mode", async () => {
-  const [{ InvitationDesigner }, { getInvitationExample, getInvitationExamplePrice }] = await Promise.all([
+  const [{ InvitationDesigner }, { getInvitationExample, getInvitationExamplePrice }, readOnlyStyles] = await Promise.all([
     vite.ssrLoadModule("/components/invitation-designer.tsx"),
     vite.ssrLoadModule("/lib/invitation-examples.ts"),
+    readFile(new URL("../app/examples/examples.css", import.meta.url), "utf8"),
   ]);
   const example = getInvitationExample("burgundy-romance");
   assert.ok(example);
@@ -256,6 +325,9 @@ test("the existing designer renders exact example settings in a locked read-only
   assert.match(html, new RegExp(`Rs ${getInvitationExamplePrice(example).toLocaleString("en-US")}`));
   assert.match(html, /href="\/examples\/burgundy-romance"/);
   assert.doesNotMatch(html, /Save my design|How can we contact you\?|Mauritian phone or WhatsApp number/);
+  assert.match(readOnlyStyles, /\.designer-readonly \.designer-mode-fields\[disabled\] \{[^}]*opacity: \.82;[^}]*filter: grayscale\(\.1\) saturate\(\.58\)/);
+  assert.match(readOnlyStyles, /\.designer-readonly \.designer-field input:disabled,[\s\S]*?background: #e9e6e4/);
+  assert.doesNotMatch(readOnlyStyles, /\.designer-readonly \.designer-preview-panel/);
 });
 
 test("example photographs use compact WebP files and dedicated landing thumbnails", async () => {

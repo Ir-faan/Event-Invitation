@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { DesignerMobileEnhancements } from "@/components/designer-mobile-enhancements";
 import { InvitationDesigner } from "@/components/invitation-designer";
 import { getInvitationExample, invitationExamples } from "@/lib/invitation-examples";
 import "@/app/design-invitation/design-invitation.css";
@@ -28,10 +27,5 @@ export default async function InvitationExampleSetupPage({ params }: { params: P
   const example = getInvitationExample(slug);
   if (!example) notFound();
 
-  return (
-    <>
-      <DesignerMobileEnhancements />
-      <InvitationDesigner exampleConfig={example.config} exampleName={example.name} exampleSlug={example.slug} />
-    </>
-  );
+  return <InvitationDesigner exampleConfig={example.config} exampleName={example.name} exampleSlug={example.slug} />;
 }

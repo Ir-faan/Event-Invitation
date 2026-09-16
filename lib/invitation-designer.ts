@@ -191,7 +191,7 @@ export const sectionDefinitions: Record<SectionType, { name: string; shortName: 
   journey: { name: "Our Timeline", shortName: "Our Timeline", description: "Add as many moments as your story needs.", price: 150 },
   "event-details": { name: "Event Details + Location", shortName: "Event Details", description: "Add every ceremony, venue and map.", price: 150 },
   gift: { name: "Important Notes", shortName: "Important Notes", description: "Share helpful details about gifts, parking or anything else guests should know.", price: 150 },
-  "special-message": { name: "A Special Message", shortName: "Special Message", description: "A dedication, thank-you or loving memory to your closed ones.", price: 200 },
+  "special-message": { name: "A Special Message", shortName: "Special Message", description: "Share gratitude, a dua, dedication, quotation or personal message.", price: 200 },
   seating: { name: "Seating Arrangement", shortName: "Seating", description: "List several families under each table.", price: 200 },
   "day-programme": { name: "Day Programme", shortName: "Programme", description: "Times, programme details and small notes.", price: 200 },
   glimpse: { name: "Glimpse Of Us", shortName: "Glimpse Of Us", description: "A scattered gallery of your photos.", price: 200 },
@@ -232,14 +232,14 @@ export function createSection(type: SectionType, included = false): InvitationSe
     case "special-message":
       return {
         ...common,
-        title: "In Loving Memory",
+        title: "A Special Message",
         fields: {
-          eyebrow: "With love, always",
-          message: "Though you cannot be here in person, your love remains part of every step we take.",
-          dedicationLabel: "Remembering with gratitude",
-          recipient: "Our beloved grandparents",
-          dedicationNote: "Whose love still lights our way",
-          signature: "Forever remembered · Forever loved",
+          eyebrow: "With grateful hearts",
+          message: "Thank you for surrounding us with your love, duas and support as we begin this new chapter together.",
+          dedicationLabel: "With appreciation",
+          recipient: "Our families and guests",
+          dedicationNote: "For being part of the moments that brought us here",
+          signature: "With love · From both of us",
         },
         items: [],
       };

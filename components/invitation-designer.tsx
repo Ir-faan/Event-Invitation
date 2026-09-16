@@ -156,6 +156,30 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   useEffect(() => () => objectUrls.current.forEach((url) => URL.revokeObjectURL(url)), []);
 
   useEffect(() => {
+    function closeOpenPicker(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      document.querySelectorAll<HTMLDetailsElement>(".designer-part-picker details[open]").forEach((picker) => {
+        if (!picker.contains(target)) picker.open = false;
+      });
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      document.querySelectorAll<HTMLDetailsElement>(".designer-part-picker details[open]").forEach((picker) => {
+        picker.open = false;
+      });
+    }
+
+    document.addEventListener("pointerdown", closeOpenPicker);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOpenPicker);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!showSuccess) return;
     const timer = window.setTimeout(() => window.location.assign("/"), 7000);
     return () => window.clearTimeout(timer);
@@ -1123,7 +1147,15 @@ type SectionEditorProps = {
 function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto, photoProgressLabel = "", defaultOpen = true, openWhenAdded = false, adminMode, readOnlyMode = false }: SectionEditorProps) {
   const definition = sectionDefinitions[section.type];
   const [isOpen, setIsOpen] = useState(readOnlyMode || openWhenAdded || (defaultOpen && (section.type === "event-details" || (!section.included && index === total - 1))));
+  const mobileInitialOpen = useRef(index === 0 || openWhenAdded);
   const isAdminCustomSection = adminMode && section.type === "custom";
+
+  useEffect(() => {
+    // This editor owns the state after hydration; a separate client boundary must not mutate its server-rendered <details> DOM.
+    if (!window.matchMedia("(max-width: 900px)").matches) return;
+    setIsOpen(mobileInitialOpen.current);
+  }, []);
+
   return (
     <details className="designer-section-editor" id={`editor-${section.id}`} open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)} onFocusCapture={onActivate}>
       <summary onClick={onActivate}>
@@ -1194,7 +1226,7 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
                 <TextField label="Start time" type="time" value={item.time ?? ""} onChange={(value) => onItem(itemIndex, "time", value)} icon={<Clock3 />} />
                 <TextField label="Venue name" value={item.venue ?? ""} onChange={(value) => onItem(itemIndex, "venue", value)} />
                 <TextField label="Town or full address" value={item.address ?? ""} onChange={(value) => onItem(itemIndex, "address", value)} />
-                <TextField label="Google Maps link (optional)" type="url" hint="If empty, the map searches for the venue and address but it may not find the exact location if the venue and address is not recognised." value={item.mapUrl ?? ""} onChange={(value) => onItem(itemIndex, "mapUrl", value)} full icon={<MapPin />} />
+                <TextField label="Venue map link (optional)" type="url" hint="If empty, the invitation uses the venue and address to offer Google Maps, Apple Maps and Waze directions." value={item.mapUrl ?? ""} onChange={(value) => onItem(itemIndex, "mapUrl", value)} full icon={<MapPin />} />
               </div>
             </div>
           ))}

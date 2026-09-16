@@ -94,8 +94,8 @@ function importantNotes(slug: string, message: string) {
   return section(slug, "gift", "Important Notes", { message }, [], [], true);
 }
 
-function programme(slug: string, items: InvitationSectionItem[], introduction = "A little guide to our celebration") {
-  return section(slug, "day-programme", "Day Programme", { introduction }, items);
+function programme(slug: string, title: string, items: InvitationSectionItem[], introduction = "A little guide to our celebration") {
+  return section(slug, "day-programme", title, { introduction }, items);
 }
 
 function glimpse(slug: string, images: string[], message = "A few favourite memories from the story that brought us here.") {
@@ -106,15 +106,27 @@ function seating(slug: string, items: InvitationSectionItem[], introduction = "P
   return section(slug, "seating", "Seating Arrangement", { introduction }, items);
 }
 
-function specialMessage(slug: string, recipient: string, message: string) {
-  return section(slug, "special-message", "In Loving Memory", {
-    eyebrow: "With love, always",
-    message,
-    dedicationLabel: "Remembering with gratitude",
-    recipient,
-    dedicationNote: "Whose duas and love remain with us",
-    signature: "Forever remembered · Forever loved",
+function specialMessage(slug: string, content: {
+  title: string;
+  eyebrow: string;
+  message: string;
+  dedicationLabel: string;
+  recipient: string;
+  dedicationNote: string;
+  signature: string;
+}) {
+  return section(slug, "special-message", content.title, {
+    eyebrow: content.eyebrow,
+    message: content.message,
+    dedicationLabel: content.dedicationLabel,
+    recipient: content.recipient,
+    dedicationNote: content.dedicationNote,
+    signature: content.signature,
   });
+}
+
+function table(name: string, ...families: string[]): InvitationSectionItem {
+  return { table: name, families: families.join("\n") };
 }
 
 function event(name: string, date: string, time: string, venue: string, address: string): InvitationSectionItem {
@@ -187,7 +199,7 @@ export const invitationExamples: InvitationExample[] = [
         moment("Walimah Celebration", "20 February 2027", "An evening of duas, dinner and joyful company."),
       ]),
       eventDetails("ivory-promise", [
-        event("Nikkah", "2027-02-19", "14:00", "Sir Abdul Razack Mohamed Hall", "Phoenix, Mauritius"),
+        event("Nikkah", "2027-02-19", "14:00", "Jummah Masjid", "Royal Road & Queen Street, Port Louis"),
         event("Walimah Dinner", "2027-02-20", "18:30", "Taher Bagh", "Port Louis, Mauritius"),
       ]),
       importantNotes("ivory-promise", "Your presence and duas are the greatest gifts. Kindly arrive fifteen minutes before the Nikkah begins."),
@@ -218,7 +230,7 @@ export const invitationExamples: InvitationExample[] = [
       countdown("olive-serenity", "2027-04-10", "19:00", "Our celebration begins"),
       glimpse("olive-serenity", [generatedPhotos.oliveGarden, existingPhotos.hennaHands, existingPhotos.bouquet, existingPhotos.gardenWalk]),
       eventDetails("olive-serenity", [
-        event("Nikkah", "2027-04-09", "15:00", "Inous Hafez Hall", "Sodnac, Phoenix"),
+        event("Nikkah", "2027-04-09", "15:00", "Quran House", "23 Boundary Road, Rose Hill"),
         event("Wedding Dinner", "2027-04-10", "19:00", "Taher Bagh", "Port Louis, Mauritius"),
       ]),
       importantNotes("olive-serenity", "Please keep us in your duas. Parking attendants will guide guests on arrival, and dinner will be served at 20:00."),
@@ -243,7 +255,7 @@ export const invitationExamples: InvitationExample[] = [
     },
     sections: [
       countdown("dusty-blue-elegance", "2027-06-19", "18:00", "Until our Walimah", "to an evening we cannot wait to share"),
-      programme("dusty-blue-elegance", [
+      programme("dusty-blue-elegance", "Walimah Programme", [
         { time: "17:45", details: "Guest arrival", note: "Welcome refreshments will be served" },
         { time: "18:30", details: "Family photographs", note: "Immediate family will be invited first" },
         { time: "19:30", details: "Walimah dinner", note: "Followed by dessert and tea" },
@@ -251,7 +263,7 @@ export const invitationExamples: InvitationExample[] = [
       ]),
       eventDetails("dusty-blue-elegance", [
         event("Mehendi Evening", "2027-06-17", "18:30", "Family Residence", "Quatre Bornes, Mauritius"),
-        event("Nikkah", "2027-06-18", "14:30", "Sir Abdul Razack Mohamed Hall", "Phoenix, Mauritius"),
+        event("Nikkah", "2027-06-18", "14:30", "Phoenix Sunnee Mosque", "Phoenix, Vacoas-Phoenix"),
         event("Walimah", "2027-06-19", "18:00", "Port Louis Gymkhana", "Port Louis, Mauritius"),
       ]),
       timeline("dusty-blue-elegance", [
@@ -271,7 +283,7 @@ export const invitationExamples: InvitationExample[] = [
     palette: "burgundy",
     firstName: "Ayesha",
     secondName: "Hamza",
-    date: "2027-08-14",
+    date: "2027-08-13",
     opening: { type: "envelope", asset: "classic-envelope" },
     hero: {
       type: "interactive",
@@ -280,14 +292,14 @@ export const invitationExamples: InvitationExample[] = [
       message: "Join us as our most treasured traditions become one story",
     },
     sections: [
-      countdown("burgundy-romance", "2027-08-14", "18:30", "The celebration awaits"),
+      countdown("burgundy-romance", "2027-08-13", "18:30", "The celebration awaits"),
       timeline("burgundy-romance", [
         moment("Mehendi", "11 August 2027", "Henna, music and a joyful evening with our closest family."),
-        moment("Chawtari", "12 August 2027", "A beloved tradition shared across both families."),
-        moment("Nikkah", "13 August 2027", "The moment we say qubool hai."),
-        moment("Walimah", "14 August 2027", "Our first celebration as husband and wife."),
+        moment("Nikkah", "12 August 2027", "The moment we say qubool hai."),
+        moment("Walimah", "13 August 2027", "Our first celebration as husband and wife."),
+        moment("Chawtari", "14 August 2027", "A beloved tradition shared across both families."),
       ]),
-      programme("burgundy-romance", [
+      programme("burgundy-romance", "Walimah Schedule", [
         { time: "18:00", details: "Doors open", note: "Ushers will help you find your table" },
         { time: "18:30", details: "Couple entrance", note: "Please be seated before the entrance" },
         { time: "19:15", details: "Dinner service", note: "A halal buffet will be served" },
@@ -296,17 +308,36 @@ export const invitationExamples: InvitationExample[] = [
       glimpse("burgundy-romance", [generatedPhotos.burgundyHenna, existingPhotos.hennaHands, existingPhotos.hands, existingPhotos.orchid, generatedPhotos.oliveGarden], "From our first family gathering to the day we chose forever."),
       eventDetails("burgundy-romance", [
         event("Mehendi", "2027-08-11", "18:00", "Family Residence", "Curepipe, Mauritius"),
-        event("Chawtari", "2027-08-12", "17:30", "Inous Hafez Hall", "Sodnac, Phoenix"),
-        event("Nikkah", "2027-08-13", "14:00", "Sir Abdul Razack Mohamed Hall", "Phoenix, Mauritius"),
-        event("Walimah Dinner", "2027-08-14", "18:30", "Taher Bagh", "Port Louis, Mauritius"),
+        event("Nikkah", "2027-08-12", "14:00", "Jummah Masjid", "Royal Road & Queen Street, Port Louis"),
+        event("Walimah Dinner", "2027-08-13", "18:30", "Taher Bagh", "Port Louis, Mauritius"),
+        event("Chawtari", "2027-08-14", "17:30", "Family Residence", "Curepipe, Mauritius"),
       ], "Four celebrations, each with its own place in our hearts."),
       seating("burgundy-romance", [
-        { table: "Table 1", families: "Rahman Family\nAumeer Family" },
-        { table: "Table 2", families: "Noor Family\nMulla Family" },
-        { table: "Table 3", families: "Jhummun Family\nOozeer Family" },
-        { table: "Table 4", families: "Friends of the Bride\nFriends of the Groom" },
+        table("Table 1", "Rahman Family", "Aumeer Family"),
+        table("Table 2", "Noor Family", "Mulla Family"),
+        table("Table 3", "Jhummun Family", "Oozeer Family"),
+        table("Table 4", "Abdool Rahman Family", "Mohamedally Family"),
+        table("Table 5", "Dookhun Family", "Jeetoo Family"),
+        table("Table 6", "Gooljar Family", "Hossen Family"),
+        table("Table 7", "Bride's Maternal Family", "Family Friends"),
+        table("Table 8", "Groom's Maternal Family", "Family Friends"),
+        table("Table 9", "Bride's University Friends"),
+        table("Table 10", "Groom's University Friends"),
+        table("Table 11", "Bride's Colleagues"),
+        table("Table 12", "Groom's Colleagues"),
+        table("Table 13", "Neighbours", "Community Friends"),
+        table("Table 14", "Family Friends from Port Louis"),
+        table("Table 15", "Family Friends from Curepipe"),
       ]),
-      specialMessage("burgundy-romance", "Our beloved grandparents", "Although you cannot sit beside us today, your values, stories and love are woven into every moment of this celebration."),
+      specialMessage("burgundy-romance", {
+        title: "To Our Parents",
+        eyebrow: "With heartfelt gratitude",
+        message: "Every step that brought us here was steadied by your patience, duas and unconditional love. This celebration is as much yours as it is ours.",
+        dedicationLabel: "For your guidance",
+        recipient: "Our wonderful parents",
+        dedicationNote: "Thank you for teaching us to build a home with faith and kindness",
+        signature: "With all our love · Ayesha & Hamza",
+      }),
       importantNotes("burgundy-romance", "Separate family seating is available. Please mention any dietary requirements to the family before 1 August."),
     ],
   }),
@@ -360,21 +391,29 @@ export const invitationExamples: InvitationExample[] = [
       message: "Together with our families, we invite you to our wedding celebrations",
     },
     sections: [
-      specialMessage("lavender-whispers", "Nana & Nani", "We carry your gentle guidance with us as we begin this new chapter, and remember you with love on our happiest day."),
+      specialMessage("lavender-whispers", {
+        title: "In Loving Memory",
+        eyebrow: "With love, always",
+        message: "We carry your gentle guidance with us as we begin this new chapter, and remember you with love on our happiest day.",
+        dedicationLabel: "Remembering with gratitude",
+        recipient: "Nana & Nani",
+        dedicationNote: "Whose duas and love remain with us",
+        signature: "Forever remembered · Forever loved",
+      }),
       countdown("lavender-whispers", "2027-12-18", "18:30", "Counting every blessing"),
       timeline("lavender-whispers", [
         moment("Mehendi Evening", "16 December 2027", "A colourful start to our wedding celebrations."),
         moment("Our Nikkah", "17 December 2027", "A promise made with gratitude and faith."),
         moment("Walimah", "18 December 2027", "Dinner, duas and a beautiful evening together."),
       ]),
-      programme("lavender-whispers", [
+      programme("lavender-whispers", "Walimah Programme", [
         { time: "18:15", details: "Guest welcome", note: "Please make your way to the main hall" },
         { time: "18:45", details: "Family entrance", note: "Followed by the newlyweds" },
         { time: "19:30", details: "Dinner", note: "Tea and dessert will follow" },
       ]),
       eventDetails("lavender-whispers", [
         event("Mehendi", "2027-12-16", "18:30", "Family Residence", "Rose Hill, Mauritius"),
-        event("Nikkah", "2027-12-17", "14:30", "Sir Abdul Razack Mohamed Hall", "Phoenix, Mauritius"),
+        event("Nikkah", "2027-12-17", "14:30", "Quran House", "23 Boundary Road, Rose Hill"),
         event("Walimah", "2027-12-18", "18:30", "Taher Bagh", "Port Louis, Mauritius"),
       ]),
       importantNotes("lavender-whispers", "Kindly avoid boxed gifts. A private prayer area and family seating will be available at the Walimah."),
@@ -405,13 +444,22 @@ export const invitationExamples: InvitationExample[] = [
         moment("Walimah", "29 January 2028", "An evening beneath the lights to celebrate our beginning."),
       ]),
       eventDetails("pearl-garden", [
-        event("Nikkah", "2028-01-28", "15:30", "Inous Hafez Hall", "Sodnac, Phoenix"),
+        event("Nikkah", "2028-01-28", "15:30", "Masjid Al Aqsa", "Port Louis, Mauritius"),
         event("Walimah", "2028-01-29", "18:00", "Port Louis Gymkhana", "Port Louis, Mauritius"),
       ]),
       seating("pearl-garden", [
-        { table: "Pearl", families: "Bride's Family\nGroom's Family" },
-        { table: "Olive", families: "Aunts & Uncles\nFamily Friends" },
-        { table: "Garden", families: "Cousins\nUniversity Friends" },
+        table("Pearl", "Bride's Parents", "Bride's Grandparents"),
+        table("Olive", "Groom's Parents", "Groom's Grandparents"),
+        table("Garden", "Bride's Aunts & Uncles"),
+        table("Jasmine", "Groom's Aunts & Uncles"),
+        table("Orchid", "Bride's Cousins"),
+        table("Rose", "Groom's Cousins"),
+        table("Moonflower", "Bride's University Friends"),
+        table("Magnolia", "Groom's University Friends"),
+        table("Lotus", "Work Friends"),
+        table("Lily", "Family Friends from Rose Hill"),
+        table("Iris", "Family Friends from Port Louis"),
+        table("Camellia", "Neighbours", "Community Friends"),
       ], "Your table is named after our garden palette"),
       importantNotes("pearl-garden", "The garden photographs begin at 17:30. Please arrive early if you would like a portrait before dinner."),
     ],
@@ -419,13 +467,13 @@ export const invitationExamples: InvitationExample[] = [
   createExample({
     slug: "midnight-bloom",
     name: "Midnight Bloom",
-    description: "A dramatic wine-toned evening invitation with a meaningful family tribute.",
-    eventLabel: "Chawtari + Nikkah + Dinner",
+    description: "A dramatic wine-toned celebration with a heartfelt message to family and friends.",
+    eventLabel: "Nikkah + Dinner + Chawtari",
     thumbnail: "/images/examples/midnight-bloom-thumb.webp",
     palette: "burgundy",
     firstName: "Sarah",
     secondName: "Rayyaan",
-    date: "2028-03-18",
+    date: "2028-03-17",
     bismillah: false,
     opening: { type: "none" },
     hero: {
@@ -435,23 +483,32 @@ export const invitationExamples: InvitationExample[] = [
       message: "Join us for a celebration shaped by family, faith and friendship",
     },
     sections: [
-      countdown("midnight-bloom", "2028-03-18", "19:00", "Until our evening begins"),
+      countdown("midnight-bloom", "2028-03-17", "19:00", "Until our evening begins"),
       eventDetails("midnight-bloom", [
-        event("Chawtari", "2028-03-16", "17:30", "Family Residence", "Beau Bassin, Mauritius"),
-        event("Nikkah", "2028-03-17", "14:00", "Sir Abdul Razack Mohamed Hall", "Phoenix, Mauritius"),
-        event("Wedding Dinner", "2028-03-18", "19:00", "Taher Bagh", "Port Louis, Mauritius"),
+        event("Nikkah", "2028-03-16", "14:00", "Phoenix Sunnee Mosque", "Phoenix, Vacoas-Phoenix"),
+        event("Wedding Dinner", "2028-03-17", "19:00", "Taher Bagh", "Port Louis, Mauritius"),
+        event("Chawtari", "2028-03-18", "17:30", "Family Residence", "Beau Bassin, Mauritius"),
       ]),
-      programme("midnight-bloom", [
-        { time: "18:45", details: "Guest arrival", note: "Mocktails will be served in the foyer" },
-        { time: "19:20", details: "Newlywed entrance", note: "Please take your seats" },
-        { time: "20:00", details: "Dinner", note: "Followed by dessert and photographs" },
-      ]),
+      programme("midnight-bloom", "Chawtari Programme", [
+        { time: "17:15", details: "Relatives arrive", note: "Tea and refreshments will be served" },
+        { time: "17:45", details: "Traditional family welcome", note: "Both families gather together" },
+        { time: "18:30", details: "Family supper", note: "Followed by tea and photographs" },
+        { time: "20:00", details: "Words of thanks", note: "A warm farewell from both families" },
+      ], "A guide to our closing family celebration"),
       timeline("midnight-bloom", [
-        moment("Chawtari", "16 March 2028", "A family tradition filled with laughter and colour."),
-        moment("Nikkah", "17 March 2028", "Our promise and the beginning of our next chapter."),
-        moment("Dinner", "18 March 2028", "A warm evening shared with all of you."),
+        moment("Nikkah", "16 March 2028", "Our promise and the beginning of our next chapter."),
+        moment("Wedding Dinner", "17 March 2028", "A warm evening shared with all of you."),
+        moment("Chawtari", "18 March 2028", "A family tradition that closes our wedding celebrations."),
       ]),
-      specialMessage("midnight-bloom", "Our late grandparents", "Your love built the families joining today. We feel your presence in the stories, prayers and traditions surrounding us."),
+      specialMessage("midnight-bloom", {
+        title: "To Our Family & Friends",
+        eyebrow: "A note from our hearts",
+        message: "Thank you for filling our wedding days with laughter, helping hands and sincere duas. Sharing this beginning with you is a gift we will always treasure.",
+        dedicationLabel: "Celebrating with gratitude",
+        recipient: "Every person gathered with us",
+        dedicationNote: "Your presence has made these days truly unforgettable",
+        signature: "With love and thanks · Sarah & Rayyaan",
+      }),
       importantNotes("midnight-bloom", "Evening attire is encouraged. The venue has on-site parking, and ushers will be available from 18:30."),
     ],
   }),
@@ -479,13 +536,20 @@ export const invitationExamples: InvitationExample[] = [
       ], "A simple celebration, all in one special day"),
       countdown("golden-nikkah", "2028-05-27", "14:00", "Until we say qubool hai"),
       eventDetails("golden-nikkah", [
-        event("Nikkah", "2028-05-27", "14:00", "Sir Abdul Razack Mohamed Hall", "Phoenix, Mauritius"),
+        event("Nikkah", "2028-05-27", "14:00", "Masjid Anwar E Quoba", "Vacoas-Phoenix, Mauritius"),
         event("Walimah Reception", "2028-05-27", "18:30", "Inous Hafez Hall", "Sodnac, Phoenix"),
       ]),
       seating("golden-nikkah", [
-        { table: "Table 1", families: "Noor Family\nHossen Family" },
-        { table: "Table 2", families: "Moollan Family\nOsman Family" },
-        { table: "Table 3", families: "School Friends\nWork Friends" },
+        table("Table 1", "Noor Family", "Hossen Family"),
+        table("Table 2", "Moollan Family", "Osman Family"),
+        table("Table 3", "Auckloo Family", "Beebeejaun Family"),
+        table("Table 4", "Bride's Aunts & Uncles"),
+        table("Table 5", "Groom's Aunts & Uncles"),
+        table("Table 6", "Bride's Cousins"),
+        table("Table 7", "Groom's Cousins"),
+        table("Table 8", "School Friends"),
+        table("Table 9", "Work Friends"),
+        table("Table 10", "Neighbours", "Community Friends"),
       ]),
       importantNotes("golden-nikkah", "Guests attending both events may relax in the family lounge between the Nikkah and Walimah."),
     ],
@@ -493,23 +557,23 @@ export const invitationExamples: InvitationExample[] = [
   createExample({
     slug: "lilac-moonlight",
     name: "Lilac Moonlight",
-    description: "A romantic four-event invitation with curtains, scratch reveal and photo story.",
-    eventLabel: "Mehendi to Walimah",
+    description: "A romantic five-event invitation with curtains, scratch reveal and photo story.",
+    eventLabel: "Mehendi to Thank You Dinner",
     thumbnail: "/images/examples/lilac-moonlight-thumb.webp",
     palette: "lilac",
     firstName: "Hana",
     secondName: "Adam",
-    date: "2028-07-22",
+    date: "2028-07-21",
     opening: { type: "curtain", asset: "botanical-curtain" },
     hero: {
       type: "interactive",
       uploadedUrl: generatedPhotos.lilacGarden,
       eyebrow: "A celebration written in moonlight",
-      message: "Reveal our photograph, then follow the four moments of our wedding story",
+      message: "Reveal our photograph, then follow the five moments of our wedding story",
     },
     sections: [
-      countdown("lilac-moonlight", "2028-07-22", "18:30", "Until our Walimah"),
-      programme("lilac-moonlight", [
+      countdown("lilac-moonlight", "2028-07-21", "18:30", "Until our Walimah"),
+      programme("lilac-moonlight", "Walimah Schedule", [
         { time: "18:00", details: "Welcome", note: "Refreshments and guest book" },
         { time: "18:40", details: "Couple entrance", note: "Followed by a short family dua" },
         { time: "19:30", details: "Dinner service", note: "Dessert bar opens at 20:30" },
@@ -517,18 +581,20 @@ export const invitationExamples: InvitationExample[] = [
       ]),
       timeline("lilac-moonlight", [
         moment("Mehendi", "19 July 2028", "A joyful evening of henna and family traditions."),
-        moment("Chawtari", "20 July 2028", "Both families come together before the Nikkah."),
-        moment("Nikkah", "21 July 2028", "The promise that begins our life together."),
-        moment("Walimah", "22 July 2028", "Our moonlit celebration with everyone we love."),
+        moment("Nikkah", "20 July 2028", "The promise that begins our life together."),
+        moment("Walimah", "21 July 2028", "Our moonlit celebration with everyone we love."),
+        moment("Chawtari", "22 July 2028", "Both families gather for a cherished tradition."),
+        moment("Thank You Dinner", "23 July 2028", "A final supper for the relatives who supported us throughout the week."),
       ]),
       glimpse("lilac-moonlight", [generatedPhotos.lilacGarden, generatedPhotos.dustyBlueHall, existingPhotos.islandWalk, existingPhotos.orchid, existingPhotos.hennaHands], "A handful of memories from the path that brought us to this beautiful week."),
       eventDetails("lilac-moonlight", [
         event("Mehendi", "2028-07-19", "18:30", "Family Residence", "Moka, Mauritius"),
-        event("Chawtari", "2028-07-20", "17:30", "Inous Hafez Hall", "Sodnac, Phoenix"),
-        event("Nikkah", "2028-07-21", "14:30", "Sir Abdul Razack Mohamed Hall", "Phoenix, Mauritius"),
-        event("Walimah", "2028-07-22", "18:30", "Port Louis Gymkhana", "Port Louis, Mauritius"),
+        event("Nikkah", "2028-07-20", "14:30", "Quatre Bornes Sunnee Masjid", "Tristan D'Avice Avenue, Quatre Bornes"),
+        event("Walimah", "2028-07-21", "18:30", "Port Louis Gymkhana", "Port Louis, Mauritius"),
+        event("Chawtari", "2028-07-22", "17:30", "Inous Hafez Hall", "Sodnac, Phoenix"),
+        event("Thank You Dinner", "2028-07-23", "19:00", "Family Residence", "Moka, Mauritius"),
       ]),
-      importantNotes("lilac-moonlight", "Please use the event cards above for the correct day and venue. Children are warmly welcome at the Walimah."),
+      importantNotes("lilac-moonlight", "Please use the event cards above for the correct day and venue. The Thank You Dinner is for relatives and family friends who helped throughout the wedding week."),
     ],
   }),
 ];
