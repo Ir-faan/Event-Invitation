@@ -97,17 +97,16 @@ button.orders-metric:hover { transform: translateY(-2px); border-color: #d9bcc6;
 .orders-metric.is-value > span { color: #8a6425; background: #f7efd9; }
 
 .orders-table-scroll { width: 100%; overflow-x: auto; }
-.orders-datatable { width: 100%; min-width: 82rem; border-collapse: collapse; table-layout: fixed; }
+.orders-datatable { width: 100%; min-width: 78rem; border-collapse: collapse; table-layout: fixed; }
 .orders-datatable th { height: 2.75rem; padding: 0 .7rem; color: #95898e; background: #fcfaf8; text-align: left; text-transform: uppercase; letter-spacing: .075em; font-size: .61rem; font-weight: 800; }
-.orders-datatable th:nth-child(1) { width: 14%; padding-left: 1.25rem; }
-.orders-datatable th:nth-child(2) { width: 11%; }
-.orders-datatable th:nth-child(3) { width: 12%; }
-.orders-datatable th:nth-child(4) { width: 9%; }
+.orders-datatable th:nth-child(1) { width: 15%; padding-left: 1.25rem; }
+.orders-datatable th:nth-child(2) { width: 12%; }
+.orders-datatable th:nth-child(3) { width: 13%; }
+.orders-datatable th:nth-child(4) { width: 10%; }
 .orders-datatable th:nth-child(5) { width: 10%; }
 .orders-datatable th:nth-child(6) { width: 7%; }
-.orders-datatable th:nth-child(7) { width: 11%; }
-.orders-datatable th:nth-child(8) { width: 8%; }
-.orders-datatable th:nth-child(9) { width: 18%; }
+.orders-datatable th:nth-child(7) { width: 13%; }
+.orders-datatable th:nth-child(8) { width: 20%; }
 .orders-datatable th button { display: inline-flex; align-items: center; gap: .3rem; padding: .35rem 0; border: 0; color: inherit; background: transparent; text-transform: inherit; letter-spacing: inherit; font: inherit; }
 .orders-datatable th button:hover { color: var(--orders-wine); }
 .orders-datatable th svg { width: .72rem; }
@@ -115,6 +114,9 @@ button.orders-metric:hover { transform: translateY(-2px); border-color: #d9bcc6;
 .orders-datatable td:first-child { padding-left: 1.25rem; }
 .orders-datatable tbody tr { transition: background .16s ease; }
 .orders-datatable tbody tr:hover { background: #fcf7f8; }
+.orders-datatable tbody tr.has-custom-part { background: radial-gradient(circle at 1px 1px,rgba(151,105,63,.08) 0 .7px,transparent .8px),linear-gradient(90deg,#fff8ef 0%,#fffaf5 46%,#fff 100%); background-size: 1rem 1rem,auto; }
+.orders-datatable tbody tr.has-custom-part:hover { background: radial-gradient(circle at 1px 1px,rgba(151,105,63,.11) 0 .7px,transparent .8px),linear-gradient(90deg,#fff3e5 0%,#fff8f1 48%,#fffdfb 100%); background-size: 1rem 1rem,auto; }
+.orders-datatable tbody tr.has-custom-part td:first-child { box-shadow: inset .2rem 0 0 #c89d6b; }
 .orders-invitation-cell { min-width: 0; display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; gap: .65rem; }
 .orders-invitation-cell > i { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; border-radius: .72rem; color: var(--orders-wine); background: var(--orders-blush); font: 600 .7rem "Cormorant Garamond", Georgia, serif; letter-spacing: .08em; }
 .orders-invitation-cell > span, .orders-cell-stack { min-width: 0; display: grid; gap: .2rem; }
@@ -129,10 +131,6 @@ button.orders-metric:hover { transform: translateY(-2px); border-color: #d9bcc6;
 .orders-link-button:disabled { opacity: .55; cursor: wait; }
 .orders-link-note { display: block; max-width: 100%; margin-left: .42rem; overflow: hidden; color: #908289; font-size: .62rem; text-overflow: ellipsis; white-space: nowrap; }
 .orders-link-note.is-full-url { overflow: visible; overflow-wrap: anywhere; font-size: .58rem; line-height: 1.3; white-space: normal; }
-.orders-custom-cell { white-space: nowrap; }
-.orders-custom-badge { width: fit-content; display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .5rem; border: 1px solid #ecd5de; border-radius: 999px; color: #713b55; background: #fff3f7; font-size: .59rem; font-weight: 800; letter-spacing: .01em; white-space: nowrap; }
-.orders-custom-badge svg { width: .68rem; height: .68rem; color: #a34e70; }
-.orders-custom-empty { color: #b8adb1; font-size: .72rem; }
 .order-status { width: fit-content; display: inline-flex; align-items: center; gap: .34rem; padding: .32rem .5rem; border-radius: 999px; font-size: .62rem; font-weight: 800; white-space: nowrap; }
 .order-status i { width: .38rem; height: .38rem; border-radius: 50%; background: currentColor; }
 .order-status.is-pending { color: #925c19; background: #fbf0d8; }
@@ -321,12 +319,14 @@ button.orders-metric:hover { transform: translateY(-2px); border-color: #d9bcc6;
   .orders-datatable thead { display: none; }
   .orders-datatable tbody { display: grid; gap: .75rem; padding: .8rem; }
   .orders-datatable tbody tr { min-width: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .65rem .8rem; padding: .9rem; border: 1px solid var(--orders-line); border-radius: .9rem; background: #fff; box-shadow: 0 .5rem 1.3rem rgba(55,35,43,.045); }
+  .orders-datatable tbody tr.has-custom-part { border-color: #e5cfb7; background: radial-gradient(circle at 1px 1px,rgba(151,105,63,.08) 0 .7px,transparent .8px),linear-gradient(135deg,#fff7ec,#fffdf9); background-size: 1rem 1rem,auto; box-shadow: inset .2rem 0 0 #c89d6b,0 .5rem 1.3rem rgba(82,55,34,.065); }
+  .orders-datatable tbody tr.has-custom-part:hover { background: radial-gradient(circle at 1px 1px,rgba(151,105,63,.11) 0 .7px,transparent .8px),linear-gradient(135deg,#fff2e1,#fffaf4); background-size: 1rem 1rem,auto; }
+  .orders-datatable tbody tr.has-custom-part td:first-child { box-shadow: none; }
   .orders-datatable td, .orders-datatable td:first-child { min-width: 0; height: auto; display: block; padding: 0; border: 0; }
   .orders-datatable td::before { content: attr(data-label); display: block; margin-bottom: .3rem; color: #94868d; text-transform: uppercase; letter-spacing: .1em; font-size: .57rem; font-weight: 800; }
   .orders-datatable td:first-child { grid-column: 1 / -1; padding-bottom: .65rem; border-bottom: 1px solid #f1e9e6; }
   .orders-datatable td:first-child::before { display: none; }
   .orders-datatable td:nth-child(3), .orders-datatable td:last-child { grid-column: 1 / -1; }
-  .orders-datatable .orders-custom-cell.is-empty { display: none; }
   .orders-datatable td:last-child { padding-top: .65rem; border-top: 1px solid #f1e9e6; }
   .orders-datatable .orders-row-actions { justify-content: flex-start; flex-wrap: wrap; gap: .45rem; }
   .orders-datatable .orders-row-actions button, .orders-datatable .orders-row-actions a { width: 2.3rem; height: 2.3rem; }

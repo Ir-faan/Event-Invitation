@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { sanitizeCustomSectionCss, sanitizeCustomSectionHtml } from "@/lib/custom-sections";
 import { getInvitationThemeVariables, type PaletteId } from "@/lib/invitation-designer";
 
@@ -11,6 +11,11 @@ type CustomSectionRendererProps = {
   css: string;
   palette: PaletteId;
 };
+
+type HeightSyncReason = "load" | "observer" | "asset";
+
+export const customSectionPreviewDebounceMs = 250;
+const customSectionHeightTolerance = 1;
 
 const customSectionBaseCss = `
 html, body { width: 100%; min-width: 0; margin: 0; padding: 0; background: transparent; }
@@ -52,38 +57,101 @@ export function buildCustomSectionDocument(html: string, css: string, palette: P
 export function CustomSectionRenderer({ sectionId, sectionName, html, css, palette }: CustomSectionRendererProps) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const documentHtml = useMemo(() => buildCustomSectionDocument(html, css, palette), [html, css, palette]);
+  const resizeAnimationFrameRef = useRef<number | null>(null);
+  const observedDocumentRef = useRef<Document | null>(null);
+  const imageLoadCleanupsRef = useRef<Array<() => void>>([]);
+  const pendingSyncReasonRef = useRef<HeightSyncReason>("observer");
+  const feedbackGuardRef = useRef({ direction: 0, lastWriteAt: 0, streak: 0 });
+  const [previewSource, setPreviewSource] = useState(() => ({ html, css }));
+  const documentHtml = useMemo(
+    () => buildCustomSectionDocument(previewSource.html, previewSource.css, palette),
+    [palette, previewSource.css, previewSource.html],
+  );
 
-  function syncHeight() {
-    const frame = frameRef.current;
-    const root = frame?.contentDocument?.getElementById("custom-section-root");
-    if (!frame || !root) return;
-    const height = Math.max(root.scrollHeight, root.getBoundingClientRect().height, 1);
-    frame.style.height = `${Math.ceil(height)}px`;
-  }
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setPreviewSource((current) => current.html === html && current.css === css ? current : { html, css });
+    }, customSectionPreviewDebounceMs);
+    return () => window.clearTimeout(timeout);
+  }, [css, html]);
 
-  function watchContentSize() {
-    const frame = frameRef.current;
-    const root = frame?.contentDocument?.getElementById("custom-section-root");
-    if (!frame || !root) return;
+  const stopWatchingContent = useCallback(() => {
     resizeObserverRef.current?.disconnect();
-    syncHeight();
+    resizeObserverRef.current = null;
+    if (resizeAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(resizeAnimationFrameRef.current);
+      resizeAnimationFrameRef.current = null;
+    }
+    imageLoadCleanupsRef.current.forEach((cleanup) => cleanup());
+    imageLoadCleanupsRef.current = [];
+    observedDocumentRef.current = null;
+    feedbackGuardRef.current = { direction: 0, lastWriteAt: 0, streak: 0 };
+  }, []);
+
+  const scheduleHeightSync = useCallback((document: Document, reason: HeightSyncReason) => {
+    if (observedDocumentRef.current !== document) return;
+    if (reason !== "observer") pendingSyncReasonRef.current = reason;
+    if (resizeAnimationFrameRef.current !== null) return;
+    pendingSyncReasonRef.current = reason;
+    resizeAnimationFrameRef.current = window.requestAnimationFrame(() => {
+      resizeAnimationFrameRef.current = null;
+      const frame = frameRef.current;
+      const root = document.getElementById("custom-section-root");
+      if (!frame || !root || frame.contentDocument !== document || observedDocumentRef.current !== document) return;
+      const measuredHeight = Math.max(root.scrollHeight, root.getBoundingClientRect().height, 1);
+      const nextHeight = Math.ceil(measuredHeight);
+      const currentHeight = frame.getBoundingClientRect().height;
+      const difference = nextHeight - currentHeight;
+      if (Math.abs(difference) <= customSectionHeightTolerance) return;
+
+      const syncReason = pendingSyncReasonRef.current;
+      pendingSyncReasonRef.current = "observer";
+      if (syncReason === "observer") {
+        const now = performance.now();
+        const direction = Math.sign(difference);
+        const guard = feedbackGuardRef.current;
+        const followsRecentWrite = now - guard.lastWriteAt < 120 && direction === guard.direction;
+        guard.streak = followsRecentWrite ? guard.streak + 1 : 1;
+        guard.direction = direction;
+        if (guard.streak > 4) return;
+        guard.lastWriteAt = now;
+      } else {
+        feedbackGuardRef.current = { direction: Math.sign(difference), lastWriteAt: performance.now(), streak: 1 };
+      }
+
+      frame.style.height = `${nextHeight}px`;
+    });
+  }, []);
+
+  const watchContentSize = useCallback(() => {
+    stopWatchingContent();
+    const frame = frameRef.current;
+    const document = frame?.contentDocument;
+    const root = document?.getElementById("custom-section-root");
+    if (!frame || !document || !root) return;
+    observedDocumentRef.current = document;
     if (typeof ResizeObserver !== "undefined") {
-      resizeObserverRef.current = new ResizeObserver(syncHeight);
+      resizeObserverRef.current = new ResizeObserver(() => scheduleHeightSync(document, "observer"));
       resizeObserverRef.current.observe(root);
     }
-    void frame.contentDocument?.fonts?.ready.then(syncHeight);
-    root.querySelectorAll("img").forEach((image) => image.addEventListener("load", syncHeight, { once: true }));
-  }
+    root.querySelectorAll("img").forEach((image) => {
+      const onLoad = () => scheduleHeightSync(document, "asset");
+      image.addEventListener("load", onLoad);
+      imageLoadCleanupsRef.current.push(() => image.removeEventListener("load", onLoad));
+    });
+    void document.fonts?.ready.then(() => scheduleHeightSync(document, "asset"));
+    scheduleHeightSync(document, "load");
+  }, [scheduleHeightSync, stopWatchingContent]);
 
   useLayoutEffect(() => {
+    stopWatchingContent();
     const frame = frameRef.current;
-    if (!frame) return;
-    const phoneScreen = frame.closest(".designer-phone-shell")?.querySelector<HTMLElement>(".designer-phone-screen");
-    frame.style.height = `${Math.max(phoneScreen?.clientHeight ?? window.innerHeight, 1)}px`;
-  }, [documentHtml]);
-
-  useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
+    if (frame && frame.getBoundingClientRect().height <= 1) {
+      const phoneScreen = frame.closest(".designer-phone-shell")?.querySelector<HTMLElement>(".designer-phone-screen");
+      frame.style.height = `${Math.max(phoneScreen?.clientHeight ?? window.innerHeight, 1)}px`;
+    }
+    return stopWatchingContent;
+  }, [documentHtml, stopWatchingContent]);
 
   return (
     <section className="custom-section-renderer" data-preview-section={sectionId}>

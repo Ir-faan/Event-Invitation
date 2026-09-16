@@ -10,6 +10,24 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const vite = await createServer({ appType: "custom", configFile: false, root, resolve: { alias: { "@": root } }, server: { middlewareMode: true } });
 after(async () => vite.close());
 
+function jpegDimensions(buffer) {
+  let offset = 2;
+  while (offset + 9 < buffer.length) {
+    if (buffer[offset] !== 0xff) { offset += 1; continue; }
+    const marker = buffer[offset + 1];
+    offset += 2;
+    if (marker === 0xd8 || marker === 0xd9) continue;
+    const segmentLength = buffer.readUInt16BE(offset);
+    const isStartOfFrame = (marker >= 0xc0 && marker <= 0xc3)
+      || (marker >= 0xc5 && marker <= 0xc7)
+      || (marker >= 0xc9 && marker <= 0xcb)
+      || (marker >= 0xcd && marker <= 0xcf);
+    if (isStartOfFrame) return { height: buffer.readUInt16BE(offset + 3), width: buffer.readUInt16BE(offset + 5) };
+    offset += segmentLength;
+  }
+  throw new Error("JPEG dimensions could not be read");
+}
+
 test("renders the complete Paperless Invites landing page", async () => {
   const { default: Home } = await vite.ssrLoadModule("/app/page.tsx");
   const html = renderToStaticMarkup(React.createElement(Home));
@@ -128,9 +146,10 @@ test("uses the revised hero, photo choices and additional-part prices", async ()
 });
 
 test("protects mobile preview interactions and layout regressions", async () => {
-  const [designer, preview, styles, setupPage, examplePage] = await Promise.all([
+  const [designer, preview, customRenderer, styles, setupPage, examplePage] = await Promise.all([
     readFile(new URL("../components/invitation-designer.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/invitation-phone-preview.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/custom-section-renderer.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
     readFile(new URL("../app/examples/[slug]/setup/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/examples/[slug]/page.tsx", import.meta.url), "utf8"),
@@ -199,7 +218,17 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.doesNotMatch(setupPage, /DesignerMobileEnhancements|dynamic\(|React\.lazy/);
   assert.match(setupPage, /export const dynamic = "force-dynamic"/);
   assert.match(setupPage, /export const revalidate = 0/);
+  assert.match(setupPage, /robots: \{ index: false, follow: false \}/);
   assert.match(examplePage, /href=\{`\/examples\/\$\{example\.slug\}\/setup`\} prefetch=\{false\}/);
+  assert.match(customRenderer, /customSectionPreviewDebounceMs = 250/);
+  assert.match(customRenderer, /window\.setTimeout/);
+  assert.match(customRenderer, /window\.requestAnimationFrame/);
+  assert.match(customRenderer, /Math\.abs\(difference\) <= customSectionHeightTolerance/);
+  assert.match(customRenderer, /resizeObserverRef\.current\?\.disconnect\(\)/);
+  assert.match(customRenderer, /window\.cancelAnimationFrame/);
+  assert.match(customRenderer, /observedDocumentRef\.current !== document/);
+  assert.match(customRenderer, /guard\.streak > 4/);
+  assert.doesNotMatch(customRenderer, /new ResizeObserver\(syncHeight\)|window\.addEventListener\(["']error/);
 });
 
 test("example invitations are data-driven, varied, and priced by the shared calculator", async () => {
@@ -998,8 +1027,8 @@ test("saving an admin edit prunes removed image metadata atomically and deletes 
   }
 });
 
-test("WhatsApp text distinguishes a plain customer chat from a live invitation; social image follows the opening", async () => {
-  const [{ customerWhatsAppUrl }, { invitationPreviewImage }, { createInitialInvitation, openingAssets }] = await Promise.all([
+test("WhatsApp text distinguishes a plain customer chat from a live invitation; every invitation shares one optimized social image", async () => {
+  const [{ customerWhatsAppUrl }, { invitationPreviewImage, invitationSocialDetails, invitationSocialImage }, { createInitialInvitation }] = await Promise.all([
     vite.ssrLoadModule("/lib/whatsapp-messages.ts"),
     vite.ssrLoadModule("/lib/invitation-social.ts"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
@@ -1015,38 +1044,81 @@ test("WhatsApp text distinguishes a plain customer chat from a live invitation; 
   const config = createInitialInvitation();
   config.opening = { type: "curtain", asset: "classic-curtain", initials: "A" };
   const origin = "https://www.paperless-invites.com";
-  assert.equal(invitationPreviewImage(config, origin), `${origin}${openingAssets.curtain[0].urls[config.palette]}`);
+  const secondConfig = structuredClone(config);
+  secondConfig.opening = { type: "envelope", asset: "botanical-envelope", initials: "Z" };
+  assert.equal(invitationPreviewImage(origin), `${origin}/social/invitation-preview.jpg`);
+  assert.equal(invitationSocialDetails(config, origin, "first-invitation").image, invitationSocialDetails(secondConfig, origin, "second-invitation").image);
+  assert.deepEqual(invitationSocialImage, { path: "/social/invitation-preview.jpg", width: 1200, height: 630, type: "image/jpeg" });
+  const socialImageFile = new URL("../public/social/invitation-preview.jpg", import.meta.url);
+  const socialImage = await readFile(socialImageFile);
+  assert.deepEqual(jpegDimensions(socialImage), { width: 1200, height: 630 });
+  assert.ok((await stat(socialImageFile)).size < 500_000);
   const publicPage = await readFile(new URL("../app/[slug]/page.tsx", import.meta.url), "utf8");
   assert.match(publicPage, /generateMetadata/);
-  assert.match(publicPage, /openGraph: \{ type: "website"/);
+  assert.match(publicPage, /openGraph: \{/);
+  assert.match(publicPage, /twitter: \{ card: "summary_large_image"/);
 });
 
-test("live invitation metadata advertises its opening artwork at the canonical public URL", async () => {
+test("live invitation metadata uses couple-specific copy with the shared social image", async () => {
   const [{ generateMetadata }, { createInitialInvitation }] = await Promise.all([
     vite.ssrLoadModule("/app/[slug]/page.tsx"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
   ]);
-  const config = createInitialInvitation();
-  config.hero.firstName = "John";
-  config.hero.secondName = "Sameer";
-  config.opening.type = "envelope";
+  const firstConfig = createInitialInvitation();
+  firstConfig.hero.firstName = "John";
+  firstConfig.hero.secondName = "Sameer";
+  firstConfig.opening.type = "envelope";
+  const secondConfig = createInitialInvitation();
+  secondConfig.hero.firstName = "Ayesha";
+  secondConfig.hero.secondName = "Hamza";
+  secondConfig.opening.type = "curtain";
   const originalFetch = globalThis.fetch;
   const previousUrl = process.env.SUPABASE_URL;
   const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const previousPublicSiteUrl = process.env.PUBLIC_SITE_URL;
   process.env.SUPABASE_URL = "https://test-project.supabase.co";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
+  delete process.env.PUBLIC_SITE_URL;
   try {
-    globalThis.fetch = async () => Response.json([{
-      id: "11111111-1111-4111-8111-111111111111", slug: "john-and-sameer", status: "active", active_until: "2099-12-31", config,
-    }]);
-    const metadata = await generateMetadata({ params: Promise.resolve({ slug: "john-and-sameer" }) });
-    assert.equal(metadata.openGraph.url, "https://www.paperless-invites.com/john-and-sameer");
-    assert.match(metadata.openGraph.images[0].url, /builder-envelope-classic-beige\.webp/);
-    assert.equal(metadata.openGraph.type, "website");
+    let requestNumber = 0;
+    globalThis.fetch = async () => {
+      const isFirst = requestNumber++ === 0;
+      return Response.json([{
+        id: isFirst ? "11111111-1111-4111-8111-111111111111" : "22222222-2222-4222-8222-222222222222",
+        slug: isFirst ? "john-and-sameer" : "ayesha-and-hamza",
+        status: "active",
+        active_until: "2099-12-31",
+        config: isFirst ? firstConfig : secondConfig,
+      }]);
+    };
+    const firstMetadata = await generateMetadata({ params: Promise.resolve({ slug: "john-and-sameer" }) });
+    const secondMetadata = await generateMetadata({ params: Promise.resolve({ slug: "ayesha-and-hamza" }) });
+    assert.equal(firstMetadata.title, "John & Sameer — You're Invited");
+    assert.equal(secondMetadata.title, "Ayesha & Hamza — You're Invited");
+    assert.equal(firstMetadata.description, "You're invited to celebrate the wedding of John & Sameer. Open their Paperless Invite for the celebration details.");
+    assert.equal(secondMetadata.description, "You're invited to celebrate the wedding of Ayesha & Hamza. Open their Paperless Invite for the celebration details.");
+    assert.equal(firstMetadata.openGraph.title, firstMetadata.title);
+    assert.equal(secondMetadata.openGraph.title, secondMetadata.title);
+    assert.equal(firstMetadata.openGraph.description, firstMetadata.description);
+    assert.equal(secondMetadata.openGraph.description, secondMetadata.description);
+    assert.equal(firstMetadata.openGraph.url, "https://www.paperless-invites.com/john-and-sameer");
+    assert.equal(secondMetadata.openGraph.url, "https://www.paperless-invites.com/ayesha-and-hamza");
+    assert.equal(firstMetadata.openGraph.images[0].url, "https://www.paperless-invites.com/social/invitation-preview.jpg");
+    assert.equal(secondMetadata.openGraph.images[0].url, firstMetadata.openGraph.images[0].url);
+    assert.equal(firstMetadata.openGraph.images[0].width, 1200);
+    assert.equal(firstMetadata.openGraph.images[0].height, 630);
+    assert.equal(firstMetadata.openGraph.images[0].type, "image/jpeg");
+    assert.equal(firstMetadata.openGraph.type, "website");
+    assert.equal(firstMetadata.twitter.card, "summary_large_image");
+    assert.equal(firstMetadata.twitter.title, firstMetadata.title);
+    assert.equal(firstMetadata.twitter.description, firstMetadata.description);
+    assert.deepEqual(firstMetadata.twitter.images, [firstMetadata.openGraph.images[0].url]);
+    assert.deepEqual(firstMetadata.robots, { index: false, follow: false });
   } finally {
     globalThis.fetch = originalFetch;
     if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
     if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = previousKey;
+    if (previousPublicSiteUrl === undefined) delete process.env.PUBLIC_SITE_URL; else process.env.PUBLIC_SITE_URL = previousPublicSiteUrl;
   }
 });
 
@@ -1072,7 +1144,7 @@ test("supports automatic invitation routes and order lifecycle storage", async (
   config.sections.push(createSection("custom"));
   assert.equal(summarizeOrder(order).hasCustomPart, true);
 
-  const [migration, proxy, publicRoute, privatePreview, dashboardApi, customerApi, designer, dashboard, confirmation] = await Promise.all([
+  const [migration, proxy, publicRoute, privatePreview, dashboardApi, customerApi, designer, dashboard, dashboardStyles, confirmation] = await Promise.all([
     readFile(new URL("../supabase/dashboard-migration.sql", import.meta.url), "utf8"),
     readFile(new URL("../proxy.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/[slug]/page.tsx", import.meta.url), "utf8"),
@@ -1081,6 +1153,7 @@ test("supports automatic invitation routes and order lifecycle storage", async (
     readFile(new URL("../app/api/invitations/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../components/invitation-designer.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/invitation-dashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/dashboard.css", import.meta.url), "utf8"),
     readFile(new URL("../components/order-confirmation-modal.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(migration, /status in \('pending', 'active', 'inactive'\)/);
@@ -1109,11 +1182,12 @@ test("supports automatic invitation routes and order lifecycle storage", async (
   assert.doesNotMatch(designer, /window\.confirm/);
   assert.match(dashboard, /new Set\(\["pending"\]\)/);
   assert.match(dashboard, /orders-datatable/);
-  assert.match(dashboard, /Custom part/);
-  assert.match(dashboard, /data-label="Custom part"/);
-  assert.match(dashboard, /orders-custom-cell/);
-  const eventDateCell = dashboard.match(/<td data-label="Event date">.*?<\/td>/s)?.[0] ?? "";
-  assert.doesNotMatch(eventDateCell, /orders-custom-badge/);
+  assert.match(dashboard, /<tr className=\{order\.hasCustomPart \? "has-custom-part" : undefined\}>/);
+  assert.doesNotMatch(dashboard, /<th scope="col">Custom<\/th>|data-label="Custom part"|orders-custom-(?:cell|badge|empty)/);
+  assert.match(dashboardStyles, /tr\.has-custom-part \{[^}]*radial-gradient[^}]*linear-gradient/);
+  assert.match(dashboardStyles, /tr\.has-custom-part:hover/);
+  assert.match(dashboardStyles, /@media \(max-width: 700px\)[\s\S]*?tr\.has-custom-part/);
+  assert.doesNotMatch(dashboardStyles, /orders-custom-(?:cell|badge|empty)/);
   assert.match(dashboard, /\/dashboard\/preview\/\$\{order\.id\}/);
   assert.match(dashboard, /customerWhatsAppUrl/);
   assert.doesNotMatch(dashboard, /window\.confirm/);

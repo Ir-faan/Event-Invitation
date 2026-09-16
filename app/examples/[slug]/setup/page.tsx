@@ -23,6 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: example ? `${example.name} design setup — Paperless Invites` : "Example design setup — Paperless Invites",
     description: example ? `View the exact read-only settings used to create the ${example.name} invitation.` : undefined,
+    robots: { index: false, follow: false },
   };
 }
 
