@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import {
   ArrowDownRight,
   ArrowRight,
   Check,
-  ChevronDown,
   Clock3,
   CreditCard,
   Eye,
@@ -20,6 +20,7 @@ import {
   Smartphone,
   Sparkles,
 } from "lucide-react";
+import type { InvitationExampleCard } from "@/lib/invitation-examples";
 
 const palettes = [
   { name: "Beige", colours: ["#e8ddcf", "#f8f2ea", "#b89d7f"] },
@@ -28,17 +29,6 @@ const palettes = [
   { name: "Burgundy / Wine", colours: ["#54202b", "#8a4a55", "#f0dedf"] },
   { name: "Pink", colours: ["#c88e9a", "#e8bec7", "#fff0f2"] },
   { name: "Purple / Lilac", colours: ["#75617f", "#b8a2c1", "#f1eaf3"] },
-];
-
-const examples = [
-  { name: "Soft & Timeless", mood: "Beige, ivory & warm colours", image: "/images/coastal-reverie.webp" },
-  { name: "Olive Romance", mood: "Olive green & soft flowers", image: "/images/rose-scratch-hero-olive.webp" },
-  { name: "Evening Elegance", mood: "Deep colours & an elegant look", image: "/images/moonlit-bloom.webp" },
-  { name: "Warm Garden", mood: "Soft beige & garden romance", image: "/images/builder-hero-beige.webp" },
-  { name: "Dusty Blue Ballroom", mood: "Dusty blue & refined details", image: "/images/builder-hero-ballroom-dusty-blue.webp" },
-  { name: "Burgundy Evening", mood: "Burgundy, warmth & candlelight", image: "/images/builder-hero-burgundy.webp" },
-  { name: "Lilac Hall", mood: "Lilac tones & elegant arches", image: "/images/builder-hero-islamic-hall-lilac.webp" },
-  { name: "Blush Ballroom", mood: "Soft pink & romantic light", image: "/images/builder-hero-ballroom-pink.webp" },
 ];
 
 // Each marquee row has its own images. Six photo cards + two opening cards keeps openings at 25%.
@@ -94,7 +84,7 @@ function getWhatsAppLink(message: string) {
   return whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}` : "#";
 }
 
-export function LandingExperienceRefresh() {
+export function LandingExperienceRefresh({ exampleCards }: { exampleCards: InvitationExampleCard[] }) {
   useEffect(() => {
     const reveals = document.querySelectorAll<HTMLElement>(".landing-refresh .reveal");
     const observer = new IntersectionObserver(
@@ -150,7 +140,7 @@ export function LandingExperienceRefresh() {
           <a href="#compare">Why digital</a>
           <a href="#pricing">Pricing</a>
         </nav>
-        <a href="/design-invitation" className="nav-action">Design yours <ArrowRight aria-hidden="true" /></a>
+        <Link href="/design-invitation" className="nav-action">Design yours <ArrowRight aria-hidden="true" /></Link>
         <details className="mobile-menu">
           <summary aria-label="Open navigation"><Menu aria-hidden="true" /></summary>
           <div>
@@ -159,7 +149,7 @@ export function LandingExperienceRefresh() {
             <a href="#process">How it works</a>
             <a href="#compare">Why digital</a>
             <a href="#pricing">Pricing</a>
-            <a href="/design-invitation">Design yours</a>
+            <Link href="/design-invitation">Design yours</Link>
           </div>
         </details>
       </header>
@@ -172,7 +162,7 @@ export function LandingExperienceRefresh() {
           <h1 id="hero-title">The most elegant <em>save the date.</em></h1>
           <p>Beautiful digital invitations for weddings and special days. Choose the details you love, preview them live and share your finished invitation in a tap.</p>
           <div className="hero-actions">
-            <a className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></a>
+            <Link className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></Link>
             <a className="text-link" href="#collection">See what you can create <ArrowDownRight aria-hidden="true" /></a>
           </div>
         </div>
@@ -203,16 +193,17 @@ export function LandingExperienceRefresh() {
           <p>These examples show a few designs you can create. Your final invitation can mix the colours, opening, photos and parts that suit you.</p>
         </div>
         <div className="collection-grid">
-          {examples.map((item, index) => (
+          {exampleCards.map((item, index) => (
             <article className="collection-card reveal" key={item.name} style={{ "--reveal-delay": `${index * 110}ms` } as React.CSSProperties}>
-              <img src={item.image} alt={`${item.name} digital invitation example`} />
-              <div className="collection-number">0{index + 1}</div>
+              <img src={item.thumbnail} alt={`${item.name} invitation for ${item.coupleNames}`} loading="lazy" decoding="async" width="420" height="600" />
+              <div className="collection-number">{String(index + 1).padStart(2, "0")}</div>
               <div className="collection-content">
-                <span>{item.mood}</span>
+                <span>{item.paletteName} · {item.eventLabel}</span>
                 <h3>{item.name}</h3>
-                <p>Invitation inspiration</p>
+                <p>{item.coupleNames}</p>
+                <strong>Approx. Rs {item.price.toLocaleString("en-US")}</strong>
               </div>
-              <a href="/design-invitation" aria-label={`Design an invitation inspired by ${item.name}`}><ArrowDownRight aria-hidden="true" /></a>
+              <Link href={`/examples/${item.slug}`} aria-label={`Open ${item.name}, an invitation for ${item.coupleNames}`}><span>View example</span><ArrowDownRight aria-hidden="true" /></Link>
             </article>
           ))}
         </div>
@@ -269,7 +260,7 @@ export function LandingExperienceRefresh() {
             <span><Layers3 aria-hidden="true" /><b>Choose your parts</b><small>Add only the sections and interactive moments you want.</small></span>
             <span><Palette aria-hidden="true" /><b>Your colours & photos</b><small>Shape the look around your own event and style.</small></span>
           </div>
-          <a className="button button-wine" href="/design-invitation">Start designing yours <ArrowRight aria-hidden="true" /></a>
+          <Link className="button button-wine" href="/design-invitation">Start designing yours <ArrowRight aria-hidden="true" /></Link>
         </div>
 
         <div className="customizer-demo reveal" aria-label="Preview of the invitation creation page">
@@ -461,7 +452,7 @@ export function LandingExperienceRefresh() {
 
         <div className="pricing-action reveal">
           <p><strong>Ready to start?</strong> Choose your options and build the invitation you want.</p>
-          <a className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></a>
+          <Link className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></Link>
         </div>
       </section>
 
@@ -471,7 +462,7 @@ export function LandingExperienceRefresh() {
             <a href="#top" className="footer-logo"><span className="brand-seal">PI</span><span>Paperless Invites</span></a>
             <h2>Your celebration.<br /><em>Your invitation.</em></h2>
             <p>Elegant digital invitations you can shape around your own colours, photos and story.</p>
-            <a className="footer-design-button" href="/design-invitation">Design yours <ArrowRight aria-hidden="true" /></a>
+            <Link className="footer-design-button" href="/design-invitation">Design yours <ArrowRight aria-hidden="true" /></Link>
           </div>
 
           <div className="footer-column">
@@ -486,7 +477,7 @@ export function LandingExperienceRefresh() {
           <div className="footer-column footer-start-column">
             <span className="footer-column-title">Start creating</span>
             <p>Choose your options and see a live phone preview before sending your design.</p>
-            <a href="/design-invitation" className="footer-arrow-link">Open the invitation designer <ArrowRight aria-hidden="true" /></a>
+            <Link href="/design-invitation" className="footer-arrow-link">Open the invitation designer <ArrowRight aria-hidden="true" /></Link>
             <div className="footer-socials-new" aria-label="Paperless Invites social media coming soon">
               <span title="Facebook"><FacebookLogo /></span>
               <span title="Instagram"><InstagramLogo /></span>

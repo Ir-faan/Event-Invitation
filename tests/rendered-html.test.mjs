@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, stat } from "node:fs/promises";
 import test, { after } from "node:test";
 import { fileURLToPath } from "node:url";
 import React from "react";
@@ -14,8 +14,11 @@ test("renders the complete Paperless Invites landing page", async () => {
   const { default: Home } = await vite.ssrLoadModule("/app/page.tsx");
   const html = renderToStaticMarkup(React.createElement(Home));
   assert.match(html, /The most elegant/);
-  assert.match(html, /Soft &amp; Timeless/);
-  assert.match(html, /Olive Romance/);
+  assert.match(html, /Ivory Promise/);
+  assert.match(html, /Olive Serenity/);
+  assert.match(html, /Aaliyah &amp; Zayd/);
+  assert.match(html, /Approx\. Rs 1,000/);
+  assert.match(html, /\/examples\/ivory-promise/);
   assert.match(html, /Make the first tap/);
   assert.match(html, /Paper or digital/);
   assert.match(html, /Simple pricing/);
@@ -180,7 +183,105 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.match(designer, /setNewlyAddedSectionId\(section\.id\)/);
   assert.match(designer, /setNewlyAddedSectionId\(copy\.id\)/);
   assert.match(designer, /openWhenAdded=\{newlyAddedSectionId === section\.id\}/);
-  assert.match(designer, /useState\(openWhenAdded \|\| \(defaultOpen/);
+  assert.match(designer, /useState\(readOnlyMode \|\| openWhenAdded \|\| \(defaultOpen/);
+});
+
+test("example invitations are data-driven, varied, and priced by the shared calculator", async () => {
+  const [{ invitationExamples, getInvitationExampleCards, getInvitationExamplePrice }, { calculateInvitationPrice, includedSectionTypes }, { isInvitationConfig }] = await Promise.all([
+    vite.ssrLoadModule("/lib/invitation-examples.ts"),
+    vite.ssrLoadModule("/lib/invitation-designer.ts"),
+    vite.ssrLoadModule("/lib/invitation-validation.ts"),
+  ]);
+
+  assert.equal(invitationExamples.length, 10);
+  assert.equal(new Set(invitationExamples.map((example) => example.slug)).size, 10);
+  assert.deepEqual(new Set(invitationExamples.map((example) => example.config.palette)), new Set(["beige", "olive", "dusty-blue", "burgundy", "pink", "lilac"]));
+  assert.ok(new Set(invitationExamples.map((example) => example.config.opening.type)).size >= 3);
+  assert.ok(invitationExamples.some((example) => example.config.hero.type === "interactive"));
+  assert.ok(invitationExamples.some((example) => example.config.hero.type === "basic"));
+  assert.ok(invitationExamples.some((example) => example.config.sections.some((section) => section.type === "glimpse" && section.images.length >= 4)));
+
+  for (const example of invitationExamples) {
+    assert.ok(isInvitationConfig(example.config), `${example.slug} should be a valid invitation config`);
+    assert.equal(getInvitationExamplePrice(example), calculateInvitationPrice(example.config).total);
+    assert.ok(includedSectionTypes.every((type) => example.config.sections.some((section) => section.type === type && section.included)));
+    assert.ok(example.thumbnail.startsWith("/images/examples/"));
+  }
+
+  const cards = getInvitationExampleCards();
+  assert.equal(cards.length, invitationExamples.length);
+  assert.deepEqual(cards.map((card) => card.price), invitationExamples.map((example) => calculateInvitationPrice(example.config).total));
+  assert.ok(new Set(cards.map((card) => card.price)).size >= 5);
+});
+
+test("example mode labels every invitation part without affecting normal invitations", async () => {
+  const [{ PublishedInvitation }, { getInvitationExample }] = await Promise.all([
+    vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
+    vite.ssrLoadModule("/lib/invitation-examples.ts"),
+  ]);
+  const example = getInvitationExample("olive-serenity");
+  assert.ok(example);
+
+  const demoHtml = renderToStaticMarkup(React.createElement(PublishedInvitation, { config: example.config, exampleMode: true }));
+  const normalHtml = renderToStaticMarkup(React.createElement(PublishedInvitation, { config: example.config }));
+  const labelCount = (demoHtml.match(/class="example-section-label/g) ?? []).length;
+
+  assert.equal(labelCount, example.config.sections.length + 3); // opening, hero, configured sections and footer
+  assert.match(demoHtml, /Section · Opening · Envelope/);
+  assert.match(demoHtml, /Section · Main Area · Interactive Hero/);
+  assert.match(demoHtml, /Section · Glimpse Of Us/);
+  assert.match(demoHtml, /Section · Footer/);
+  assert.doesNotMatch(normalHtml, /example-section-label|Section · Main Area/);
+});
+
+test("the existing designer renders exact example settings in a locked read-only mode", async () => {
+  const [{ InvitationDesigner }, { getInvitationExample, getInvitationExamplePrice }] = await Promise.all([
+    vite.ssrLoadModule("/components/invitation-designer.tsx"),
+    vite.ssrLoadModule("/lib/invitation-examples.ts"),
+  ]);
+  const example = getInvitationExample("burgundy-romance");
+  assert.ok(example);
+  const html = renderToStaticMarkup(React.createElement(InvitationDesigner, {
+    exampleConfig: example.config,
+    exampleName: example.name,
+    exampleSlug: example.slug,
+  }));
+
+  assert.match(html, /Read-only design setup/);
+  assert.match(html, /View-only example/);
+  assert.match(html, /<fieldset class="designer-mode-fields" disabled="" aria-label="Read-only invitation settings"/);
+  assert.match(html, /Ayesha/);
+  assert.match(html, /Hamza/);
+  assert.match(html, /Mehendi/);
+  assert.match(html, new RegExp(`Rs ${getInvitationExamplePrice(example).toLocaleString("en-US")}`));
+  assert.match(html, /href="\/examples\/burgundy-romance"/);
+  assert.doesNotMatch(html, /Save my design|How can we contact you\?|Mauritian phone or WhatsApp number/);
+});
+
+test("example photographs use compact WebP files and dedicated landing thumbnails", async () => {
+  const full = [
+    "example-couple-olive-garden.webp",
+    "example-couple-burgundy-henna.webp",
+    "example-couple-dusty-blue-hall.webp",
+    "example-couple-lilac-garden.webp",
+  ];
+  const thumbs = [
+    "ivory-promise-thumb.webp",
+    "olive-serenity-thumb.webp",
+    "dusty-blue-elegance-thumb.webp",
+    "burgundy-romance-thumb.webp",
+    "blush-reverie-thumb.webp",
+    "lavender-whispers-thumb.webp",
+    "pearl-garden-thumb.webp",
+    "midnight-bloom-thumb.webp",
+    "golden-nikkah-thumb.webp",
+    "lilac-moonlight-thumb.webp",
+  ];
+  const directory = new URL("../public/images/examples/", import.meta.url);
+  const fullStats = await Promise.all(full.map((name) => stat(new URL(name, directory))));
+  const thumbStats = await Promise.all(thumbs.map((name) => stat(new URL(name, directory))));
+  assert.ok(fullStats.every((item) => item.size < 250_000));
+  assert.ok(thumbStats.every((item) => item.size < 80_000));
 });
 
 test("long couple names use measured shared sizing and wrap only at spaces", async () => {

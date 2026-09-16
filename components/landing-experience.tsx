@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -161,11 +162,11 @@ export function LandingExperience() {
           <a href="#compare">Why digital</a>
           <a href="#pricing">Pricing</a>
         </nav>
-        <a href="/design-invitation" className="nav-action">Design yours <ArrowRight aria-hidden="true" /></a>
+        <Link href="/design-invitation" className="nav-action">Design yours <ArrowRight aria-hidden="true" /></Link>
         <details className="mobile-menu">
           <summary aria-label="Open navigation"><Menu aria-hidden="true" /></summary>
           <div>
-            <a href="#collection">Examples</a><a href="#process">How it works</a><a href="#compare">Why digital</a><a href="#pricing">Pricing</a><a href="/design-invitation">Design yours</a>
+            <a href="#collection">Examples</a><a href="#process">How it works</a><a href="#compare">Why digital</a><a href="#pricing">Pricing</a><Link href="/design-invitation">Design yours</Link>
           </div>
         </details>
       </header>
@@ -178,7 +179,7 @@ export function LandingExperience() {
           <h1 id="hero-title">The most elegant <em>save the date.</em></h1>
           <p>Beautiful digital invitations for weddings and special days. Easy to open, easy to share and made to feel personal.</p>
           <div className="hero-actions">
-            <a className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></a>
+            <Link className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></Link>
             <a className="text-link" href="#collection">See invitation examples <ArrowDownRight aria-hidden="true" /></a>
           </div>
         </div>
@@ -237,7 +238,7 @@ export function LandingExperience() {
           </div>
         </div>
         <div className="collection-cta reveal">
-          <a className="button button-wine" href="/design-invitation">Design your own invitation <ArrowRight aria-hidden="true" /></a>
+          <Link className="button button-wine" href="/design-invitation">Design your own invitation <ArrowRight aria-hidden="true" /></Link>
         </div>
         <div className="ticker" aria-hidden="true">
           <div>{Array.from({ length: 4 }, (_, index) => <span key={index}>{ribbonMessage}</span>)}</div>
@@ -469,7 +470,7 @@ export function LandingExperience() {
 
         <div className="pricing-action reveal">
           <p><strong>Ready to start?</strong> Choose your options and build the invitation you want.</p>
-          <a className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></a>
+          <Link className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></Link>
         </div>
       </section>
 

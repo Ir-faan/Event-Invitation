@@ -19,7 +19,7 @@ import "./landing-marquee-clean.css";
 import "./landing-template-gallery-compact.css";
 import "./landing-mobile-polish.css";
 import "./landing-template-palette-polish.css";
-import { TemplateCardRouter } from "@/components/template-card-router";
+import "./landing-examples.css";
 import { FooterSocialLinkFix } from "@/components/footer-social-link-fix";
 import { LandingMainPolish } from "@/components/landing-main-polish";
 import { LandingTemplateCardTilt } from "@/components/landing-template-card-tilt";
@@ -42,7 +42,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <TemplateCardRouter />
         <FooterSocialLinkFix />
         <LandingMainPolish />
         <LandingTemplateCardTilt />

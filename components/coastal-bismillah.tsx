@@ -11,7 +11,14 @@ export function CoastalBismillah() {
 
   useEffect(() => {
     const heroSection = document.querySelector<HTMLElement>("section[aria-labelledby='couple-names']");
-    setHero(heroSection);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) setHero(heroSection);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (!hero) return null;
