@@ -19,15 +19,11 @@ function getFaqItems(basePrice: string): FaqItem[] {
     },
     {
       question: "Can I choose how my invitation looks?",
-      answer: "Yes. You can choose one of six colour palettes, no opening or an envelope or curtain opening, and a normal or scratch-to-reveal main photo area. You can also choose extra invitation parts and add your own pictures where available. Some choices cost extra, so the price can change as you build your invitation. The designer shows your current total while you make changes.",
+      answer: "Yes. You can choose one of six colour palettes, no opening or an envelope or curtain opening, and a normal or scratch-to-reveal main photo area. Your invitation starts with four main parts: Countdown, Our Timeline, Event Details + Location and Important Notes. You can also choose extra invitation parts (such as A Special Message, Seating Arrangement, Day Programme and Glimpse Of Us) and add your own pictures where available. Some choices cost extra, so the price can change as you build your invitation. The designer shows your current total while you make changes. If you need something that is not listed, you can contact us about a custom part.",
     },
     {
       question: "Can I use my own pictures?",
       answer: "Yes. You can upload your own picture for the interactive main photo area and on 'The Glimpse Of Us' part. Clear, bright pictures usually give the best result. You can see your uploaded pictures in the preview before you send the design.",
-    },
-    {
-      question: "Can I add or remove parts of my invitation?",
-      answer: "Your invitation starts with four main parts: Countdown, Our Timeline, Event Details + Location and Important Notes. You can add other parts such as A Special Message, Seating Arrangement, Day Programme and Glimpse Of Us. You can remove extra parts that you added before sending your design. Extra parts can increase the price. If you need something that is not listed, you can contact us about a custom part.",
     },
     {
       question: "How much does an invitation cost?",
@@ -51,11 +47,11 @@ function getFaqItems(basePrice: string): FaqItem[] {
     },
     {
       question: "How will I receive my invitation and send it to my guests?",
-      answer: "Once your invitation is ready, we will send you the invitation link using the contact details you gave us. Open the link first and check the finished invitation. You can then copy the same link and send it through WhatsApp, Messenger, SMS or another messaging app. Your guests only need to press the link to open the invitation.",
+      answer: "Once your invitation is ready, we will send you the invitation link using the contact details you gave us when designin your invitation. Open the link first and check the finished invitation. You can then copy the same link and send it through WhatsApp, Messenger, SMS or another messaging app. Your guests only need to press the link to open the invitation.",
     },
     {
       question: "Can I contact you if I need help?",
-      answer: "Yes. Contact us if you do not understand something, have trouble creating the invitation, notice a mistake, have a special request or have a payment question. Tell us what you need help with and we will guide you.",
+      answer: "Of course! Contact us if you do not understand something, have trouble creating the invitation, notice a mistake, have a special request or have a payment question. Tell us what you need help with and we will assist you.",
     },
   ];
 }
