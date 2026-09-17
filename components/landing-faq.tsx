@@ -15,7 +15,7 @@ function getFaqItems(basePrice: string): FaqItem[] {
     },
     {
       question: "How do I create my invitation?",
-      answer: "Press “Design your invitation” to start. Choose your colours, how the invitation opens, the main photo area and the parts you want. Add your names, date, time, location, notes and pictures where needed. Use the phone preview to check how it looks. When you are happy, add your contact details and send the design to us. You do not need design or computer skills.",
+      answer: "Press “Design your invitation” to start. Choose your colours, how the invitation opens, the main photo area and the parts you want. Add your names, date, time, location, notes and pictures where needed. Use the phone preview to check how it looks. When you are happy, add your contact details and send the design to us.",
     },
     {
       question: "Can I choose how my invitation looks?",
@@ -23,11 +23,11 @@ function getFaqItems(basePrice: string): FaqItem[] {
     },
     {
       question: "Can I use my own pictures?",
-      answer: "Yes. You can upload your own picture for the interactive main photo area. The Glimpse Of Us part also lets you add your own photos. If a part does not need a picture, you will not be asked to add one. Clear, bright pictures usually give the best result. You can see your uploaded pictures in the preview before you send the design.",
+      answer: "Yes. You can upload your own picture for the interactive main photo area and on 'The Glimpse Of Us' part. Clear, bright pictures usually give the best result. You can see your uploaded pictures in the preview before you send the design.",
     },
     {
       question: "Can I add or remove parts of my invitation?",
-      answer: "Your invitation starts with four main parts: Countdown, Our Timeline, Event Details + Location and Important Notes. You can add other parts such as A Special Message (for example, In Loving Memory), Seating Arrangement, Day Programme and Glimpse Of Us. You can remove extra parts that you added before sending your design. Extra parts can increase the price. If you need something that is not listed, you can contact us about a custom part.",
+      answer: "Your invitation starts with four main parts: Countdown, Our Timeline, Event Details + Location and Important Notes. You can add other parts such as A Special Message, Seating Arrangement, Day Programme and Glimpse Of Us. You can remove extra parts that you added before sending your design. Extra parts can increase the price. If you need something that is not listed, you can contact us about a custom part.",
     },
     {
       question: "How much does an invitation cost?",
@@ -35,7 +35,7 @@ function getFaqItems(basePrice: string): FaqItem[] {
     },
     {
       question: "Can I see the price before I send my design?",
-      answer: "Yes. The designer shows your current price while you create the invitation. When you add or remove a paid option, the total changes. A price summary also shows what is included in the total. Check this amount before you send your design.",
+      answer: "Yes. The designer shows your current price while you create the invitation. When you add or remove a paid option, the total changes. A price summary also shows what is included in the total.",
     },
     {
       question: "I sent my invitation design. What happens now?",
@@ -43,11 +43,7 @@ function getFaqItems(basePrice: string): FaqItem[] {
     },
     {
       question: "Can I change something after I send my design?",
-      answer: "After you send the design, you cannot open it again and edit it yourself. If you notice a wrong name, date, time, address, picture or another mistake, contact us as soon as you can. Tell us exactly what needs to change. We will check your request and tell you what can be updated. Please review the finished link carefully before you pay.",
-    },
-    {
-      question: "What if I make a mistake while creating my invitation?",
-      answer: "Before sending, use the preview and check the names, event date, time, location, pictures and notes. You can go back through the designer and correct your choices before you press the final send button. If you only notice the mistake after sending, contact us as soon as possible. Tell us what is wrong so we can check it with you.",
+      answer: "After you send the design, you cannot open it again and edit it yourself. If you notice a wrong name, date, time, address, picture or another mistake, contact us as soon as you can. Tell us exactly what needs to change. We will check your request and tell you what can be updated.",
     },
     {
       question: "How do I pay?",
@@ -59,7 +55,7 @@ function getFaqItems(basePrice: string): FaqItem[] {
     },
     {
       question: "Can I contact you if I need help?",
-      answer: "Yes. Use the WhatsApp option in the Free Assistance area on this page. Contact us if you do not understand something, have trouble creating the invitation, notice a mistake, have a special request or have a payment question. Tell us what you need help with and we will guide you.",
+      answer: "Yes. Contact us if you do not understand something, have trouble creating the invitation, notice a mistake, have a special request or have a payment question. Tell us what you need help with and we will guide you.",
     },
   ];
 }
