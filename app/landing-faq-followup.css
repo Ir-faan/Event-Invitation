@@ -3,6 +3,10 @@
 }
 
 @media (min-width: 960px) {
+  .landing-refresh .faq-section {
+    overflow: clip;
+  }
+
   .landing-refresh .faq-heading {
     position: sticky;
     top: 7rem;
