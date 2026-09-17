@@ -1,0 +1,11 @@
+.landing-refresh .faq-section::after {
+  content: none;
+}
+
+@media (min-width: 960px) {
+  .landing-refresh .faq-heading {
+    position: sticky;
+    top: 7rem;
+    align-self: start;
+  }
+}
