@@ -20,6 +20,7 @@ import "./landing-template-gallery-compact.css";
 import "./landing-mobile-polish.css";
 import "./landing-template-palette-polish.css";
 import "./landing-faq.css";
+import "./landing-faq-followup.css";
 import "./landing-examples.css";
 import { FooterSocialLinkFix } from "@/components/footer-social-link-fix";
 import { LandingMainPolish } from "@/components/landing-main-polish";
