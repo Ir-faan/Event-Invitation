@@ -1,36 +1,51 @@
 .landing-refresh .faq-section {
   position: relative;
-  width: min(74rem, 92%);
-  margin: clamp(3.5rem, 6vw, 5.5rem) auto 2rem;
-  padding: clamp(2rem, 4vw, 3.5rem);
+  width: 100%;
+  margin: 0;
+  padding: clamp(4.8rem, 7vw, 7rem) 5vw clamp(8rem, 11vw, 11rem);
   overflow: hidden;
-  border: 1px solid rgba(74, 25, 34, .1);
-  border-radius: 2rem;
+  border: 0;
   background:
-    radial-gradient(circle at 92% 10%, rgba(211, 164, 73, .12), transparent 20rem),
-    radial-gradient(circle at 5% 85%, rgba(158, 82, 95, .09), transparent 22rem),
-    linear-gradient(145deg, rgba(255, 253, 250, .98), rgba(248, 238, 231, .94));
-  box-shadow: 0 1.8rem 4rem rgba(65, 31, 37, .07);
+    radial-gradient(circle at 10% 18%, rgba(211, 164, 73, .11), transparent 24rem),
+    radial-gradient(circle at 88% 42%, rgba(158, 82, 95, .1), transparent 30rem),
+    linear-gradient(180deg, #fffdfa 0%, #fffaf6 18%, #f8eee7 72%, #ead9d5 100%);
 }
 
 .landing-refresh .faq-section::before {
   content: "";
   position: absolute;
-  width: 18rem;
-  height: 18rem;
-  right: -9rem;
-  top: -10rem;
+  width: 26rem;
+  height: 26rem;
+  right: -12rem;
+  top: -13rem;
   border: 1px solid rgba(158, 82, 95, .08);
   border-radius: 50%;
-  box-shadow: 0 0 0 3rem rgba(158, 82, 95, .018), 0 0 0 6rem rgba(158, 82, 95, .012);
+  box-shadow: 0 0 0 4rem rgba(158, 82, 95, .018), 0 0 0 8rem rgba(158, 82, 95, .012);
   pointer-events: none;
 }
 
-.landing-refresh .faq-heading {
+.landing-refresh .faq-section::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(4.5rem, 7vw, 7rem);
+  background: linear-gradient(180deg, rgba(18, 6, 9, 0), #120609);
+  pointer-events: none;
+}
+
+.landing-refresh .faq-shell {
   position: relative;
   z-index: 1;
+  width: min(78rem, 100%);
+  margin: 0 auto;
+}
+
+.landing-refresh .faq-heading {
   width: min(48rem, 100%);
-  margin: 0 auto clamp(1.7rem, 3vw, 2.4rem);
+  margin: 0 auto clamp(1.8rem, 3vw, 2.6rem);
   text-align: center;
 }
 
@@ -42,8 +57,9 @@
 .landing-refresh .faq-heading h2 {
   margin: 0;
   color: var(--wine);
-  font: 500 clamp(2.7rem, 5vw, 4.8rem)/.96 var(--serif);
+  font: 500 clamp(2.9rem, 5vw, 5rem)/.96 var(--serif);
   letter-spacing: -.05em;
+  text-wrap: balance;
 }
 
 .landing-refresh .faq-heading h2 em {
@@ -52,35 +68,35 @@
 }
 
 .landing-refresh .faq-heading > p:last-child {
-  max-width: 34rem;
+  max-width: 35rem;
   margin: 1rem auto 0;
   color: var(--muted);
-  font-size: .88rem;
+  font-size: .9rem;
   line-height: 1.7;
 }
 
 .landing-refresh .faq-list {
-  position: relative;
-  z-index: 1;
   width: min(58rem, 100%);
   margin: 0 auto;
   display: grid;
-  gap: .7rem;
+  gap: .75rem;
 }
 
 .landing-refresh .faq-item {
+  min-width: 0;
   overflow: hidden;
   border: 1px solid rgba(74, 25, 34, .1);
   border-radius: 1.15rem;
-  background: rgba(255, 253, 250, .82);
-  box-shadow: 0 .55rem 1.6rem rgba(65, 31, 37, .025);
-  transition: border-color .22s ease, box-shadow .22s ease, background .22s ease;
+  background: rgba(255, 253, 250, .86);
+  box-shadow: 0 .55rem 1.6rem rgba(65, 31, 37, .03);
+  backdrop-filter: blur(8px);
+  transition: border-color .22s ease, box-shadow .22s ease, background .22s ease, transform .22s ease;
 }
 
 .landing-refresh .faq-item[data-open="true"] {
   border-color: rgba(158, 82, 95, .25);
   background: rgba(255, 253, 250, .98);
-  box-shadow: 0 .8rem 2rem rgba(65, 31, 37, .055);
+  box-shadow: 0 .85rem 2.1rem rgba(65, 31, 37, .06);
 }
 
 .landing-refresh .faq-item h3 {
@@ -101,7 +117,7 @@
   background: transparent;
   text-align: left;
   font-family: var(--sans);
-  font-size: .9rem;
+  font-size: .91rem;
   font-weight: 750;
   line-height: 1.45;
   cursor: pointer;
@@ -144,10 +160,9 @@
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
-  transition: grid-template-rows .26s ease, opacity .2s ease;
+  transition: grid-template-rows .28s ease, opacity .2s ease;
 }
 
-.landing-refresh .faq-answer[data-open="true"],
 .landing-refresh .faq-item[data-open="true"] .faq-answer {
   grid-template-rows: 1fr;
   opacity: 1;
@@ -159,17 +174,88 @@
 }
 
 .landing-refresh .faq-answer p {
+  max-width: 48rem;
   margin: 0;
-  padding: 0 4.5rem 1.15rem 1.3rem;
+  padding: 0 4.5rem 1.25rem 1.3rem;
   color: var(--muted);
-  font-size: .82rem;
-  line-height: 1.7;
+  font-size: .83rem;
+  line-height: 1.75;
+}
+
+@media (min-width: 641px) {
+  .landing-refresh .pricing:has(+ .faq-section) {
+    padding-bottom: clamp(4.5rem, 6vw, 6.5rem);
+  }
+}
+
+@media (min-width: 960px) {
+  .landing-refresh .faq-shell {
+    width: min(82rem, 90vw);
+    display: grid;
+    grid-template-columns: minmax(17rem, .72fr) minmax(30rem, 1.28fr);
+    align-items: start;
+    gap: clamp(3rem, 6vw, 6.5rem);
+  }
+
+  .landing-refresh .faq-heading {
+    width: 100%;
+    margin: .35rem 0 0;
+    text-align: left;
+  }
+
+  .landing-refresh .faq-heading .eyebrow {
+    justify-content: flex-start;
+  }
+
+  .landing-refresh .faq-heading h2 {
+    font-size: clamp(3.35rem, 4.6vw, 5.3rem);
+  }
+
+  .landing-refresh .faq-heading > p:last-child {
+    max-width: 27rem;
+    margin-left: 0;
+  }
+
+  .landing-refresh .faq-list {
+    width: 100%;
+    margin: 0;
+    gap: .82rem;
+  }
+
+  .landing-refresh .faq-question {
+    min-height: 4.75rem;
+    padding: 1.08rem 1.2rem 1.08rem 1.4rem;
+    font-size: .94rem;
+  }
+
+  .landing-refresh .faq-answer p {
+    max-width: 43rem;
+    padding: 0 4.7rem 1.35rem 1.4rem;
+    font-size: .85rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 959px) {
+  .landing-refresh .faq-section {
+    padding-left: 4vw;
+    padding-right: 4vw;
+  }
+
+  .landing-refresh .faq-shell {
+    width: min(54rem, 92vw);
+  }
+
+  .landing-refresh .faq-list {
+    width: min(48rem, 100%);
+  }
 }
 
 @media (hover: hover) {
   .landing-refresh .faq-item:not([data-open="true"]):hover {
-    border-color: rgba(158, 82, 95, .18);
+    transform: translateY(-1px);
+    border-color: rgba(158, 82, 95, .2);
     background: rgba(255, 253, 250, .96);
+    box-shadow: 0 .75rem 1.8rem rgba(65, 31, 37, .045);
   }
 
   .landing-refresh .faq-question:hover .faq-icon {
@@ -185,14 +271,43 @@
 
 @media (max-width: 640px) {
   .landing-refresh .faq-section {
-    width: 100%;
-    margin-top: 3rem;
+    width: calc(100% - 2.5rem);
+    margin: 3rem auto 2rem;
     padding: 2rem .85rem;
+    border: 1px solid rgba(74, 25, 34, .1);
     border-radius: 1.45rem;
+    background:
+      radial-gradient(circle at 92% 10%, rgba(211, 164, 73, .12), transparent 20rem),
+      radial-gradient(circle at 5% 85%, rgba(158, 82, 95, .09), transparent 22rem),
+      linear-gradient(145deg, rgba(255, 253, 250, .98), rgba(248, 238, 231, .94));
+    box-shadow: 0 1.8rem 4rem rgba(65, 31, 37, .07);
+  }
+
+  .landing-refresh .faq-section::before {
+    width: 18rem;
+    height: 18rem;
+    right: -9rem;
+    top: -10rem;
+    box-shadow: 0 0 0 3rem rgba(158, 82, 95, .018), 0 0 0 6rem rgba(158, 82, 95, .012);
+  }
+
+  .landing-refresh .faq-section::after {
+    display: none;
+  }
+
+  .landing-refresh .faq-shell {
+    width: 100%;
   }
 
   .landing-refresh .faq-heading {
+    width: min(48rem, 100%);
+    margin: 0 auto clamp(1.7rem, 3vw, 2.4rem);
     padding: 0 .35rem;
+    text-align: center;
+  }
+
+  .landing-refresh .faq-heading .eyebrow {
+    justify-content: center;
   }
 
   .landing-refresh .faq-heading h2 {
@@ -200,15 +315,28 @@
   }
 
   .landing-refresh .faq-heading > p:last-child {
+    max-width: 34rem;
+    margin: 1rem auto 0;
     font-size: .82rem;
+    line-height: 1.7;
   }
 
   .landing-refresh .faq-list {
+    width: min(58rem, 100%);
+    margin: 0 auto;
     gap: .6rem;
   }
 
   .landing-refresh .faq-item {
     border-radius: 1rem;
+    background: rgba(255, 253, 250, .82);
+    box-shadow: 0 .55rem 1.6rem rgba(65, 31, 37, .025);
+    backdrop-filter: none;
+  }
+
+  .landing-refresh .faq-item[data-open="true"] {
+    background: rgba(255, 253, 250, .98);
+    box-shadow: 0 .8rem 2rem rgba(65, 31, 37, .055);
   }
 
   .landing-refresh .faq-question {
@@ -223,7 +351,12 @@
     height: 2.15rem;
   }
 
+  .landing-refresh .faq-answer {
+    transition: grid-template-rows .26s ease, opacity .2s ease;
+  }
+
   .landing-refresh .faq-answer p {
+    max-width: none;
     padding: 0 1rem 1rem;
     font-size: .8rem;
     line-height: 1.65;
