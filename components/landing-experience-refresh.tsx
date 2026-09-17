@@ -203,7 +203,7 @@ export function LandingExperienceRefresh({ exampleCards }: { exampleCards: Invit
                 <p>{item.coupleNames}</p>
                 <strong>Approx. Rs {item.price.toLocaleString("en-US")}</strong>
               </div>
-              <Link href={`/examples/${item.slug}`} aria-label={`Open ${item.name}, an invitation for ${item.coupleNames}`}><span>View example</span><ArrowDownRight aria-hidden="true" /></Link>
+              <Link target="_blank" href={`/examples/${item.slug}`} aria-label={`Open ${item.name}, an invitation for ${item.coupleNames}`}><span>View example</span><ArrowDownRight aria-hidden="true" /></Link>
             </article>
           ))}
         </div>
