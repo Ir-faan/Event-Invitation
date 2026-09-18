@@ -12,6 +12,15 @@ import {
 import { supabaseRequest } from "@/lib/supabase-server";
 
 const orderFields = "id,revision,status,slug,active_until,total_price,created_at,deployed_at,inactive_at,config";
+export const defaultPublicSiteOrigin = "https://www.paperless-invites.com";
+
+export function getConfiguredPublicSiteOrigin() {
+  if (!process.env.PUBLIC_SITE_URL) return null;
+  try {
+    const configured = new URL(process.env.PUBLIC_SITE_URL);
+    return configured.protocol === "https:" && !configured.username && !configured.password ? configured.origin : null;
+  } catch { return null; }
+}
 
 export async function expirePastInvitations() {
   const params = new URLSearchParams({ status: "eq.active", active_until: `lt.${todayInMauritius()}` });
@@ -94,14 +103,10 @@ export async function invitationSlugIsAvailable(slug: string, orderId: string) {
 }
 
 export function getPublicSiteOrigin(request?: Request) {
-  if (process.env.PUBLIC_SITE_URL) {
-    try {
-      const configured = new URL(process.env.PUBLIC_SITE_URL);
-      if (configured.protocol === "https:" && !configured.username && !configured.password) return configured.origin;
-    } catch { /* Use the request origin when the optional setting is invalid. */ }
-  }
-  const requestUrl = new URL(request?.url || "https://www.paperless-invites.com");
+  const configured = getConfiguredPublicSiteOrigin();
+  if (configured) return configured;
+  const requestUrl = new URL(request?.url || defaultPublicSiteOrigin);
   // Never put a localhost address in a link meant to be sent to a customer.
-  if (["localhost", "127.0.0.1", "[::1]"].includes(requestUrl.hostname)) return "https://www.paperless-invites.com";
-  return requestUrl.origin;
+  if (requestUrl.protocol !== "https:" || ["localhost", "127.0.0.1", "[::1]"].includes(requestUrl.hostname)) return defaultPublicSiteOrigin;
+  return requestUrl.username || requestUrl.password ? defaultPublicSiteOrigin : requestUrl.origin;
 }

@@ -16,13 +16,16 @@ import {
   bismillahAssets,
   getHeroImage,
   getHeroPreset,
+  getInvitationThemeVariables,
   getPalette,
   getSectionItems,
   interactiveFrameAssets,
   openingAssets,
+  sectionDefinitions,
   type InvitationConfig,
   type InvitationSection,
   type InvitationSectionItem,
+  type PaletteId,
 } from "@/lib/invitation-designer";
 import { CustomSectionRenderer } from "@/components/custom-section-renderer";
 import { safeHttpsUrl } from "@/lib/safe-url";
@@ -94,25 +97,25 @@ export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKe
 }
 
 /** The full invitation without the builder's decorative phone frame. */
-export function PublishedInvitation({ config, privatePreview = false }: { config: InvitationConfig; privatePreview?: boolean }) {
+export function PublishedInvitation({ config, privatePreview = false, exampleMode = false }: { config: InvitationConfig; privatePreview?: boolean; exampleMode?: boolean }) {
   return (
-    <main className={`published-invitation${privatePreview ? " is-private" : ""}`} style={getThemeStyle(config)}>
+    <main className={`published-invitation${privatePreview ? " is-private" : ""}${exampleMode ? " is-example" : ""}`} style={getThemeStyle(config)}>
       <div className="designer-phone-screen published-invitation-screen">
-        <InvitationPreviewContent config={config} replayKey={0} published />
+        <InvitationPreviewContent config={config} replayKey={0} published exampleMode={exampleMode} />
       </div>
     </main>
   );
 }
 
-function InvitationPreviewContent({ config, replayKey, published = false }: { config: InvitationConfig; replayKey: number; published?: boolean }) {
+function InvitationPreviewContent({ config, replayKey, published = false, exampleMode = false }: { config: InvitationConfig; replayKey: number; published?: boolean; exampleMode?: boolean }) {
   const footerDate = formatDate(config.hero.date);
   const nameFit = invitationNameFit(config.hero.firstName, config.hero.secondName);
   return (
     <>
-      <OpeningPreview config={config} replayKey={replayKey} />
+      <OpeningPreview config={config} replayKey={replayKey} exampleMode={exampleMode} />
       <PreviewAmbience />
-      <HeroPreview config={config} replayKey={replayKey} />
-      {config.sections.map((section) => <MemoSectionPreview key={section.id} section={section} published={published} />)}
+      <HeroPreview config={config} replayKey={replayKey} exampleMode={exampleMode} />
+      {config.sections.map((section) => <MemoSectionPreview key={section.id} section={section} palette={config.palette} exampleMode={exampleMode} published={published} />)}
       <footer className="invite-preview-footer">
         <div className="invite-preview-footer-monogram">{config.hero.firstName.charAt(0)}<Heart aria-hidden="true" />{config.hero.secondName.charAt(0)}</div>
         <strong data-name-fit={nameFit}>{config.hero.firstName} &amp; {config.hero.secondName}</strong>
@@ -142,6 +145,7 @@ function PreviewAmbience() {
 function getThemeStyle(config: InvitationConfig) {
   const palette = getPalette(config.palette);
   return {
+    ...getInvitationThemeVariables(config.palette),
     "--preview-bg": palette.theme.background,
     "--preview-surface": palette.theme.surface,
     "--preview-primary": palette.theme.primary,
@@ -152,7 +156,7 @@ function getThemeStyle(config: InvitationConfig) {
   } as CSSProperties;
 }
 
-function OpeningPreview({ config, replayKey }: { config: InvitationConfig; replayKey: number }) {
+function OpeningPreview({ config, replayKey, exampleMode = false }: { config: InvitationConfig; replayKey: number; exampleMode?: boolean }) {
   if (config.opening.type === "none") return null;
   const palette = getPalette(config.palette);
 
@@ -160,6 +164,7 @@ function OpeningPreview({ config, replayKey }: { config: InvitationConfig; repla
     const asset = openingAssets.envelope.find((item) => item.id === config.opening.asset) ?? openingAssets.envelope[0];
     return (
       <div className="preview-opening preview-opening-envelope" key={`envelope-${replayKey}`} style={{ "--opening-tint": palette.theme.primary } as CSSProperties}>
+        {exampleMode && <ExampleSectionLabel light>Opening · Envelope</ExampleSectionLabel>}
         <div className="preview-envelope-panel preview-envelope-left"><img src={asset.urls[config.palette]} alt="" /></div>
         <div className="preview-envelope-panel preview-envelope-right"><img src={asset.urls[config.palette]} alt="" /></div>
         <span className="preview-opening-label">Tap to open</span>
@@ -170,6 +175,7 @@ function OpeningPreview({ config, replayKey }: { config: InvitationConfig; repla
   const asset = openingAssets.curtain.find((item) => item.id === config.opening.asset) ?? openingAssets.curtain[0];
   return (
     <div className="preview-opening preview-opening-curtain" key={`curtain-${replayKey}`} style={{ "--curtain-image": `url(${asset.urls[config.palette]})`, "--opening-tint": palette.theme.primary } as CSSProperties}>
+      {exampleMode && <ExampleSectionLabel light>Opening · Curtain</ExampleSectionLabel>}
       <div className="preview-curtain-half preview-curtain-left" />
       <div className="preview-curtain-half preview-curtain-right" />
       <span>Our story begins</span>
@@ -177,7 +183,7 @@ function OpeningPreview({ config, replayKey }: { config: InvitationConfig; repla
   );
 }
 
-function HeroPreview({ config, replayKey }: { config: InvitationConfig; replayKey: number }) {
+function HeroPreview({ config, replayKey, exampleMode = false }: { config: InvitationConfig; replayKey: number; exampleMode?: boolean }) {
   const image = getHeroImage(config);
   const preset = getHeroPreset(config);
   const formattedDate = formatDate(config.hero.date);
@@ -185,11 +191,12 @@ function HeroPreview({ config, replayKey }: { config: InvitationConfig; replayKe
     ? { objectPosition: preset.objectPosition, transform: `scale(${preset.zoom})` }
     : undefined;
   if (config.hero.type === "interactive") {
-    return <InteractiveHeroPreview key={`${image}-${config.palette}-${replayKey}`} config={config} image={image} imageStyle={imageStyle} formattedDate={formattedDate} />;
+    return <InteractiveHeroPreview key={`${image}-${config.palette}-${replayKey}`} config={config} image={image} imageStyle={imageStyle} formattedDate={formattedDate} exampleMode={exampleMode} />;
   }
 
   return (
     <section className={`invite-preview-hero ${config.bismillah.enabled ? "has-bismillah" : ""}`} data-preview-section="hero">
+      {exampleMode && <ExampleSectionLabel light>Main Area · Basic Hero</ExampleSectionLabel>}
       <img className="invite-preview-hero-image" src={image} alt="Selected wedding background" style={imageStyle} />
       <div className="invite-preview-hero-shade" />
       {config.bismillah.enabled && <BismillahArtwork config={config} />}
@@ -213,10 +220,11 @@ function BismillahArtwork({ config }: { config: InvitationConfig }) {
   );
 }
 
-function InteractiveHeroPreview({ config, image, imageStyle, formattedDate }: { config: InvitationConfig; image: string; imageStyle?: CSSProperties; formattedDate: string }) {
+function InteractiveHeroPreview({ config, image, imageStyle, formattedDate, exampleMode = false }: { config: InvitationConfig; image: string; imageStyle?: CSSProperties; formattedDate: string; exampleMode?: boolean }) {
   const [revealed, setRevealed] = useState(false);
   return (
     <section className={`invite-preview-hero is-interactive ${revealed ? "is-revealed" : ""} ${config.bismillah.enabled ? "has-bismillah" : ""}`} data-preview-section="hero">
+      {exampleMode && <ExampleSectionLabel light>Main Area · Interactive Hero</ExampleSectionLabel>}
       <div className="interactive-hero-glow" aria-hidden="true" />
       {config.bismillah.enabled && <BismillahArtwork config={config} />}
       <div className="interactive-frame-composition">
@@ -461,14 +469,14 @@ function ScratchPhoto({ color, onReveal }: { color: string; onReveal: () => void
 
 const MemoSectionPreview = memo(SectionPreview);
 
-function SectionPreview({ section, published = false }: { section: InvitationSection; published?: boolean }) {
+function SectionPreview({ section, palette, exampleMode = false, published = false }: { section: InvitationSection; palette: PaletteId; exampleMode?: boolean; published?: boolean }) {
   const items = getSectionItems(section);
   switch (section.type) {
     case "countdown":
-      return <CountdownPreview section={section} />;
+      return <CountdownPreview section={section} exampleMode={exampleMode} />;
     case "journey":
       return (
-        <PreviewSection section={section} className="preview-journey" eyebrow={section.fields.introduction}>
+        <PreviewSection section={section} className="preview-journey" eyebrow={section.fields.introduction} exampleMode={exampleMode}>
           <div className="preview-heart-rule preview-title-rule"><i /><Heart aria-hidden="true" /><i /></div>
           <div className="journey-timeline">
             {items.map((item, index) => (
@@ -484,7 +492,7 @@ function SectionPreview({ section, published = false }: { section: InvitationSec
       );
     case "event-details":
       return (
-        <PreviewSection section={section} className="preview-details" eyebrow="Join us" introduction={section.fields.introduction}>
+        <PreviewSection section={section} className="preview-details" eyebrow="Join us" introduction={section.fields.introduction} exampleMode={exampleMode}>
           <div className="preview-event-list">
             {items.map((event, index) => <EventCard event={event} key={index} />)}
           </div>
@@ -493,6 +501,7 @@ function SectionPreview({ section, published = false }: { section: InvitationSec
     case "gift":
       return (
         <section className="invite-preview-section preview-gift" data-preview-section={section.id}>
+          {exampleMode && <ExampleSectionLabel>{sectionDefinitions[section.type].name}</ExampleSectionLabel>}
           <div className="preview-gift-ornament" aria-hidden="true"><i /><Sparkles /><i /></div>
           <h3>{section.title}</h3>
           <p>{section.fields.message}</p>
@@ -507,6 +516,7 @@ function SectionPreview({ section, published = false }: { section: InvitationSec
       );
       return (
         <section className="invite-preview-section preview-message" data-preview-section={section.id}>
+          {exampleMode && <ExampleSectionLabel>{sectionDefinitions[section.type].name}</ExampleSectionLabel>}
           <article className="preview-memory-card">
             <span className="preview-paper-corners" aria-hidden="true"><Leaf /><Leaf /><Leaf /><Leaf /></span>
             {section.fields.eyebrow?.trim() && <span className="preview-section-eyebrow">{section.fields.eyebrow}</span>}
@@ -527,6 +537,7 @@ function SectionPreview({ section, published = false }: { section: InvitationSec
     case "seating":
       return (
         <section className="invite-preview-section preview-seating" data-preview-section={section.id}>
+          {exampleMode && <ExampleSectionLabel>{sectionDefinitions[section.type].name}</ExampleSectionLabel>}
           <div className="preview-seating-heading">
             <span className="preview-section-eyebrow">You&apos;re among family</span>
             <h3>{section.title}</h3>
@@ -545,7 +556,7 @@ function SectionPreview({ section, published = false }: { section: InvitationSec
       );
     case "day-programme":
       return (
-        <PreviewSection section={section} className="preview-programme" eyebrow="Celebrating every moment" introduction={section.fields.introduction}>
+        <PreviewSection section={section} className="preview-programme" eyebrow="Celebrating every moment" introduction={section.fields.introduction} exampleMode={exampleMode}>
           <div className="preview-programme-list">
             {items.map((item, index) => (
               <article key={index}>
@@ -560,7 +571,7 @@ function SectionPreview({ section, published = false }: { section: InvitationSec
       );
     case "glimpse":
       return (
-        <PreviewSection section={section} className="preview-glimpse" eyebrow="A few favourite memories">
+        <PreviewSection section={section} className="preview-glimpse" eyebrow="A few favourite memories" exampleMode={exampleMode} labelLight>
           <p>{section.fields.message}</p>
           <div className={`preview-gallery ${section.images.length ? "has-photos" : ""}`} data-photo-count={section.images.length}>
             {section.images.length
@@ -572,16 +583,23 @@ function SectionPreview({ section, published = false }: { section: InvitationSec
     case "custom":
       const customSource = getCustomSectionSource(section);
       if (!customSource.html.trim()) {
-        return <PreviewSection section={section} className="preview-custom"><Sparkles aria-hidden="true" /><p>This custom part will be discussed and designed with you during a video consultation or by message.</p><small>Your final preview will be prepared after we discuss it together.</small></PreviewSection>;
+        return <PreviewSection section={section} className="preview-custom" exampleMode={exampleMode}><Sparkles aria-hidden="true" /><p>This custom part will be discussed and designed with you during a video consultation or by message.</p><small>Your final preview will be prepared after we discuss it together.</small></PreviewSection>;
       }
-      return <CustomSectionRenderer sectionId={section.id} sectionName={section.title} html={customSource.html} css={customSource.css} lazy={published} />;
+      return <div className="example-custom-section">{exampleMode && <ExampleSectionLabel>{sectionDefinitions[section.type].name}</ExampleSectionLabel>}<CustomSectionRenderer sectionId={section.id} sectionName={section.title} html={customSource.html} css={customSource.css} palette={palette} lazy={published} /></div>;
   }
 }
 
 function EventCard({ event }: { event: InvitationSectionItem }) {
   const query = `${event.venue ?? ""} ${event.address ?? ""}`.trim();
-  const mapEmbed = `https://www.google.com/maps?q=${encodeURIComponent(query || "Mauritius")}&output=embed`;
-  const directions = safeHttpsUrl(event.mapUrl) || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || "Mauritius")}`;
+  const encodedDestination = encodeURIComponent(query || "Mauritius");
+  const mapEmbed = `https://www.google.com/maps?q=${encodedDestination}&output=embed`;
+  const venueUrl = safeHttpsUrl(event.mapUrl);
+  const navigationOptions = [
+    ...(venueUrl ? [{ label: "Venue link", shortLabel: "Venue", href: venueUrl }] : []),
+    { label: "Google Maps", shortLabel: "Google", href: `https://www.google.com/maps/dir/?api=1&destination=${encodedDestination}` },
+    { label: "Apple Maps", shortLabel: "Apple", href: `https://maps.apple.com/?daddr=${encodedDestination}&dirflg=d` },
+    { label: "Waze", shortLabel: "Waze", href: `https://www.waze.com/ul?q=${encodedDestination}&navigate=yes` },
+  ];
   return (
     <article className="preview-event-card">
       <div className="preview-event-icon"><Sparkles aria-hidden="true" /></div>
@@ -593,14 +611,30 @@ function EventCard({ event }: { event: InvitationSectionItem }) {
         <span><MapPin aria-hidden="true" />{event.venue || "Choose a venue"}<small>{event.address}</small></span>
       </div>
       <div className="preview-map-frame"><iframe src={mapEmbed} title={`Map to ${event.venue || "event"}`} loading="lazy" referrerPolicy="no-referrer" /></div>
-      <a href={directions} target="_blank" rel="noreferrer">Open directions <Navigation aria-hidden="true" /></a>
+      <details className="preview-direction-picker">
+        <summary>Directions <Navigation aria-hidden="true" /></summary>
+        <div className="preview-direction-options" data-option-count={navigationOptions.length}>
+          {navigationOptions.map((option) => (
+            <a
+              href={option.href}
+              target="_blank"
+              rel="noreferrer"
+              key={option.label}
+              aria-label={`Open ${event.venue || "the venue"} in ${option.label}`}
+            >
+              {option.shortLabel}
+            </a>
+          ))}
+        </div>
+      </details>
     </article>
   );
 }
 
-function PreviewSection({ section, className, eyebrow, introduction, children }: { section: InvitationSection; className?: string; eyebrow?: string; introduction?: string; children: ReactNode }) {
+function PreviewSection({ section, className, eyebrow, introduction, children, exampleMode = false, labelLight = false }: { section: InvitationSection; className?: string; eyebrow?: string; introduction?: string; children: ReactNode; exampleMode?: boolean; labelLight?: boolean }) {
   return (
     <section className={`invite-preview-section ${className ?? ""}`} data-preview-section={section.id}>
+      {exampleMode && <ExampleSectionLabel light={labelLight}>{sectionDefinitions[section.type].name}</ExampleSectionLabel>}
       {eyebrow && <span className="preview-section-eyebrow">{eyebrow}</span>}
       <h3>{section.title}</h3>
       {introduction && <p className="preview-section-introduction">{introduction}</p>}
@@ -609,7 +643,7 @@ function PreviewSection({ section, className, eyebrow, introduction, children }:
   );
 }
 
-function CountdownPreview({ section }: { section: InvitationSection }) {
+function CountdownPreview({ section, exampleMode = false }: { section: InvitationSection; exampleMode?: boolean }) {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
@@ -621,6 +655,7 @@ function CountdownPreview({ section }: { section: InvitationSection }) {
 
   return (
     <section className="invite-preview-section preview-countdown" data-preview-section={section.id}>
+      {exampleMode && <ExampleSectionLabel>{sectionDefinitions[section.type].name}</ExampleSectionLabel>}
       <span className="preview-garden-portal preview-portal-left" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" loading="lazy" decoding="async" /></span>
       <span className="preview-garden-portal preview-portal-right" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" loading="lazy" decoding="async" /></span>
       <span className="preview-section-eyebrow">{section.fields.eyebrow || "You are invited to our big day"}</span>
@@ -632,6 +667,10 @@ function CountdownPreview({ section }: { section: InvitationSection }) {
       <div className="preview-heart-rule"><i /><Heart aria-hidden="true" /><i /></div>
     </section>
   );
+}
+
+function ExampleSectionLabel({ children, light = false }: { children: ReactNode; light?: boolean }) {
+  return <span className={`example-section-label${light ? " is-light" : ""}`}>Section · {children}</span>;
 }
 
 function getCountdownParts(dateValue = "", timeValue = "00:00") {

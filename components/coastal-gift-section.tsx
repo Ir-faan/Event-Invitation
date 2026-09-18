@@ -13,22 +13,29 @@ export function CoastalGiftSection() {
     const invitation = document.querySelector<HTMLElement>("main#invitation-top");
     const footer = invitation?.querySelector<HTMLElement>("footer");
     const parent = footer?.parentElement;
+    let cancelled = false;
 
     if (!invitation || !footer || !parent) return;
 
     const existing = invitation.querySelector<HTMLElement>("[data-coastal-gift-section]");
     if (existing) {
-      const frame = requestAnimationFrame(() => setMountNode(existing));
-      return () => cancelAnimationFrame(frame);
+      queueMicrotask(() => {
+        if (!cancelled) setMountNode(existing);
+      });
+      return () => {
+        cancelled = true;
+      };
     }
 
     const node = document.createElement("div");
     node.dataset.coastalGiftSection = "true";
     parent.insertBefore(node, footer);
-    const frame = requestAnimationFrame(() => setMountNode(node));
+    queueMicrotask(() => {
+      if (!cancelled) setMountNode(node);
+    });
 
     return () => {
-      cancelAnimationFrame(frame);
+      cancelled = true;
       node.remove();
     };
   }, []);

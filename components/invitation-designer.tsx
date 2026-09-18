@@ -4,6 +4,7 @@ import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState
 import Link from "next/link";
 import {
   ArrowLeft,
+  ArrowRight,
   CalendarPlus,
   Check,
   ChevronDown,
@@ -56,6 +57,7 @@ import {
   getPalette,
   getHeroPresets,
   getSectionItems,
+  invitationThemeVariableDefinitions,
   normalizeInvitationConfig,
   openingAssets,
   openingOptions,
@@ -83,6 +85,9 @@ export type AdminInvitationOrder = InvitationOrderRecord & { summary: Invitation
 
 type InvitationDesignerProps = {
   adminOrder?: AdminInvitationOrder;
+  exampleConfig?: InvitationConfig;
+  exampleName?: string;
+  exampleSlug?: string;
   today?: string;
   publicOrigin?: string;
   onAdminBack?: () => void;
@@ -93,9 +98,14 @@ const acceptedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const whatsappSupportNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
 const whatsappSupportMessage = "Hi, I had trouble saving my invitation design. Could you please help me?";
 
-export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "https://www.paperless-invites.com", onAdminBack, onAdminOrderChange }: InvitationDesignerProps = {}) {
+export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "Example invitation", exampleSlug = "", today = "", publicOrigin = "https://www.paperless-invites.com", onAdminBack, onAdminOrderChange }: InvitationDesignerProps = {}) {
   const adminMode = Boolean(adminOrder);
-  const [config, setConfig] = useState<InvitationConfig>(() => adminOrder ? normalizeInvitationConfig(adminOrder.config) : createInitialInvitation());
+  const readOnlyMode = Boolean(exampleConfig);
+  const [config, setConfig] = useState<InvitationConfig>(() => exampleConfig
+    ? normalizeInvitationConfig(exampleConfig)
+    : adminOrder
+      ? normalizeInvitationConfig(adminOrder.config)
+      : createInitialInvitation());
   const previewConfig = useDeferredValue(config);
   const [addType, setAddType] = useState<SectionType>("special-message");
   const [newlyAddedSectionId, setNewlyAddedSectionId] = useState("");
@@ -147,6 +157,30 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
     : "/#consultation";
 
   useEffect(() => () => objectUrls.current.forEach((url) => URL.revokeObjectURL(url)), []);
+
+  useEffect(() => {
+    function closeOpenPicker(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      document.querySelectorAll<HTMLDetailsElement>(".designer-part-picker details[open]").forEach((picker) => {
+        if (!picker.contains(target)) picker.open = false;
+      });
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      document.querySelectorAll<HTMLDetailsElement>(".designer-part-picker details[open]").forEach((picker) => {
+        picker.open = false;
+      });
+    }
+
+    document.addEventListener("pointerdown", closeOpenPicker);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOpenPicker);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
 
   useEffect(() => {
     if (!showSuccess) return;
@@ -648,7 +682,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   }
 
   return (
-    <main className={`designer-page designer-mobile-${mobileView}`} style={{ "--builder-accent": palette.theme.primary, "--builder-soft": palette.theme.background } as CSSProperties}>
+    <main className={`designer-page designer-mobile-${mobileView}${readOnlyMode ? " designer-readonly" : ""}`} style={{ "--builder-accent": palette.theme.primary, "--builder-soft": palette.theme.background } as CSSProperties}>
       <div className="designer-page-petals" aria-hidden="true">
         {Array.from({ length: 14 }, (_, index) => (
           <span key={index} style={{ "--petal-x": `${(index * 29) % 97}%`, "--petal-delay": `${-(index % 7) * 2.1}s`, "--petal-duration": `${15 + (index % 5) * 2.4}s` } as CSSProperties}>{index % 3 === 0 ? "❀" : "·"}</span>
@@ -657,12 +691,14 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       <header className="designer-header">
         {adminMode
           ? <button type="button" className="designer-back admin-designer-back" onClick={onAdminBack}><ArrowLeft aria-hidden="true" /> Back to orders</button>
-          : <Link href="/" className="designer-back"><ArrowLeft aria-hidden="true" /> Back to Home</Link>}
+          : readOnlyMode
+            ? <Link href={`/examples/${exampleSlug}`} className="designer-back"><ArrowLeft aria-hidden="true" /> Back to example</Link>
+            : <Link href="/" className="designer-back"><ArrowLeft aria-hidden="true" /> Back to Home</Link>}
         <div className="designer-title">
           <span className="designer-brand-mark">PI</span>
-          <div><p>{adminMode ? `Order ${currentAdminOrder?.id.slice(0, 8)}` : "Invitation designer"}</p><h1>{adminMode ? "Edit invitation" : "Create your invitation"}</h1></div>
+          <div><p>{adminMode ? `Order ${currentAdminOrder?.id.slice(0, 8)}` : readOnlyMode ? "Read-only design setup" : "Invitation designer"}</p><h1>{adminMode ? "Edit invitation" : readOnlyMode ? exampleName : "Create your invitation"}</h1></div>
         </div>
-        <div className="designer-header-price"><span>{adminMode ? "Order price" : "Your price"}</span><strong>Rs {(adminMode ? adminPrice : price.total).toLocaleString("en-US")}</strong></div>
+        <div className="designer-header-price"><span>{adminMode ? "Order price" : readOnlyMode ? "Example price" : "Your price"}</span><strong>Rs {(adminMode ? adminPrice : price.total).toLocaleString("en-US")}</strong></div>
       </header>
 
       {adminMode && currentAdminOrder && (
@@ -702,11 +738,11 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       )}
 
       <div className="designer-mobile-switch" aria-label="Choose editor or preview">
-        <button type="button" className={mobileView === "edit" ? "is-active" : ""} onClick={() => setMobileView("edit")}>Edit invitation</button>
-        <button type="button" className={mobileView === "preview" ? "is-active" : ""} onClick={showMobilePreview}>View preview</button>
+        <button type="button" className={mobileView === "edit" ? "is-active" : ""} onClick={() => setMobileView("edit")}>{readOnlyMode ? "Design setup" : "Edit invitation"}</button>
+        <button type="button" className={mobileView === "preview" ? "is-active" : ""} onClick={showMobilePreview}>{readOnlyMode ? "Invitation preview" : "View preview"}</button>
       </div>
 
-      {!adminMode && showDesktopTip && <div className="designer-device-tip" role="status"><Monitor aria-hidden="true" /><span>For the easiest design experience, use a laptop or desktop computer.</span></div>}
+      {!adminMode && !readOnlyMode && showDesktopTip && <div className="designer-device-tip" role="status"><Monitor aria-hidden="true" /><span>For the easiest design experience, use a laptop or desktop computer.</span></div>}
 
       <div className="designer-workspace">
         <form inert={saveState === "saving" || Boolean(adminAction)} id="invitation-designer-form" className="designer-form" onSubmit={saveDesign} noValidate>
@@ -716,6 +752,16 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
             <a href="#designer-hero" onClick={(event) => openDesignerStep(event, "designer-hero")}><span>3</span>Main Area</a>
             <a href="#designer-sections" onClick={(event) => openDesignerStep(event, "designer-sections")}><span>4</span>Parts</a>
           </nav>
+
+          {readOnlyMode && (
+            <div className="designer-readonly-banner" role="note">
+              <LockKeyhole aria-hidden="true" />
+              <span><strong>View-only example</strong><small>These are the exact choices used for this invitation. Open each step to use it as a guide for your own design.</small></span>
+              <Link href="/design-invitation">Create yours <ArrowRight aria-hidden="true" /></Link>
+            </div>
+          )}
+
+          <fieldset className="designer-mode-fields" disabled={readOnlyMode} aria-label={readOnlyMode ? "Read-only invitation settings" : undefined}>
 
           <MainStep id="designer-colours" number="1" icon={<Palette />} title="Choose your colours" description="The same artwork changes into your selected colour, so the design stays consistent." defaultOpen={!adminMode}>
             <div className="designer-palette-grid">
@@ -831,6 +877,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
                   defaultOpen={!adminMode}
                   openWhenAdded={newlyAddedSectionId === section.id}
                   adminMode={adminMode}
+                  readOnlyMode={readOnlyMode}
                 />
               ))}
             </div>
@@ -841,9 +888,10 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
               <button type="button" onClick={() => addSection()}><Plus aria-hidden="true" /> Add this part</button>
             </div>
           </MainStep>
+          </fieldset>
 
           <section className="designer-price-summary" aria-labelledby="designer-price-title">
-            <div><CircleDollarSign aria-hidden="true" /><span><small>{adminMode ? "Calculated price guide" : "Your current price"}</small><strong id="designer-price-title">Rs {price.total.toLocaleString("en-US")}</strong></span></div>
+            <div><CircleDollarSign aria-hidden="true" /><span><small>{adminMode ? "Calculated price guide" : readOnlyMode ? "Calculated example price" : "Your current price"}</small><strong id="designer-price-title">Rs {price.total.toLocaleString("en-US")}</strong></span></div>
             <dl>
               <div><dt>Basic invitation</dt><dd>Rs {price.base.toLocaleString("en-US")}</dd></div>
               {price.opening > 0 && <div><dt>{config.opening.type === "envelope" ? "Envelope opening" : "Curtain opening"}</dt><dd>+ Rs {price.opening}</dd></div>}
@@ -852,7 +900,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
             </dl>
           </section>
 
-          {!adminMode && <section className="designer-contact-card" aria-labelledby="designer-contact-title">
+          {!adminMode && !readOnlyMode && <section className="designer-contact-card" aria-labelledby="designer-contact-title">
             <div className="designer-contact-heading">
               <span><UserRound aria-hidden="true" /></span>
               <div>
@@ -867,20 +915,20 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
             </div>
           </section>}
 
-          {validationErrors.length > 0 && (
+          {!readOnlyMode && validationErrors.length > 0 && (
             <div className="designer-validation-card" id="designer-validation-errors" role="alert">
               <span><Info aria-hidden="true" /></span>
               <div><strong>Please check your contact details</strong><ul>{validationErrors.map((error) => <li key={error}>{error}</li>)}</ul></div>
             </div>
           )}
-          {saveError && (
+          {!readOnlyMode && saveError && (
             <div className="designer-notice is-error" role="alert">
               <Info aria-hidden="true" />
               <span>{saveError}</span>
               {!adminMode && <a href={whatsappSupportUrl} target={whatsappSupportNumber ? "_blank" : undefined} rel={whatsappSupportNumber ? "noreferrer" : undefined}><WhatsAppIcon /> WhatsApp</a>}
             </div>
           )}
-          <div className="designer-submit-panel">
+          {!readOnlyMode && <div className="designer-submit-panel">
             <button className={`designer-final-save ${saveState === "submitted" || saveState === "saved" ? "is-complete" : ""}`} type="submit" disabled={photoProcessing > 0 || saveState === "saving" || saveState === "submitted" || saveState === "saved"}>{saveState === "saving" ? <Loader2 className="is-spinning" aria-hidden="true" /> : saveState === "submitted" || saveState === "saved" ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}{saveButtonText}</button>
             <p>{adminMode
               ? currentAdminOrder?.status === "active"
@@ -889,7 +937,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
               : hasCustomPart
                 ? "We will contact you to discuss your custom part, then share payment details when your order is ready."
                 : "Once your order is ready, we will contact you with the payment details."}</p>
-          </div>
+          </div>}
         </form>
 
         <InvitationPhonePreview config={previewConfig} replayKey={replayKey} focusTarget={previewFocus.target} focusKey={previewFocus.key} priceTotal={adminMode ? adminPrice : price.total} onReplay={() => { setReplayKey((key) => key + 1); activatePreview("opening"); }} />
@@ -1107,12 +1155,21 @@ type SectionEditorProps = {
   defaultOpen?: boolean;
   openWhenAdded?: boolean;
   adminMode: boolean;
+  readOnlyMode?: boolean;
 };
 
-function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto, photoProgressLabel = "", defaultOpen = true, openWhenAdded = false, adminMode }: SectionEditorProps) {
+function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto, photoProgressLabel = "", defaultOpen = true, openWhenAdded = false, adminMode, readOnlyMode = false }: SectionEditorProps) {
   const definition = sectionDefinitions[section.type];
-  const [isOpen, setIsOpen] = useState(openWhenAdded || (defaultOpen && (section.type === "event-details" || (!section.included && index === total - 1))));
+  const [isOpen, setIsOpen] = useState(readOnlyMode || openWhenAdded || (defaultOpen && (section.type === "event-details" || (!section.included && index === total - 1))));
+  const mobileInitialOpen = useRef(index === 0 || openWhenAdded);
   const isAdminCustomSection = adminMode && section.type === "custom";
+
+  useEffect(() => {
+    // This editor owns the state after hydration; a separate client boundary must not mutate its server-rendered <details> DOM.
+    if (!window.matchMedia("(max-width: 900px)").matches) return;
+    setIsOpen(mobileInitialOpen.current);
+  }, []);
+
   return (
     <details className="designer-section-editor" id={`editor-${section.id}`} open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)} onFocusCapture={onActivate}>
       <summary onClick={onActivate}>
@@ -1183,7 +1240,7 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
                 <TextField label="Start time" type="time" value={item.time ?? ""} onChange={(value) => onItem(itemIndex, "time", value)} icon={<Clock3 />} />
                 <TextField label="Venue name" value={item.venue ?? ""} onChange={(value) => onItem(itemIndex, "venue", value)} />
                 <TextField label="Town or full address" value={item.address ?? ""} onChange={(value) => onItem(itemIndex, "address", value)} />
-                <TextField label="Google Maps link (optional)" type="url" hint="If empty, the map searches for the venue and address but it may not find the exact location if the venue and address is not recognised." value={item.mapUrl ?? ""} onChange={(value) => onItem(itemIndex, "mapUrl", value)} full icon={<MapPin />} />
+                <TextField label="Venue map link (optional)" type="url" hint="If empty, the invitation uses the venue and address to offer Google Maps, Apple Maps and Waze directions." value={item.mapUrl ?? ""} onChange={(value) => onItem(itemIndex, "mapUrl", value)} full icon={<MapPin />} />
               </div>
             </div>
           ))}
@@ -1278,6 +1335,19 @@ function SectionFields({ section, onTitle, onField, onItem, onAddItem, onRemoveI
           <div className="designer-fields-grid">
             <TextField label="Section Name" hint="Used to identify this section in the admin dashboard." value={section.title} onChange={onTitle} full maxLength={200} />
             <TextArea label="HTML" hint={`Safe HTML only · up to ${maxCustomSectionHtmlLength.toLocaleString("en-US")} characters`} value={section.fields[customSectionHtmlField] ?? ""} onChange={(value) => onField(customSectionHtmlField, value)} full rows={12} code maxLength={maxCustomSectionHtmlLength} />
+            <details className="designer-custom-theme-reference">
+              <summary>
+                <Palette aria-hidden="true" />
+                <span><strong>Invitation palette variables</strong><small>Automatically use this invitation&apos;s selected colour palette.</small></span>
+                <ChevronDown aria-hidden="true" />
+              </summary>
+              <div className="designer-custom-theme-tokens">
+                {invitationThemeVariableDefinitions.map((variable) => (
+                  <div key={variable.name}><code>{`var(${variable.name})`}</code><span>{variable.description}</span></div>
+                ))}
+              </div>
+              <p><strong>Example</strong><code>{`.custom-section { color: var(--invitation-text); background: var(--invitation-background); }`}</code></p>
+            </details>
             <TextArea label="CSS" hint={`Scoped to this section · responsive @media rules are supported · up to ${maxCustomSectionCssLength.toLocaleString("en-US")} characters`} value={section.fields[customSectionCssField] ?? ""} onChange={(value) => onField(customSectionCssField, value)} full rows={12} code maxLength={maxCustomSectionCssLength} />
           </div>
           <div className="designer-custom-security"><LockKeyhole aria-hidden="true" /><span>HTML is sanitized before previewing and saving. JavaScript, event handlers, embedded frames and objects are blocked.</span></div>

@@ -335,7 +335,7 @@ async function requestedSlug(value: unknown, orderId: string): Promise<{
     .replace(/^-+|-+$/g, "")
     .slice(0, 90);
   if (!slug) return { value: null, provided: true, status: 200 };
-  if (["api", "dashboard", "login", "design-invitation", "templates", "invitation"].includes(slug)) {
+  if (["api", "dashboard", "login", "design-invitation", "examples", "templates", "invitation"].includes(slug)) {
     return { value: null, provided: true, error: "That invitation link is reserved. Choose another one.", status: 400 };
   }
   if (!(await invitationSlugIsAvailable(slug, orderId))) {

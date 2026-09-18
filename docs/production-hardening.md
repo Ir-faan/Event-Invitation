@@ -1,12 +1,17 @@
 # Production hardening: review and rollout
 
-This branch starts at main `2d650fda21c5a9b0c6d0a5690b20642461cbcf82`.
+This branch was created from the then-current main commit
+`2d650fda21c5a9b0c6d0a5690b20642461cbcf82`. During the hardening pass,
+`origin/main` advanced to `2f919fe6a679cacd0a8d36e5c766c9884052a6b3`.
+That exact tip was merged into this review branch without writing to main, so the
+final branch contains the latest main additions as well as the hardening work.
+
 The recovered complete audit covered `Existing-Template-Design` commit
-`99a47660b31c5f444631e69e20c1d582b59abaab`. Those trees differ: the audited
-development branch was **not identical to the fetched main**. Findings were
-rechecked against main, and the development branch was not merged wholesale.
-The existing generic social JPEG was reused from that development commit as a
-targeted privacy fix. Review any other missing development features separately.
+`99a47660b31c5f444631e69e20c1d582b59abaab`, which is now an ancestor of the
+integrated main tip. Every audit finding was rechecked against the resulting
+tree. The later data-driven example pages, read-only example designer, palette
+tokens and navigation changes were also reviewed and exercised by the merged
+test suite rather than being overwritten by the hardening changes.
 
 ## Required rollout order
 
@@ -60,6 +65,7 @@ the new application protections. Do not delete queued jobs as a rollback step.
 | SEC-007 | Arbitrary venue URL could become a dangerous clickable link. | `safe-url.ts`, config validation, EventCard/public DTO: HTTPS only, no credentials/control characters/backslashes; unsafe saved links fall back to the venue search. |
 | SEC-008 | Size check ran after parsing a potentially huge body. | `request-security.ts`: stream byte bounds independent of Content-Length before JSON/multipart parsing; expected Content-Type and object shape; safe 400/413/415 responses. |
 | SEC-009 | Custom HTML/CSS can request external tracking resources. | Intentionally retained HTTPS images/fonts/links to preserve authored sections. No-referrer, HTML allowlist, iframe/CSP isolation and no scripts limit access. External hosts can still observe requests; an asset allowlist would be a separately reviewed content-policy change. |
+| SEC-010 | Custom-section links could send guests to arbitrary sites and be used for phishing. | Only HTTPS, `mailto:` and `tel:` destinations remain; every link is forced into a separate context with `noopener noreferrer`, while scripts/forms/top navigation remain blocked. Arbitrary HTTPS links are intentionally retained for legitimate venue/vendor content, so destination trust remains an editorial responsibility unless a future host allowlist is adopted. |
 | PRIV-001 | Names-only generated links were enumerable. | New normal/duplicate links carry a 128-bit HMAC suffix unrelated to the public name/internal UUID. Existing links and explicit admin custom slugs remain compatible. Older/custom names-only URLs remain guessable. |
 | PRIV-002 | Small originals could preserve EXIF/GPS. | `photo-upload.ts` always re-encodes new browser uploads. Server independently strips private EXIF/XMP/IPTC/text metadata. Minimal JPEG orientation alone is retained for correctly displaying duplicated legacy camera images. Existing stored bytes are not rewritten. |
 | PRIV-003 | Storage paths exposed customer names/order UUIDs. | `private-media-path.ts`, storage/upload/duplicate routes: opaque HMAC folders for new objects. Legacy paths and committed folders from a prior signing key remain recognized. Existing public URLs are unchanged. |
@@ -72,16 +78,16 @@ the new application protections. Do not delete queued jobs as a rollback step.
 | PERF-001 | Public page/metadata repeated full database reads. | Request-scoped promise deduplication; bounded 16-entry/5-minute cache of sanitized immutable revisions. A cold request uses two narrow reads; a warm request uses one identity/revision read. Every new request rechecks active/expiry, preserving immediate undeploy. Dynamic rendering is deliberately retained. |
 | SCALE-001 | Dashboard stopped at 250 rows and filtered full configurations in-browser. | Service-only pagination RPC returns summaries plus full filtered totals/status counts; debounced server filtering/sorting and stale-response protection in dashboard. Detail config fetched only when opening an order. |
 | PERF-002 | Typing rerendered all sections. | Deferred preview config and memoized unchanged sections reduce avoidable work; form/editor architecture retained. Preview focus also follows deferred section ordering. This is a targeted reduction, not a complete editor state rewrite. |
-| PERF-003 | Every source edit reloaded the entire custom iframe. | Renderer debounces source 350 ms and memoizes the sanitized document. Editing still reloads the document after a pause to preserve isolation and viewport media queries. |
+| PERF-003 | Every source edit reloaded the entire custom iframe. | Renderer debounces source 250 ms and memoizes the sanitized document. Editing still reloads the document after a pause to preserve isolation and viewport media queries. |
 | PERF-004 | ResizeObserver measured and wrote in a feedback-prone loop. | Measurements/writes scheduled outside the observer via requestAnimationFrame, 2px tolerance, bounded updates and 20,000px maximum height; observer/image/font/RAF cleanup. Phone height seeds the initial viewport. Pathological viewport-relative CSS may hit the safety bound. |
 | PERF-005 | Public invitations hydrate shared UI and load broad designer CSS. | Broad server/client or CSS extraction deferred: it touches shared animations, scratch/reveal, typography and mobile rules and was too risky without browser regression coverage. No claim of complete bundle optimization. |
 | PERF-006 | All preparation and uploads were sequential. | Keep CPU-heavy decoding/compression serial to contain memory; upload two photos concurrently, await both before failure handling, and cache results by slot for retries/same file in multiple slots. |
 | PERF-007 | All custom frames eagerly loaded. | Published/private full-page invitations lazy-load custom frames; designer remains eager. |
-| PERF-008 | Landing DOM helpers mounted on every route. | Move landing helpers to home only; put the second card's existing destination directly in its Link and remove obsolete router helper. Decorative countdown images lazy-load/async decode. |
+| PERF-008 | Landing DOM helpers mounted on every route. | Move landing helpers to home only; server-render the main landing tree; remove the redundant footer helper and hydrated marquee/text rewrites; render the final marquee asset set once with lazy/async images. The spotlight alone keeps high fetch priority. Decorative countdown images also lazy-load/async decode. |
 | DEP-001 / DEP-002 | React/RSC and Next were within security-advisory ranges. | Compatible React/RSC, Next, Vite, Cloudflare tooling and affected transitive updates; see versions below. Vinext stays at 0.0.50 to avoid an unrelated prerelease/major runtime migration. |
 
 Additional defenses include CSS `<` escaping before `srcDoc` interpolation,
-duplicate slot/section-ID rejection, strict calendar-date validation, consistent
+duplicate slot/section-ID rejection, strict active-until calendar-date validation, consistent
 generic provider failures, independent storage paths for duplicated orders, and
 preventing form edits while a save/lifecycle operation is in flight. Map embeds
 also receive no invitation URL in the HTTP referrer. Customer
@@ -127,6 +133,12 @@ was reachable on this Cloudflare deployment.
 - `components/template-card-router.tsx`: its sole behavior is now the same
   destination directly in the rendered card Link, removing the post-mount DOM
   rewrite and avoiding conflicting router click behavior.
+- `components/footer-social-link-fix.tsx`: its footer mutation duplicated the
+  remaining landing-only polish helper and attached listeners to nodes that the
+  latter immediately replaced. Removing it avoids redundant hydration/listeners.
+- Hydrated marquee replacement and landing text-tree rewriting: the final assets
+  and labels are now emitted directly by the server, avoiding a second DOM tree
+  and duplicate image discovery after hydration.
 - `removeStoredPhotos` in `media-submission.ts`: no remaining callers; replaced
   by durable staged/transactional cleanup.
 - Legacy media-folder construction helpers and obsolete browser upload identity
@@ -146,9 +158,10 @@ production build and all tests). The tests use synthetic provider responses and
 an in-memory real PostgreSQL engine; no tests connect to production Supabase.
 
 The suite covers landing/designer/admin shells, all palette artwork, preserved
-pricing, mobile/desktop shared markup and responsive style guards, both example
-invitations, openings and scratch/reveal code paths, section ordering/custom
-source, WhatsApp/social metadata, login/admin membership/HttpOnly refresh,
+pricing, mobile/desktop shared markup and responsive style guards, all nine
+data-driven examples and both legacy template routes, read-only setup pages,
+openings and scratch/reveal code paths, section ordering/custom source,
+WhatsApp/social metadata, login/admin membership/HttpOnly refresh,
 upload failure/retry/storage immutability, atomic create/duplicate/save/delete,
 deploy/update/undeploy/redeploy/review, private DTOs, bounded bodies, MIME spoofing,
 rate limits, permission denial, revision conflicts, cleanup leasing, pagination

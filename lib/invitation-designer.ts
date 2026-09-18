@@ -101,6 +101,25 @@ export const paletteOptions = [
   },
 ] as const;
 
+/**
+ * Public theme tokens available to admin-authored Custom Parts. Their values
+ * are always derived from the selected invitation palette below, so adding a
+ * palette does not require maintaining a second set of Custom Part colours.
+ */
+export const invitationThemeVariableDefinitions = [
+  { name: "--invitation-primary", description: "Primary colour" },
+  { name: "--invitation-secondary", description: "Secondary colour" },
+  { name: "--invitation-accent", description: "Accent colour" },
+  { name: "--invitation-background", description: "Invitation background" },
+  { name: "--invitation-background-alt", description: "Alternate background" },
+  { name: "--invitation-text", description: "Main text" },
+  { name: "--invitation-text-muted", description: "Muted text" },
+  { name: "--invitation-border", description: "Border colour" },
+  { name: "--invitation-card", description: "Card background" },
+] as const;
+
+export type InvitationThemeVariableName = (typeof invitationThemeVariableDefinitions)[number]["name"];
+
 type HeroPreset = { id: string; name: string; url: string; objectPosition: string; zoom: number; hidden?: boolean };
 
 /** Bump this value whenever the generated designer artwork changes. */
@@ -191,7 +210,7 @@ export const sectionDefinitions: Record<SectionType, { name: string; shortName: 
   journey: { name: "Our Timeline", shortName: "Our Timeline", description: "Add as many moments as your story needs.", price: 150 },
   "event-details": { name: "Event Details + Location", shortName: "Event Details", description: "Add every ceremony, venue and map.", price: 150 },
   gift: { name: "Important Notes", shortName: "Important Notes", description: "Share helpful details about gifts, parking or anything else guests should know.", price: 150 },
-  "special-message": { name: "A Special Message", shortName: "Special Message", description: "A dedication, thank-you or loving memory to your closed ones.", price: 200 },
+  "special-message": { name: "A Special Message", shortName: "Special Message", description: "Share gratitude, a dua, dedication, quotation or personal message.", price: 200 },
   seating: { name: "Seating Arrangement", shortName: "Seating", description: "List several families under each table.", price: 200 },
   "day-programme": { name: "Day Programme", shortName: "Programme", description: "Times, programme details and small notes.", price: 200 },
   glimpse: { name: "Glimpse Of Us", shortName: "Glimpse Of Us", description: "A scattered gallery of your photos.", price: 200 },
@@ -232,14 +251,14 @@ export function createSection(type: SectionType, included = false): InvitationSe
     case "special-message":
       return {
         ...common,
-        title: "In Loving Memory",
+        title: "A Special Message",
         fields: {
-          eyebrow: "With love, always",
-          message: "Though you cannot be here in person, your love remains part of every step we take.",
-          dedicationLabel: "Remembering with gratitude",
-          recipient: "Our beloved grandparents",
-          dedicationNote: "Whose love still lights our way",
-          signature: "Forever remembered · Forever loved",
+          eyebrow: "With grateful hearts",
+          message: "Thank you for surrounding us with your love, duas and support as we begin this new chapter together.",
+          dedicationLabel: "With appreciation",
+          recipient: "Our families and guests",
+          dedicationNote: "For being part of the moments that brought us here",
+          signature: "With love · From both of us",
         },
         items: [],
       };
@@ -297,6 +316,21 @@ export function createInitialInvitation(): InvitationConfig {
 
 export function getPalette(id: PaletteId) {
   return paletteOptions.find((palette) => palette.id === id) ?? paletteOptions[0];
+}
+
+export function getInvitationThemeVariables(id: PaletteId) {
+  const { theme } = getPalette(id);
+  return {
+    "--invitation-primary": theme.primary,
+    "--invitation-secondary": theme.secondary,
+    "--invitation-accent": theme.accent,
+    "--invitation-background": theme.background,
+    "--invitation-background-alt": theme.surface,
+    "--invitation-text": theme.ink,
+    "--invitation-text-muted": theme.muted,
+    "--invitation-border": theme.secondary,
+    "--invitation-card": theme.surface,
+  } satisfies Record<InvitationThemeVariableName, string>;
 }
 
 export function getCoupleInitials(firstName = "", secondName = "") {

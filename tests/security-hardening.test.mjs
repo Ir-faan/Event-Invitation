@@ -224,6 +224,11 @@ test("admin lifecycle rejects stale revisions and preserves deployment values", 
     throw new Error(url);
   }, async () => {
     assert.equal((await PATCH(request("/api/dashboard/orders", "PATCH", { id, action: "deploy", revision: 0, activeUntil: "2099-01-01" }, true))).status, 409);
+    const reserved = await PATCH(request("/api/dashboard/orders", "PATCH", {
+      id, revision: order.revision, action: "save", config: order.config, slug: "examples",
+    }, true));
+    assert.equal(reserved.status, 400);
+    assert.match((await reserved.json()).error, /reserved/);
     for (const action of ["deploy", "deploy", "deactivate", "deploy", "review", "save"]) {
       const result = await PATCH(request("/api/dashboard/orders", "PATCH", { id, revision: order.revision, action, activeUntil: "2099-01-01", ...(action === "save" ? { config: order.config } : {}) }, true));
       assert.equal(result.status, 200); assert.equal(order.slug, "existing-shared-link"); assert.equal(order.total_price, 1000);

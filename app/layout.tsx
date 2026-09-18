@@ -19,6 +19,7 @@ import "./landing-marquee-clean.css";
 import "./landing-template-gallery-compact.css";
 import "./landing-mobile-polish.css";
 import "./landing-template-palette-polish.css";
+import "./landing-examples.css";
 
 export const metadata: Metadata = {
   title: "Paperless Invites — The most elegant save the date",

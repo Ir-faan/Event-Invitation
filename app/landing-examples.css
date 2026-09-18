@@ -1,0 +1,215 @@
+/* Data-driven invitation examples. Loaded after the older gallery polish files so
+   the cards can carry useful names, couple details and prices at every size. */
+.landing-refresh .collection-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  width: min(82rem, 100%) !important;
+  margin: .45rem auto 0 !important;
+  gap: clamp(.72rem, 1.2vw, 1.05rem) !important;
+}
+
+.landing-refresh .collection-card {
+  position: relative;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0;
+  aspect-ratio: 4 / 5.35;
+  border-radius: 1rem;
+  isolation: isolate;
+}
+
+.landing-refresh .collection-card::after {
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(18, 8, 12, .05) 20%, rgba(18, 8, 12, .3) 49%, rgba(18, 8, 12, .94) 100%);
+}
+
+.landing-refresh .collection-card > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.landing-refresh .collection-number {
+  top: .7rem;
+  left: .7rem;
+  width: 2rem;
+  height: 2rem;
+  border-color: rgba(255, 255, 255, .64);
+  font-size: .48rem;
+}
+
+.landing-refresh .collection-content {
+  z-index: 4;
+  left: .9rem;
+  right: .9rem;
+  bottom: .92rem;
+  display: grid;
+  gap: .18rem;
+  pointer-events: none;
+}
+
+.landing-refresh .collection-content > span {
+  display: -webkit-box;
+  min-height: 1.55em;
+  overflow: hidden;
+  color: rgba(255, 255, 255, .78);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-size: .42rem;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.landing-refresh .collection-content h3 {
+  margin: .25rem 0 .08rem;
+  font-size: clamp(1.25rem, 1.8vw, 1.75rem);
+  line-height: .96;
+}
+
+.landing-refresh .collection-content p {
+  display: block;
+  margin: 0;
+  color: rgba(255, 255, 255, .88);
+  font: italic .76rem/1.25 var(--serif);
+}
+
+.landing-refresh .collection-content strong {
+  margin-top: .35rem;
+  color: #f3d89c;
+  letter-spacing: .04em;
+  font-size: .62rem;
+}
+
+.landing-refresh .collection-card > a {
+  z-index: 7;
+  inset: 0;
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  backdrop-filter: none;
+  transform: none !important;
+}
+
+.landing-refresh .collection-card > a span {
+  position: absolute;
+  top: .76rem;
+  right: .72rem;
+  padding: .34rem .52rem;
+  border: 1px solid rgba(255, 255, 255, .42);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(25, 12, 16, .25);
+  backdrop-filter: blur(10px);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .4rem;
+  font-weight: 800;
+}
+
+.landing-refresh .collection-card > a svg {
+  position: absolute;
+  right: .75rem;
+  bottom: .78rem;
+  width: .72rem;
+  height: .72rem;
+  padding: .42rem;
+  box-sizing: content-box;
+  border: 1px solid rgba(255, 255, 255, .5);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .1);
+  transition: color .25s ease, background .25s ease, transform .25s ease;
+}
+
+.landing-refresh .collection-card:hover > a svg,
+.landing-refresh .collection-card > a:focus-visible svg {
+  color: var(--wine);
+  background: #fff;
+  transform: rotate(-45deg);
+}
+
+.landing-refresh .collection-card > a:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1120px) {
+  .landing-refresh .collection-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 780px) {
+  .landing-refresh .collection-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .landing-refresh .collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: .65rem !important;
+  }
+
+  .landing-refresh .collection-card {
+    aspect-ratio: 4 / 5.55;
+    border-radius: .86rem;
+  }
+
+  .landing-refresh .collection-number {
+    top: .52rem;
+    left: .52rem;
+    width: 1.55rem;
+    height: 1.55rem;
+    font-size: .4rem;
+  }
+
+  .landing-refresh .collection-content {
+    left: .68rem;
+    right: .68rem;
+    bottom: .7rem;
+  }
+
+  .landing-refresh .collection-content > span {
+    font-size: .34rem;
+  }
+
+  .landing-refresh .collection-content h3 {
+    margin-top: .16rem;
+    font-size: clamp(1.04rem, 5.2vw, 1.35rem);
+  }
+
+  .landing-refresh .collection-content p {
+    font-size: .66rem;
+  }
+
+  .landing-refresh .collection-content strong {
+    margin-top: .22rem;
+    font-size: .54rem;
+  }
+
+  .landing-refresh .collection-card > a span {
+    display: none;
+  }
+
+  .landing-refresh .collection-card > a svg {
+    right: .55rem;
+    bottom: .58rem;
+    width: .56rem;
+    height: .56rem;
+    padding: .34rem;
+  }
+
+  .landing-refresh .collection-content {
+    right: 2.05rem;
+  }
+}
+
+@media (max-width: 350px) {
+  .landing-refresh .collection-grid {
+    grid-template-columns: 1fr !important;
+    width: min(15rem, 100%) !important;
+  }
+}
