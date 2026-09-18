@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { InvitationExampleCard } from "@/lib/invitation-examples";
+import Image from "next/image";
 
 const palettes = [
   { name: "Beige", colours: ["#e8ddcf", "#f8f2ea", "#b89d7f"] },
@@ -250,7 +251,16 @@ export function LandingExperienceRefresh({ exampleCards }: { exampleCards: Invit
           </div>
           <div className="customizer-live-badge"><span className="live-dot" /> Live preview while you design</div>
           <div className="customizer-frame">
-            <iframe src="/design-invitation" title="Paperless Invites invitation designer preview" loading="lazy" tabIndex={-1} />
+            {/* <img src="/images/invitation-designer-preview.webp" alt="Preview of the Paperless Invites invitation designer" loading="lazy" decoding="async"/> */}
+            <Image
+  src="/images/invitation-designer-preview.webp"
+  alt="Preview of the Paperless Invites invitation designer"
+  fill
+  sizes="(max-width: 768px) 100vw, 50vw"
+  style={{ objectFit: "cover" }}
+  unoptimized
+/>
+          
           </div>
           <p>This is the same creation page you will use to design your invitation.</p>
         </div>
