@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -96,6 +96,7 @@ const whatsappSupportMessage = "Hi, I had trouble saving my invitation design. C
 export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "https://www.paperless-invites.com", onAdminBack, onAdminOrderChange }: InvitationDesignerProps = {}) {
   const adminMode = Boolean(adminOrder);
   const [config, setConfig] = useState<InvitationConfig>(() => adminOrder ? normalizeInvitationConfig(adminOrder.config) : createInitialInvitation());
+  const previewConfig = useDeferredValue(config);
   const [addType, setAddType] = useState<SectionType>("special-message");
   const [newlyAddedSectionId, setNewlyAddedSectionId] = useState("");
   const [pendingFiles, setPendingFiles] = useState<Record<string, File[]>>({});
@@ -117,9 +118,10 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   const [adminConfirmationError, setAdminConfirmationError] = useState("");
   const [adminNotice, setAdminNotice] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const submissionKeyRef = useRef<string | null>(null);
   const submissionRef = useRef<SubmissionIdentity | null>(null);
   const preparedPhotoRef = useRef(new Map<File, File>());
-  const uploadedPhotoUrlsRef = useRef(new Map<File, UploadedPhoto>());
+  const uploadedPhotoUrlsRef = useRef(new Map<string, UploadedPhoto>());
   const objectUrls = useRef<string[]>([]);
   const processingPhotosRef = useRef(0);
   const sectionMoveAnchor = useRef<{ id: string; top: number; focusedControl: HTMLElement | null } | null>(null);
@@ -177,6 +179,10 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   }, []);
 
   function updateConfig(updater: (current: InvitationConfig) => InvitationConfig) {
+    if (saveState === "saving" || adminAction) return;
+    submissionKeyRef.current = null;
+    submissionRef.current = null;
+    uploadedPhotoUrlsRef.current.clear();
     setConfig((current) => updater(current));
     if (saveState === "saved") setSaveState("idle");
     if (saveError) setSaveError("");
@@ -314,6 +320,10 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   function removeSection(id: string) {
     const section = config.sections.find((item) => item.id === id);
     if (!section || section.included) return;
+    section.images.filter((url) => url.startsWith("blob:")).forEach((url) => {
+      URL.revokeObjectURL(url);
+      objectUrls.current = objectUrls.current.filter((item) => item !== url);
+    });
     updateConfig((current) => ({ ...current, sections: current.sections.filter((item) => item.id !== id) }));
     setPendingFiles((current) => Object.fromEntries(Object.entries(current).filter(([key]) => !key.includes(id))));
   }
@@ -423,7 +433,8 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       setProcessing(1);
     }
     try {
-      const previews = await Promise.all(files.map(preparePhotoPreview));
+      const previews: Blob[] = [];
+      for (const file of files) previews.push(await preparePhotoPreview(file));
       urls.push(...previews.map((preview) => URL.createObjectURL(preview)));
       objectUrls.current.push(...urls);
       setPendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), ...files] }));
@@ -472,7 +483,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
 
   async function saveDesign(event: FormEvent) {
     event.preventDefault();
-    if (saveState === "saving") return;
+    if (saveState === "saving" || adminAction) return;
     if (processingPhotosRef.current) { setSaveError("Your photos are still being prepared. Please wait until they appear in the preview, then save."); return; }
     if (Object.values(pendingFiles).reduce((count, files) => count + files.length, 0) > 32) {
       setSaveError("Choose no more than 32 photos in this invitation.");
@@ -496,12 +507,9 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       let workingConfig = removeLocalPhotoUrls(config);
       await preparePhotosForSave();
       if (adminMode && currentAdminOrder) {
-        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current, undefined, {
-          link: normalizeInvitationLink(adminSlug) || makeInvitationSlug(config),
-          customerName: config.contact.name,
-        });
+        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
         if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
-        const updated = await updateAdminOrder(currentAdminOrder.id, currentAdminOrder.status === "active" ? "deploy" : "save", {
+        const updated = await updateAdminOrder(currentAdminOrder.id, currentAdminOrder.revision, currentAdminOrder.status === "active" ? "deploy" : "save", {
           config: workingConfig,
           totalPrice: adminPrice,
           slug: adminSlug,
@@ -522,7 +530,8 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       }
 
       const slots = Object.entries(pendingFiles).flatMap(([slot, files]) => files.map((_, index) => `${slot}:${index}`));
-      const submission = await createInvitation(workingConfig, slots);
+      submissionKeyRef.current ??= crypto.randomUUID();
+      const submission = submissionRef.current ?? await createInvitation(workingConfig, slots, submissionKeyRef.current);
       if (slots.length) {
         if (!submission.uploadToken) throw new Error("The secure photo upload could not be started.");
         submissionRef.current = submission;
@@ -551,8 +560,15 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
           setShowSuccess(true);
           return;
         }
-        submissionRef.current = null;
-        uploadedPhotoUrlsRef.current.clear();
+        if (error instanceof Error && /expired/i.test(error.message)) {
+          // Start a fresh opaque order when the capability really expired;
+          // the durable queue will remove the previous staged objects.
+          submissionRef.current = null;
+          submissionKeyRef.current = null;
+          uploadedPhotoUrlsRef.current.clear();
+        }
+        // Otherwise retain the capability and receipts so a lost finalize
+        // response can be retried without creating another order or photo.
       }
       console.error(adminMode ? "Unable to update invitation order" : "Unable to send invitation design", error);
       setSaveState("error");
@@ -563,7 +579,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
   }
 
   async function runAdminLifecycle(nextAction: "deploy" | "deactivate" | "review") {
-    if (!currentAdminOrder || adminAction) return;
+    if (!currentAdminOrder || adminAction || saveState === "saving") return;
     if (processingPhotosRef.current) { setSaveError("Please wait for your photos to finish optimizing before publishing."); return; }
     if (Object.values(pendingFiles).reduce((count, files) => count + files.length, 0) > 32) {
       setSaveError("Choose no more than 32 new photos in this invitation.");
@@ -578,13 +594,10 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       let workingConfig = removeLocalPhotoUrls(config);
       if (nextAction === "deploy") {
         await preparePhotosForSave();
-        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current, undefined, {
-          link: normalizeInvitationLink(adminSlug) || makeInvitationSlug(config),
-          customerName: config.contact.name,
-        });
+        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
         if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
       }
-      const updated = await updateAdminOrder(currentAdminOrder.id, nextAction, nextAction === "deploy" ? {
+      const updated = await updateAdminOrder(currentAdminOrder.id, currentAdminOrder.revision, nextAction, nextAction === "deploy" ? {
         config: workingConfig,
         totalPrice: adminPrice,
         slug: adminSlug,
@@ -696,7 +709,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
       {!adminMode && showDesktopTip && <div className="designer-device-tip" role="status"><Monitor aria-hidden="true" /><span>For the easiest design experience, use a laptop or desktop computer.</span></div>}
 
       <div className="designer-workspace">
-        <form id="invitation-designer-form" className="designer-form" onSubmit={saveDesign} noValidate>
+        <form inert={saveState === "saving" || Boolean(adminAction)} id="invitation-designer-form" className="designer-form" onSubmit={saveDesign} noValidate>
           <nav className="designer-steps" aria-label="Invitation design steps">
             <a href="#designer-colours" onClick={(event) => openDesignerStep(event, "designer-colours")}><span>1</span>Colours</a>
             <a href="#designer-opening" onClick={(event) => openDesignerStep(event, "designer-opening")}><span>2</span>Opening</a>
@@ -879,7 +892,7 @@ export function InvitationDesigner({ adminOrder, today = "", publicOrigin = "htt
           </div>
         </form>
 
-        <InvitationPhonePreview config={config} replayKey={replayKey} focusTarget={previewFocus.target} focusKey={previewFocus.key} priceTotal={adminMode ? adminPrice : price.total} onReplay={() => { setReplayKey((key) => key + 1); activatePreview("opening"); }} />
+        <InvitationPhonePreview config={previewConfig} replayKey={replayKey} focusTarget={previewFocus.target} focusKey={previewFocus.key} priceTotal={adminMode ? adminPrice : price.total} onReplay={() => { setReplayKey((key) => key + 1); activatePreview("opening"); }} />
       </div>
 
       {showSuccess && <SubmissionSuccessModal />}
@@ -1289,10 +1302,10 @@ function TextArea({ label, hint, value, onChange, full = false, rows = 3, code =
   return <label className={`designer-field ${full ? "is-full" : ""} ${code ? "is-code" : ""}`}><span>{label}</span><textarea value={value ?? ""} rows={rows} maxLength={maxLength} spellCheck={!code} autoCapitalize={code ? "off" : undefined} autoCorrect={code ? "off" : undefined} onChange={(event) => onChange(event.target.value)} />{hint && <small>{hint}</small>}</label>;
 }
 
-async function createInvitation(config: InvitationConfig, slots: string[]): Promise<SubmissionIdentity> {
+async function createInvitation(config: InvitationConfig, slots: string[], submissionKey: string): Promise<SubmissionIdentity> {
   const response = await fetch("/api/invitations", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "Idempotency-Key": submissionKey },
     body: JSON.stringify({ config, ...(slots.length ? { slots } : {}) }),
   });
   const result = await response.json() as { id?: string; uploadToken?: string; error?: string };
@@ -1327,11 +1340,11 @@ async function cleanupUploadedPhotos(endpoint: string, invitationId: string, med
   }
 }
 
-async function updateAdminOrder(id: string, action: "save" | "deploy" | "deactivate" | "review", values: Record<string, unknown>) {
+async function updateAdminOrder(id: string, revision: number, action: "save" | "deploy" | "deactivate" | "review", values: Record<string, unknown>) {
   const response = await fetch("/api/dashboard/orders", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, action, ...values }),
+    body: JSON.stringify({ id, revision, action, ...values }),
   });
   const result = await response.json() as { order?: AdminInvitationOrder; error?: string };
   if (!response.ok || !result.order) throw new Error(result.error || "The order could not be updated.");

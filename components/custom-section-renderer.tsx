@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { sanitizeCustomSectionCss, sanitizeCustomSectionHtml } from "@/lib/custom-sections";
 
 type CustomSectionRendererProps = {
@@ -8,6 +8,7 @@ type CustomSectionRendererProps = {
   sectionName: string;
   html: string;
   css: string;
+  lazy?: boolean;
 };
 
 const customSectionBaseCss = `
@@ -39,41 +40,74 @@ export function buildCustomSectionDocument(html: string, css: string) {
  * A sandboxed iframe is used instead of Shadow DOM because viewport media
  * queries must follow the simulated phone width in the editor.
  */
-export function CustomSectionRenderer({ sectionId, sectionName, html, css }: CustomSectionRendererProps) {
+export function CustomSectionRenderer({ sectionId, sectionName, html, css, lazy = false }: CustomSectionRendererProps) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const documentHtml = useMemo(() => buildCustomSectionDocument(html, css), [html, css]);
+  const [source, setSource] = useState({ html, css });
+  const frameRequest = useRef(0);
+  const cleanupRef = useRef<(() => void) | null>(null);
+  const lastHeight = useRef(0);
+  const resizeStreak = useRef({ count: 0, started: 0 });
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSource({ html, css }), 350);
+    return () => window.clearTimeout(timer);
+  }, [html, css]);
+  const documentHtml = useMemo(() => buildCustomSectionDocument(source.html, source.css), [source]);
 
   function syncHeight() {
-    const frame = frameRef.current;
-    const root = frame?.contentDocument?.getElementById("custom-section-root");
-    if (!frame || !root) return;
-    const height = Math.max(root.scrollHeight, root.getBoundingClientRect().height, 1);
-    frame.style.height = `${Math.ceil(height)}px`;
+    if (frameRequest.current) return;
+    frameRequest.current = requestAnimationFrame(() => {
+      frameRequest.current = 0;
+      const frame = frameRef.current;
+      const root = frame?.contentDocument?.getElementById("custom-section-root");
+      if (!frame || !root) return;
+      const height = Math.min(20_000, Math.max(1, Math.ceil(Math.max(root.scrollHeight, root.getBoundingClientRect().height))));
+      if (Math.abs(height - lastHeight.current) < 2) return;
+      const now = performance.now();
+      const streak = resizeStreak.current;
+      if (now - streak.started > 1000) { streak.started = now; streak.count = 0; }
+      // A viewport-height-dependent custom rule must not grow without bound.
+      if (++streak.count > 12) return;
+      lastHeight.current = height;
+      frame.style.height = `${height}px`;
+    });
   }
 
   function watchContentSize() {
+    cleanupRef.current?.();
+    resizeStreak.current = { count: 0, started: 0 };
     const frame = frameRef.current;
     const root = frame?.contentDocument?.getElementById("custom-section-root");
     if (!frame || !root) return;
-    resizeObserverRef.current?.disconnect();
-    syncHeight();
+    let active = true;
+    const schedule = () => { if (active) syncHeight(); };
+    schedule();
     if (typeof ResizeObserver !== "undefined") {
-      resizeObserverRef.current = new ResizeObserver(syncHeight);
+      resizeObserverRef.current = new ResizeObserver(schedule);
       resizeObserverRef.current.observe(root);
     }
-    void frame.contentDocument?.fonts?.ready.then(syncHeight);
-    root.querySelectorAll("img").forEach((image) => image.addEventListener("load", syncHeight, { once: true }));
+    void frame.contentDocument?.fonts?.ready.then(schedule);
+    const images = [...root.querySelectorAll("img")];
+    images.forEach((image) => { image.addEventListener("load", schedule); image.addEventListener("error", schedule); });
+    cleanupRef.current = () => {
+      active = false;
+      resizeObserverRef.current?.disconnect();
+      cancelAnimationFrame(frameRequest.current);
+      frameRequest.current = 0;
+      images.forEach((image) => { image.removeEventListener("load", schedule); image.removeEventListener("error", schedule); });
+    };
   }
 
   useLayoutEffect(() => {
     const frame = frameRef.current;
     if (!frame) return;
     const phoneScreen = frame.closest(".designer-phone-shell")?.querySelector<HTMLElement>(".designer-phone-screen");
-    frame.style.height = `${Math.max(phoneScreen?.clientHeight ?? window.innerHeight, 1)}px`;
+    cleanupRef.current?.();
+    lastHeight.current = Math.max(phoneScreen?.clientHeight ?? window.innerHeight, 1);
+    frame.style.height = `${lastHeight.current}px`;
   }, [documentHtml]);
 
-  useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
+  useEffect(() => () => cleanupRef.current?.(), []);
 
   return (
     <section className="custom-section-renderer" data-preview-section={sectionId}>
@@ -84,7 +118,7 @@ export function CustomSectionRenderer({ sectionId, sectionName, html, css }: Cus
         srcDoc={documentHtml}
         sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         referrerPolicy="no-referrer"
-        loading="eager"
+        loading={lazy ? "lazy" : "eager"}
         onLoad={watchContentSize}
       />
     </section>

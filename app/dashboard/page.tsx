@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/admin-guard";
 import type { Metadata } from "next";
 import { InvitationDashboard } from "@/components/invitation-dashboard";
 import { DesignerMobileEnhancements } from "@/components/designer-mobile-enhancements";
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  await requireAdminPage();
   return <><DesignerMobileEnhancements /><InvitationDashboard /></>;
 }

@@ -297,7 +297,7 @@ export function RoseAfterglowInvitation() {
                 <span><MapPin aria-hidden="true" />{event.venue}<small>{event.address}</small></span>
               </div>
               <div className={styles.mapFrame}>
-                <iframe src={event.map} title={`Map to ${event.venue}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                <iframe src={event.map} title={`Map to ${event.venue}`} loading="lazy" referrerPolicy="no-referrer" />
               </div>
               <a href={event.directions} target="_blank" rel="noreferrer">Open directions <Navigation aria-hidden="true" /></a>
             </article>

@@ -1,5 +1,9 @@
+import { withAdmin } from "@/lib/admin-guard";
+import { readJson, RequestError, requestErrorResponse } from "@/lib/request-security";
+import { privateMediaFolder, mediaPathBelongsToOrder, storePhoto } from "@/lib/photo-storage";
+import { tryMediaCleanup } from "@/lib/media-cleanup";
+import { privateDigest } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
-import { belongsToOrder, mediaFolderForOrder } from "@/lib/invitation-media-path";
 import { calculateInvitationPrice, normalizeInvitationConfig, type InvitationConfig } from "@/lib/invitation-designer";
 import { sanitizeInvitationCustomSections } from "@/lib/custom-sections";
 import {
@@ -13,11 +17,11 @@ import {
 import { isValidActiveUntil, makeInvitationSlug, summarizeOrder, todayInMauritius, type InvitationOrderRecord } from "@/lib/invitation-orders";
 import { isInvitationConfig, validInvitationId } from "@/lib/invitation-validation";
 import { mediaRows, photosMatchConfig, verifyPhotos, type UploadedPhoto } from "@/lib/media-submission";
-import { getSupabaseEnvironment, publicStorageUrl, supabaseRequest } from "@/lib/supabase-server";
+import { getSupabaseEnvironment, publicStorageUrl, supabaseRequest, SupabaseError } from "@/lib/supabase-server";
 
 export const runtime = "edge";
 
-export async function GET(request: Request) {
+export const GET = withAdmin(async (request: Request) => {
   try {
     const id = new URL(request.url).searchParams.get("id");
     if (id !== null) {
@@ -27,19 +31,21 @@ export async function GET(request: Request) {
       if (!order) return NextResponse.json({ error: "This order could not be found." }, { status: 404 });
       return NextResponse.json({ order: normalizeOrder(order), publicOrigin: getPublicSiteOrigin(request) });
     }
-    return NextResponse.json({ orders: await listInvitationOrders(), today: todayInMauritius(), publicOrigin: getPublicSiteOrigin(request) });
+    return NextResponse.json({ ...await listInvitationOrders(new URL(request.url).searchParams), today: todayInMauritius(), publicOrigin: getPublicSiteOrigin(request) });
   } catch (error) {
-    console.error("Unable to load invitation orders", error);
+    if (requestErrorResponse(error)) return requestErrorResponse(error)!;
+    if (error instanceof SupabaseError && (error.status === 409 || error.code === "23505" || error.code === "PT409")) return NextResponse.json({ error: "This order or link changed. Reload the order and try again." }, { status: 409 });
+    console.error("Unable to load invitation orders");
     return NextResponse.json({ error: "Orders are temporarily unavailable. Please try again." }, { status: 503 });
   }
-}
+});
 
 type StoredPhoto = { storage_path: string; public_url: string; slot: string; mime_type: string; size_bytes: number };
 const photoExtensions: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
-export async function POST(request: Request) {
+export const POST = withAdmin(async (request: Request) => {
   try {
-    const body = (await request.json()) as { id?: unknown; action?: unknown };
+    const body = (await readJson(request)) as { id?: unknown; action?: unknown };
     if (!validInvitationId(body.id) || body.action !== "duplicate") {
       return NextResponse.json({ error: "Choose a valid order to duplicate." }, { status: 400 });
     }
@@ -51,7 +57,7 @@ export async function POST(request: Request) {
 
     const id = crypto.randomUUID();
     const slug = await uniqueDuplicateSlug(original, id);
-    const mediaFolder = mediaFolderForOrder({ id, slug, config: original.config });
+    const mediaFolder = await privateMediaFolder(id);
     const mediaParams = new URLSearchParams({ select: "storage_path,public_url,slot,mime_type,size_bytes", invitation_id: `eq.${original.id}` });
     const mediaResponse = await supabaseRequest(`/rest/v1/invitation_media?${mediaParams.toString()}`, { cache: "no-store" });
     const media = (await mediaResponse.json()) as StoredPhoto[];
@@ -64,30 +70,25 @@ export async function POST(request: Request) {
     try {
       for (const photo of media) {
         const extension = photoExtensions[photo.mime_type];
-        if (!extension || !belongsToOrder(photo.storage_path, original.id)) throw new Error("The source order has an invalid photo record.");
+        if (!extension || !await mediaPathBelongsToOrder(photo.storage_path, original.id)) throw new Error("The source order has an invalid photo record.");
         const download = await fetch(publicStorageUrl(photo.storage_path), { cache: "no-store" });
         if (!download.ok) throw new Error("An uploaded photo on the original order could not be read.");
         const bytes = await download.arrayBuffer();
         if (!bytes.byteLength || bytes.byteLength > 5 * 1024 * 1024) throw new Error("An uploaded photo on the original order is invalid.");
-        const storagePath = `${mediaFolder}/${crypto.randomUUID()}.${extension}`;
-        const encodedPath = storagePath.split("/").map(encodeURIComponent).join("/");
-        await supabaseRequest(`/storage/v1/object/${encodeURIComponent(bucket)}/${encodedPath}`, {
-          method: "POST",
-          headers: { "Content-Type": photo.mime_type, "x-upsert": "false", "cache-control": "31536000" },
-          body: bytes,
-        });
+        const stored = await storePhoto(new File([bytes], `photo.${extension}`, { type: photo.mime_type }), id, photo.slot, mediaFolder);
+        const storagePath = stored.path;
         copiedPaths.push(storagePath);
         const url = publicStorageUrl(storagePath);
         copiedUrls.set(photo.public_url, url);
         copiedUrls.set(publicStorageUrl(photo.storage_path), url);
-        copiedMedia.push({ ...photo, storage_path: storagePath, public_url: url, size_bytes: bytes.byteLength });
+        copiedMedia.push({ ...photo, storage_path: storagePath, public_url: url, size_bytes: stored.sizeBytes });
       }
 
       const replacePhotoUrl = (url: string) => {
         const mapped = copiedUrls.get(url);
         if (mapped) return mapped;
         // A storage-backed photo must never remain shared between the two orders.
-        if (url.includes("/storage/v1/object/") && (url.includes(`/${original.id}/`) || url.includes(`/${original.id}-`))) {
+        if (url.startsWith(publicStorageUrl(""))) {
           throw new Error("A photo on the original order has no storage record to duplicate.");
         }
         return url;
@@ -99,10 +100,13 @@ export async function POST(request: Request) {
         sections: originalConfig.sections.map((section) => ({
           ...section,
           images: section.images.map(replacePhotoUrl),
+          fields: section.type === "custom" ? Object.fromEntries(Object.entries(section.fields).map(([key, value]) =>
+            [key, ["html", "css"].includes(key) ? [...copiedUrls].reduce((source, [from, to]) => source.replaceAll(from, to), value) : value])) : section.fields,
         })),
       };
       // The status may have changed while photos were being copied.
-      if ((await getInvitationOrder(original.id))?.status !== "pending") {
+      const current = await getInvitationOrder(original.id);
+      if (current?.status !== "pending" || current.revision !== original.revision) {
         throw new Error("This order was moved out of review while its copy was being prepared.");
       }
       const response = await supabaseRequest("/rest/v1/rpc/create_invitation_with_media", {
@@ -141,24 +145,21 @@ export async function POST(request: Request) {
       throw error;
     }
   } catch (error) {
-    console.error("Unable to duplicate invitation order", error);
+    if (requestErrorResponse(error)) return requestErrorResponse(error)!;
+    if (error instanceof SupabaseError && (error.status === 409 || error.code === "23505" || error.code === "PT409")) return NextResponse.json({ error: "This order or link changed. Reload the order and try again." }, { status: 409 });
+    console.error("Unable to duplicate invitation order");
     return NextResponse.json({ error: error instanceof Error && error.message.startsWith("The copy was interrupted") ? error.message : "The order could not be duplicated. Please try again." }, { status: 503 });
   }
-}
+});
 
 async function uniqueDuplicateSlug(original: InvitationOrderRecord, id: string) {
-  const originalPath = original.slug || makeInvitationSlug(original.config);
-  const base = `${originalPath.slice(0, 80).replace(/-+$/, "")}-copy`;
-  for (let suffix = 1; suffix <= 100; suffix += 1) {
-    const candidate = suffix === 1 ? base : `${base}-${suffix}`;
-    if (await invitationSlugIsAvailable(candidate, id)) return candidate;
-  }
-  return `${base}-${id.slice(0, 8)}`;
+  const base = makeInvitationSlug(original.config).slice(0, 52).replace(/-+$/, "");
+  return `${base}-copy-${(await privateDigest(`public-link:${id}`)).slice(0, 32)}`;
 }
 
-export async function PATCH(request: Request) {
+export const PATCH = withAdmin(async (request: Request) => {
   try {
-    const body = (await request.json()) as {
+    const body = (await readJson(request)) as {
       id?: unknown;
       action?: unknown;
       config?: unknown;
@@ -166,6 +167,7 @@ export async function PATCH(request: Request) {
       totalPrice?: unknown;
       slug?: unknown;
       media?: unknown;
+      revision?: unknown;
     };
     if (!validInvitationId(body.id)) return NextResponse.json({ error: "The order number is invalid." }, { status: 400 });
     if (!isOrderAction(body.action)) return NextResponse.json({ error: "Choose a valid order action." }, { status: 400 });
@@ -175,6 +177,7 @@ export async function PATCH(request: Request) {
 
     const existing = await getInvitationOrder(body.id);
     if (!existing) return NextResponse.json({ error: "This order could not be found." }, { status: 404 });
+    if (!Number.isSafeInteger(body.revision) || Number(body.revision) < 1 || body.revision !== existing.revision) throw new RequestError("This order changed in another tab. Reload it before saving.", 409);
     const photos = body.media === undefined ? [] : await verifyPhotos(existing.id, body.media);
     if (!photos) return NextResponse.json({ error: "The uploaded photo receipts are invalid." }, { status: 400 });
     if (photos.length && body.action !== "save" && body.action !== "deploy") {
@@ -182,7 +185,7 @@ export async function PATCH(request: Request) {
     }
 
     if (body.action === "prepare-link") {
-      const order = existing.slug ? existing : await patchOrder(existing.id, { slug: await createUniqueInvitationSlug(existing) });
+      const order = existing.slug ? existing : await patchOrder(existing.id, existing.revision, { slug: await createUniqueInvitationSlug(existing) });
       return NextResponse.json({ order: normalizeOrder(order), publicUrl: `${getPublicSiteOrigin(request)}/${order.slug}` });
     }
 
@@ -200,12 +203,12 @@ export async function PATCH(request: Request) {
       if (slugResult.provided) {
         values.slug = slugResult.value;
       }
-      const order = await patchOrder(existing.id, values, photos);
+      const order = await patchOrder(existing.id, existing.revision, values, photos);
       return NextResponse.json({ order: normalizeOrder(order) });
     }
 
     if (body.action === "deactivate") {
-      const order = await patchOrder(existing.id, {
+      const order = await patchOrder(existing.id, existing.revision, {
         status: "inactive",
         inactive_at: new Date().toISOString(),
       });
@@ -213,7 +216,7 @@ export async function PATCH(request: Request) {
     }
 
     if (body.action === "review") {
-      const order = await patchOrder(existing.id, {
+      const order = await patchOrder(existing.id, existing.revision, {
         status: "pending",
         active_until: null,
         inactive_at: null,
@@ -242,7 +245,7 @@ export async function PATCH(request: Request) {
     const slug = slugResult.provided
       ? slugResult.value || await createUniqueInvitationSlug(withCurrentValues)
       : existing.slug || await createUniqueInvitationSlug(withCurrentValues);
-    const order = await patchOrder(existing.id, {
+    const order = await patchOrder(existing.id, existing.revision, {
       config,
       total_price: totalPrice,
       status: "active",
@@ -256,47 +259,35 @@ export async function PATCH(request: Request) {
       publicUrl: `${getPublicSiteOrigin(request)}/${slug}`,
     });
   } catch (error) {
-    console.error("Unable to update invitation order", error);
+    if (requestErrorResponse(error)) return requestErrorResponse(error)!;
+    if (error instanceof SupabaseError && (error.status === 409 || error.code === "23505" || error.code === "PT409")) return NextResponse.json({ error: "This order or link changed. Reload the order and try again." }, { status: 409 });
+    console.error("Unable to update invitation order");
     return NextResponse.json({ error: "The order could not be updated. Please try again." }, { status: 503 });
   }
-}
+});
 
-export async function DELETE(request: Request) {
+export const DELETE = withAdmin(async (request: Request) => {
   try {
     const id = new URL(request.url).searchParams.get("id");
     if (!validInvitationId(id)) return NextResponse.json({ error: "The order number is invalid." }, { status: 400 });
     const existing = await getInvitationOrder(id);
     if (!existing) return NextResponse.json({ error: "This order could not be found." }, { status: 404 });
 
-    const mediaParams = new URLSearchParams({ select: "storage_path", invitation_id: `eq.${id}` });
-    const mediaResponse = await supabaseRequest(`/rest/v1/invitation_media?${mediaParams.toString()}`, { cache: "no-store" });
-    const media = (await mediaResponse.json()) as Array<{ storage_path: string }>;
-    const orderParams = new URLSearchParams({ id: `eq.${id}` });
-    await supabaseRequest(`/rest/v1/invitations?${orderParams.toString()}`, {
-      method: "DELETE",
-      headers: { Prefer: "return=minimal" },
-      cache: "no-store",
+    const revision = Number(new URL(request.url).searchParams.get("revision"));
+    if (!Number.isSafeInteger(revision) || revision < 1) throw new RequestError("Reload this order before deleting it.", 409);
+    await supabaseRequest("/rest/v1/rpc/delete_invitation_version", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ p_id: id, p_revision: revision }),
     });
-
-    if (media.length) {
-      try {
-        const { bucket } = getSupabaseEnvironment();
-        await supabaseRequest(`/storage/v1/object/${encodeURIComponent(bucket)}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prefixes: media.map((item) => item.storage_path) }),
-        });
-      } catch (storageError) {
-        console.error("Order deleted, but its stored media could not be removed", storageError);
-      }
-    }
+    await tryMediaCleanup();
 
     return NextResponse.json({ deleted: true, id });
   } catch (error) {
-    console.error("Unable to delete invitation order", error);
+    if (requestErrorResponse(error)) return requestErrorResponse(error)!;
+    if (error instanceof SupabaseError && (error.status === 409 || error.code === "23505" || error.code === "PT409")) return NextResponse.json({ error: "This order or link changed. Reload the order and try again." }, { status: 409 });
+    console.error("Unable to delete invitation order");
     return NextResponse.json({ error: "The order could not be deleted. Please try again." }, { status: 503 });
   }
-}
+});
 
 function isOrderAction(value: unknown): value is "save" | "deploy" | "deactivate" | "review" | "prepare-link" {
   return value === "save" || value === "deploy" || value === "deactivate" || value === "review" || value === "prepare-link";
@@ -311,43 +302,14 @@ function normalizeAndSanitizeConfig(config: InvitationConfig) {
   return sanitizeInvitationCustomSections(normalizeInvitationConfig(config));
 }
 
-async function patchOrder(id: string, values: Record<string, unknown>, photos: UploadedPhoto[] = []) {
-  if (photos.length || values.config !== undefined) {
-    const config = values.config as InvitationConfig | undefined;
-    const previousMedia = config ? await supabaseRequest(`/rest/v1/invitation_media?${new URLSearchParams({ select: "storage_path,public_url", invitation_id: `eq.${id}` })}`, { cache: "no-store" }) : null;
-    const existingPhotos = previousMedia ? await previousMedia.json() as Array<{ storage_path: string; public_url: string }> : [];
-    const response = await supabaseRequest("/rest/v1/rpc/update_invitation_with_media", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Prefer: "return=representation" },
-      body: JSON.stringify({ p_id: id, p_values: values, p_media: mediaRows(photos) }),
-      cache: "no-store",
-    });
-    const rows = (await response.json()) as InvitationOrderRecord[];
-    if (!rows[0]) throw new Error("Supabase did not confirm the updated order.");
-    if (config) {
-      const referenced = new Set([config.hero.uploadedUrl, ...config.sections.flatMap((section) => section.images)]);
-      const removedPaths = existingPhotos.filter((photo) => !referenced.has(photo.public_url)).map((photo) => photo.storage_path);
-      if (removedPaths.length) {
-        try {
-          const { bucket } = getSupabaseEnvironment();
-          await supabaseRequest(`/storage/v1/object/${encodeURIComponent(bucket)}`, {
-            method: "DELETE", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prefixes: removedPaths }),
-          });
-        } catch (cleanupError) { console.error("Removed photo metadata but could not remove unused Storage objects", cleanupError); }
-      }
-    }
-    return rows[0];
-  }
-  const params = new URLSearchParams({ id: `eq.${id}`, select: "id,status,slug,active_until,total_price,created_at,deployed_at,inactive_at,config" });
-  const response = await supabaseRequest(`/rest/v1/invitations?${params.toString()}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", Prefer: "return=representation" },
-    body: JSON.stringify(values),
-    cache: "no-store",
+async function patchOrder(id: string, revision: number, values: Record<string, unknown>, photos: UploadedPhoto[] = []) {
+  const response = await supabaseRequest("/rest/v1/rpc/save_invitation_version", {
+    method: "POST", headers: { "Content-Type": "application/json", Prefer: "return=representation" },
+    body: JSON.stringify({ p_id: id, p_revision: revision, p_values: values, p_media: mediaRows(photos) }), cache: "no-store",
   });
-  const rows = (await response.json()) as InvitationOrderRecord[];
-  if (!rows[0]) throw new Error("Supabase did not return the updated order.");
+  const rows = await response.json() as InvitationOrderRecord[];
+  if (!rows[0]) throw new Error("The update was not confirmed.");
+  await tryMediaCleanup();
   return rows[0];
 }
 

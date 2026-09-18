@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/admin-guard";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, LockKeyhole } from "lucide-react";
@@ -15,10 +16,11 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Private invitation preview — Paperless Invites", robots: { index: false, follow: false } };
 
 export default async function AdminOrderPreviewPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdminPage();
   const { id } = await params;
   if (!validInvitationId(id)) notFound();
-  const order = await getInvitationOrder(id).catch((error) => {
-    console.error("Unable to load private invitation preview", error);
+  const order = await getInvitationOrder(id).catch(() => {
+    console.error("Unable to load private invitation preview");
     return null;
   });
   if (!order) notFound();

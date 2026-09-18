@@ -4,6 +4,7 @@ export type InvitationOrderStatus = "pending" | "active" | "inactive";
 
 export type InvitationOrderRecord = {
   id: string;
+  revision: number;
   status: InvitationOrderStatus;
   slug: string | null;
   active_until: string | null;
@@ -67,7 +68,7 @@ export function todayInMauritius(date = new Date()) {
 }
 
 export function isValidActiveUntil(value: unknown): value is string {
-  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && value >= todayInMauritius();
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value && value >= todayInMauritius();
 }
 
 export function makeInvitationSlug(config: InvitationConfig) {

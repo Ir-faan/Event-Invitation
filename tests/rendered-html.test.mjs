@@ -7,8 +7,29 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { createServer } from "vite";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const vite = await createServer({ appType: "custom", configFile: false, root, resolve: { alias: { "@": root } }, server: { middlewareMode: true } });
+const vite = await createServer({ appType: "custom", configFile: false, root, resolve: { alias: { "@": root } }, server: { middlewareMode: true, hmr: false, ws: false } });
 after(async () => vite.close());
+
+// Synthetic provider responses exercise the real server auth/rate-limit code.
+process.env.SUPABASE_PUBLISHABLE_KEY = "test-publishable-key";
+const fixturePng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
+function apiRequest(url, init = {}) {
+  const headers = new Headers(init.headers);
+  if (typeof init.body === "string") headers.set("Content-Type", "application/json");
+  if (String(url).includes("/api/dashboard/")) {
+    headers.set("Origin", new URL(url).origin);
+    headers.set("Cookie", "paperless_sb_access=test-admin");
+  }
+  if (!headers.has("Idempotency-Key")) headers.set("Idempotency-Key", "dddddddd-dddd-4ddd-addd-dddddddddddd");
+  return new Request(url, { ...init, headers });
+}
+function providerSecurity(url) {
+  if (url.endsWith("/rest/v1/rpc/consume_request_limit")) return Response.json(true);
+  if (url.endsWith("/auth/v1/user")) return Response.json({ id: "11111111-1111-4111-8111-111111111111" });
+  if (url.includes("/rest/v1/dashboard_admins?")) return Response.json([{ user_id: "11111111-1111-4111-8111-111111111111" }]);
+  if (url.includes("/rest/v1/media_cleanup")) return Response.json([]);
+}
+
 
 test("renders the complete Paperless Invites landing page", async () => {
   const { default: Home } = await vite.ssrLoadModule("/app/page.tsx");
@@ -21,6 +42,7 @@ test("renders the complete Paperless Invites landing page", async () => {
   assert.match(html, /Simple pricing/);
   assert.match(html, /Your celebration/);
   assert.match(html, /\/design-invitation/);
+  assert.match(html, /href="\/templates\/rose-afterglow"/);
 });
 
 test("renders the guided invitation designer and mobile preview", async () => {
@@ -210,7 +232,7 @@ test("long couple names use measured shared sizing and wrap only at spaces", asy
 });
 
 test("renders the private order dashboard shell without a public login", async () => {
-  const { default: Dashboard } = await vite.ssrLoadModule("/app/dashboard/page.tsx");
+  const { InvitationDashboard: Dashboard } = await vite.ssrLoadModule("/components/invitation-dashboard.tsx");
   const html = renderToStaticMarkup(React.createElement(Dashboard));
   assert.match(html, /Order desk/);
   assert.match(html, /Need your review/);
@@ -352,7 +374,7 @@ test("duplicates review orders with independent photo storage and an atomic DB c
   const gallery = createSection("glimpse");
   gallery.images = [oldUrl];
   config.sections.push(gallery);
-  const original = { id: originalId, status: "pending", slug: "custom-link", active_until: null, total_price: 1730, created_at: "2026-09-12T08:15:00Z", deployed_at: null, inactive_at: null, config };
+  const original = { id: originalId, revision: 1, status: "pending", slug: "custom-link", active_until: null, total_price: 1730, created_at: "2026-09-12T08:15:00Z", deployed_at: null, inactive_at: null, config };
   const existingFetch = globalThis.fetch;
   const previousUrl = process.env.SUPABASE_URL;
   const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -365,14 +387,15 @@ test("duplicates review orders with independent photo storage and an atomic DB c
   try {
     globalThis.fetch = async (input, init = {}) => {
       const url = String(input);
+      if (providerSecurity(url)) return providerSecurity(url);
       if (url.includes("/rest/v1/invitations?") && (!init.method || init.method === "GET")) {
         if (new URL(url).searchParams.get("select") === "id") return response([]);
         return new URL(url).searchParams.get("id") === `eq.${originalId}` || !new URL(url).searchParams.has("id") ? response([original]) : response([]);
       }
       if (url.includes("/rest/v1/invitation_media?") && (!init.method || init.method === "GET")) {
-        return response([{ storage_path: `${originalId}/photo.jpg`, public_url: oldUrl, slot: "hero", mime_type: "image/jpeg", size_bytes: 3 }]);
+        return response([{ storage_path: `${originalId}/photo.jpg`, public_url: oldUrl, slot: "hero", mime_type: "image/png", size_bytes: fixturePng.length }]);
       }
-      if (url === oldUrl) return new Response(new Uint8Array([1, 2, 3]), { status: 200 });
+      if (url === oldUrl) return new Response(fixturePng, { status: 200 });
       if (init.method === "POST" && url.includes("/storage/v1/object/invitation-media/")) {
         posts.push({ type: "photo", url });
         return response({});
@@ -393,24 +416,24 @@ test("duplicates review orders with independent photo storage and an atomic DB c
       throw new Error(`Unexpected fetch: ${init.method ?? "GET"} ${url}`);
     };
 
-    const duplicated = await POST(new Request(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
+    const duplicated = await POST(apiRequest(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
     assert.equal(duplicated.status, 201);
     const { order } = await duplicated.json();
     assert.equal(order.status, "pending");
-    assert.equal(order.slug, "custom-link-copy");
+    assert.match(order.slug, /^john-and-sameer-copy-[a-f0-9]{32}$/);
     assert.equal(order.total_price, 1730);
     assert.notEqual(order.id, originalId);
     assert.deepEqual(posts.map((item) => item.type), ["photo", "atomic"]);
     const photoUrl = posts[1].values.p_media[0].public_url;
-    assert.match(photoUrl, new RegExp(`/custom-link-copy-${order.id}-customer/`));
+    assert.match(photoUrl, /\/media-[a-f0-9]{64}\//);
     assert.equal(posts[1].values.p_config.hero.uploadedUrl, photoUrl);
     assert.equal(order.config.hero.uploadedUrl, photoUrl);
     assert.equal(posts[1].values.p_config.sections.at(-1).images[0], photoUrl);
-    assert.equal(posts[1].values.p_media[0].storage_path.startsWith(`custom-link-copy-${order.id}-customer/`), true);
+    assert.match(posts[1].values.p_media[0].storage_path, /^media-[a-f0-9]{64}\//);
     assert.notEqual(photoUrl, oldUrl);
 
     original.status = "active";
-    const denied = await POST(new Request(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
+    const denied = await POST(apiRequest(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
     assert.equal(denied.status, 409);
     assert.equal(posts.length, 2);
 
@@ -421,7 +444,7 @@ test("duplicates review orders with independent photo storage and an atomic DB c
     let unsuccessful;
     try {
       console.error = (...args) => expectedErrors.push(args);
-      unsuccessful = await POST(new Request(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
+      unsuccessful = await POST(apiRequest(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
     } finally {
       console.error = previousConsoleError;
     }
@@ -432,9 +455,9 @@ test("duplicates review orders with independent photo storage and an atomic DB c
 
     original.slug = null;
     failAtomicCommit = false;
-    const withoutSlug = await POST(new Request(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
+    const withoutSlug = await POST(apiRequest(`https://localhost${endpoint}`, { method: "POST", body: JSON.stringify({ id: originalId, action: "duplicate" }) }));
     assert.equal(withoutSlug.status, 201);
-    assert.equal((await withoutSlug.json()).order.slug, "john-and-sameer-copy");
+    assert.match((await withoutSlug.json()).order.slug, /^john-and-sameer-copy-[a-f0-9]{32}$/);
   } finally {
     globalThis.fetch = existingFetch;
     if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
@@ -442,24 +465,16 @@ test("duplicates review orders with independent photo storage and an atomic DB c
   }
 });
 
-test("new media folders use slug, order id and customer name while old folders remain valid", async () => {
-  const [{ mediaFolderForIdentity, mediaFolderForOrder, belongsToOrder }, { createInitialInvitation }] = await Promise.all([
-    vite.ssrLoadModule("/lib/invitation-media-path.ts"),
-    vite.ssrLoadModule("/lib/invitation-designer.ts"),
-  ]);
-  const config = createInitialInvitation();
-  config.contact.name = "Élodie & Aamir";
+test("legacy name-bearing media folders remain valid for existing invitations", async () => {
+  const { belongsToOrder } = await vite.ssrLoadModule("/lib/invitation-media-path.ts");
   const id = "11111111-1111-4111-8111-111111111111";
-  const folder = mediaFolderForOrder({ id, slug: "john-and-sameer-copy", config });
-  assert.equal(folder, `john-and-sameer-copy-${id}-elodie-aamir`);
-  assert.equal(mediaFolderForIdentity({ link: "Current Custom Link", id, customerName: "Current Customer" }), `current-custom-link-${id}-current-customer`);
-  assert.ok(belongsToOrder(`${folder}/hero:0-example.webp`, id));
+  assert.ok(belongsToOrder(`john-and-sameer-copy-${id}-elodie-aamir/hero:0-example.webp`, id));
   assert.ok(belongsToOrder(`${id}/old-photo.jpg`, id));
   assert.ok(belongsToOrder(`${id}-elodie-aamir-john-and-sameer-copy/previous-photo.webp`, id));
   assert.equal(belongsToOrder("different-id/photo.jpg", id), false);
 });
 
-test("administrator photo uploads use the currently edited link and customer name", async () => {
+test("administrator photo uploads keep names and order IDs out of public paths", async () => {
   const [{ POST }, { createInitialInvitation }] = await Promise.all([
     vite.ssrLoadModule("/app/api/dashboard/orders/media/route.ts"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
@@ -467,7 +482,7 @@ test("administrator photo uploads use the currently edited link and customer nam
   const id = "11111111-1111-4111-8111-111111111111";
   const config = createInitialInvitation();
   config.contact.name = "Previously Saved Customer";
-  const order = { id, status: "pending", slug: "previous-link", active_until: null, total_price: 1000, created_at: "2026-09-15T00:00:00Z", deployed_at: null, inactive_at: null, config };
+  const order = { id, revision: 1, status: "pending", slug: "previous-link", active_until: null, total_price: 1000, created_at: "2026-09-15T00:00:00Z", deployed_at: null, inactive_at: null, config };
   const previousUrl = process.env.SUPABASE_URL;
   const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const originalFetch = globalThis.fetch;
@@ -477,6 +492,7 @@ test("administrator photo uploads use the currently edited link and customer nam
   try {
     globalThis.fetch = async (input, init = {}) => {
       const endpoint = String(input);
+      if (providerSecurity(endpoint)) return providerSecurity(endpoint);
       if (endpoint.includes("/rest/v1/invitations?") && (!init.method || init.method === "GET")) return Response.json([order]);
       if (init.method === "POST" && endpoint.includes("/storage/v1/object/invitation-media/")) {
         storedAt = endpoint;
@@ -489,12 +505,13 @@ test("administrator photo uploads use the currently edited link and customer nam
     form.set("slot", "hero:0");
     form.set("link", "Current Custom Link");
     form.set("customerName", "Élodie Aamir");
-    form.set("file", new File(["photo"], "portrait.webp", { type: "image/webp" }));
-    const response = await POST(new Request("https://localhost/api/dashboard/orders/media", { method: "POST", body: form }));
+    form.set("file", new File([fixturePng], "portrait.png", { type: "image/png" }));
+    const response = await POST(apiRequest("https://localhost/api/dashboard/orders/media", { method: "POST", body: form }));
     assert.equal(response.status, 201);
     const photo = await response.json();
-    assert.match(photo.path, new RegExp(`^current-custom-link-${id}-elodie-aamir/hero:0-`));
-    assert.match(storedAt, new RegExp(`current-custom-link-${id}-elodie-aamir/hero%3A0-`));
+    assert.match(photo.path, /^media-[a-f0-9]{64}\/[a-f0-9-]+\.png$/);
+    assert.ok(!photo.path.includes(id));
+    assert.ok(storedAt.endsWith(photo.path));
   } finally {
     globalThis.fetch = originalFetch;
     if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
@@ -502,20 +519,20 @@ test("administrator photo uploads use the currently edited link and customer nam
   }
 });
 
-test("administrator upload requests carry the current folder identity", async () => {
+test("administrator upload requests omit customer and link identity", async () => {
   const { uploadPendingPhotos } = await vite.ssrLoadModule("/lib/photo-upload.ts");
-  const file = new File(["photo"], "portrait.webp", { type: "image/webp" });
+  const file = new File([fixturePng], "portrait.png", { type: "image/png" });
   const pending = { hero: [file] };
   const prepared = new Map([[file, file]]);
   const uploaded = new Map();
   const originalFetch = globalThis.fetch;
   try {
     globalThis.fetch = async (_input, init) => {
-      assert.equal(init.body.get("link"), "current-link");
-      assert.equal(init.body.get("customerName"), "Current Customer");
+      assert.equal(init.body.has("link"), false);
+      assert.equal(init.body.has("customerName"), false);
       return Response.json({ url: "https://example.com/photo.webp", path: "current-link/id/current.webp", slot: "hero:0", mimeType: "image/webp", sizeBytes: 5, receipt: "signed" }, { status: 201 });
     };
-    await uploadPendingPhotos("order-id", pending, "/api/dashboard/orders/media", prepared, uploaded, undefined, { link: "current-link", customerName: "Current Customer" });
+    await uploadPendingPhotos("order-id", pending, "/api/dashboard/orders/media", prepared, uploaded);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -542,7 +559,7 @@ test("retries an interrupted batch without uploading successful files again and 
         : Response.json({ url: `https://example.com/photo-${requests}.jpg`, path: `folder/photo-${requests}.jpg`, slot: "section:glimpse-included:images:0", mimeType: "image/jpeg", sizeBytes: 3, receipt: "signed" }, { status: 201 });
     };
     await assert.rejects(uploadPendingPhotos("order", pending, "/api/invitations/media", prepared, uploaded, "secret"), /two\.jpg exceeded the upload limit/);
-    assert.equal(uploaded.get(files[0]).url, "https://example.com/photo-1.jpg");
+    assert.equal(uploaded.get("section:glimpse-included:images:0").url, "https://example.com/photo-1.jpg");
     globalThis.fetch = async () => { requests += 1; return Response.json({ url: "https://example.com/photo-2.jpg", path: "folder/photo-2.jpg", slot: "section:glimpse-included:images:1", mimeType: "image/jpeg", sizeBytes: 3, receipt: "signed" }, { status: 201 }); };
     const result = await uploadPendingPhotos("order", pending, "/api/invitations/media", prepared, uploaded, "secret");
     assert.deepEqual(result["section:glimpse-included:images"], ["https://example.com/photo-1.jpg", "https://example.com/photo-2.jpg"]);
@@ -550,7 +567,7 @@ test("retries an interrupted batch without uploading successful files again and 
   } finally { globalThis.fetch = originalFetch; }
 });
 
-test("a failed six-photo submission creates no invitation or media rows and cleans up staged images", async () => {
+test("a failed six-photo submission creates no invitation or media rows and durably stages images for cleanup", async () => {
   const [{ POST: beginOrFinalize }, { POST: upload }, { createInitialInvitation, createSection }] = await Promise.all([
     vite.ssrLoadModule("/app/api/invitations/route.ts"),
     vite.ssrLoadModule("/app/api/invitations/media/route.ts"),
@@ -574,6 +591,7 @@ test("a failed six-photo submission creates no invitation or media rows and clea
   try {
     globalThis.fetch = async (input, init = {}) => {
       const url = String(input);
+      if (providerSecurity(url)) return providerSecurity(url);
       if (url.includes("/rest/v1/invitations?")) return Response.json(committedId && new URL(url).searchParams.get("id") === `eq.${committedId}` ? [{ id: committedId }] : []);
       if (init.method === "POST" && url.includes("/storage/v1/object/invitation-media/")) {
         uploadCount += 1;
@@ -592,7 +610,7 @@ test("a failed six-photo submission creates no invitation or media rows and clea
       }
       throw new Error(`Unexpected ${init.method ?? "GET"} request: ${url}`);
     };
-    const begin = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+    const begin = await beginOrFinalize(apiRequest("https://localhost/api/invitations", {
       method: "POST", body: JSON.stringify({ config, slots }),
     }));
     assert.equal(begin.status, 201);
@@ -603,30 +621,30 @@ test("a failed six-photo submission creates no invitation or media rows and clea
       form.set("invitationId", id);
       form.set("uploadToken", uploadToken);
       form.set("slot", slot);
-      form.set("file", new File(["small photo"], "memory.webp", { type: "image/webp" }));
-      const result = await upload(new Request("https://localhost/api/invitations/media", { method: "POST", body: form }));
+      form.set("file", new File([fixturePng], "memory.png", { type: "image/png" }));
+      const result = await upload(apiRequest("https://localhost/api/invitations/media", { method: "POST", body: form }));
       if (photos.length === 4) {
-        assert.equal(result.status, 413);
-        assert.match((await result.json()).error, /storage limit/);
+        assert.equal(result.status, 503);
+        assert.match((await result.json()).error, /could not be uploaded/);
       } else {
         assert.equal(result.status, 201);
         photos.push(await result.json());
       }
     }
     assert.equal(dbCommits, 0);
-    const incomplete = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+    const incomplete = await beginOrFinalize(apiRequest("https://localhost/api/invitations", {
       method: "POST", body: JSON.stringify({ operation: "finalize-media", id, uploadToken, config, media: photos }),
     }));
     assert.equal(incomplete.status, 400);
     assert.equal(dbCommits, 0);
-    const cleanup = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+    const cleanup = await beginOrFinalize(apiRequest("https://localhost/api/invitations", {
       method: "POST", body: JSON.stringify({ operation: "cancel-media", id, uploadToken, media: photos }),
     }));
     assert.equal(cleanup.status, 200);
-    assert.deepEqual(removed, photos.map((photo) => photo.path));
+    assert.deepEqual(removed, []); // Cancellation cannot race a successful database commit.
     assert.equal(dbCommits, 0);
 
-    const retry = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+    const retry = await beginOrFinalize(apiRequest("https://localhost/api/invitations", {
       method: "POST", body: JSON.stringify({ config, slots }),
     }));
     const submission = await retry.json();
@@ -636,31 +654,31 @@ test("a failed six-photo submission creates no invitation or media rows and clea
       form.set("invitationId", submission.id);
       form.set("uploadToken", submission.uploadToken);
       form.set("slot", slot);
-      form.set("file", new File(["small photo"], "memory.webp", { type: "image/webp" }));
-      const result = await upload(new Request("https://localhost/api/invitations/media", { method: "POST", body: form }));
+      form.set("file", new File([fixturePng], "memory.png", { type: "image/png" }));
+      const result = await upload(apiRequest("https://localhost/api/invitations/media", { method: "POST", body: form }));
       assert.equal(result.status, 201);
       complete.push(await result.json());
     }
     section.images = complete.map((photo) => photo.url);
-    const committed = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+    const committed = await beginOrFinalize(apiRequest("https://localhost/api/invitations", {
       method: "POST", body: JSON.stringify({ operation: "finalize-media", id: submission.id, uploadToken: submission.uploadToken, config, media: complete }),
     }));
     assert.equal(committed.status, 201);
     assert.equal(dbCommits, 1);
     assert.equal(lastCommit.p_media.length, 6);
-    assert.ok(lastCommit.p_media.every((photo) => photo.storage_path.startsWith(`sara-and-sameer-${submission.id}-john-client/`)));
+    assert.ok(lastCommit.p_media.every((photo) => /^media-[a-f0-9]{64}\//.test(photo.storage_path)));
     const savedFile = new FormData();
     savedFile.set("invitationId", submission.id);
     savedFile.set("uploadToken", submission.uploadToken);
     savedFile.set("slot", slots[0]);
-    savedFile.set("file", new File(["small photo"], "extra.webp", { type: "image/webp" }));
-    assert.equal((await upload(new Request("https://localhost/api/invitations/media", { method: "POST", body: savedFile }))).status, 409);
+    savedFile.set("file", new File([fixturePng], "extra.png", { type: "image/png" }));
+    assert.equal((await upload(apiRequest("https://localhost/api/invitations/media", { method: "POST", body: savedFile }))).status, 409);
     assert.equal(uploadCount, 11);
-    const lateCancel = await beginOrFinalize(new Request("https://localhost/api/invitations", {
+    const lateCancel = await beginOrFinalize(apiRequest("https://localhost/api/invitations", {
       method: "POST", body: JSON.stringify({ operation: "cancel-media", id: submission.id, uploadToken: submission.uploadToken, media: complete }),
     }));
     assert.equal((await lateCancel.json()).committed, true);
-    assert.deepEqual(removed, photos.map((photo) => photo.path));
+    assert.deepEqual(removed, []); // Cancellation cannot race a successful database commit.
   } finally {
     globalThis.fetch = originalFetch;
     if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
@@ -686,6 +704,7 @@ test("Supabase Auth login requires admin membership and stores sessions in HttpO
     process.env.SUPABASE_SERVICE_ROLE_KEY = "server-only-key";
     globalThis.fetch = async (input, init = {}) => {
       const url = String(input);
+      if (!url.includes("/auth/") && !url.includes("/dashboard_admins?") && providerSecurity(url)) return providerSecurity(url);
       if (url.includes("/auth/v1/token?grant_type=password")) {
         const { password } = JSON.parse(init.body);
         return password === "correct password"
@@ -775,7 +794,7 @@ test("saving an admin edit prunes removed image metadata atomically and deletes 
   const newConfig = structuredClone(config);
   newConfig.hero.photoSource = "preset";
   newConfig.hero.uploadedUrl = "";
-  const order = { id, status: "pending", slug: "john-and-sameer", active_until: null, total_price: 1000, created_at: "2026-09-14T00:00:00Z", deployed_at: null, inactive_at: null, config };
+  const order = { id, revision: 1, status: "pending", slug: "john-and-sameer", active_until: null, total_price: 1000, created_at: "2026-09-14T00:00:00Z", deployed_at: null, inactive_at: null, config };
   const previousUrl = process.env.SUPABASE_URL;
   const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const originalFetch = globalThis.fetch;
@@ -786,20 +805,22 @@ test("saving an admin edit prunes removed image metadata atomically and deletes 
   try {
     globalThis.fetch = async (input, init = {}) => {
       const endpoint = String(input);
+      if (providerSecurity(endpoint)) return providerSecurity(endpoint);
       if (endpoint.includes("/rest/v1/invitations?") && (!init.method || init.method === "GET")) return Response.json([order]);
       if (endpoint.includes("/rest/v1/invitation_media?") && (!init.method || init.method === "GET")) return Response.json([{ storage_path: storagePath, public_url: url }]);
-      if (endpoint.endsWith("/rest/v1/rpc/update_invitation_with_media")) {
+      if (endpoint.endsWith("/rest/v1/rpc/save_invitation_version")) {
         update = JSON.parse(init.body);
         return Response.json([{ ...order, config: newConfig }]);
       }
+      if (endpoint.endsWith("/rest/v1/rpc/claim_media_cleanup")) return Response.json([{ storage_path: storagePath, lease_token: "lease" }]);
       if (init.method === "DELETE" && endpoint.endsWith("/storage/v1/object/invitation-media")) {
         removedPaths = JSON.parse(init.body).prefixes;
         return Response.json({});
       }
       throw new Error(`Unexpected ${init.method ?? "GET"} request: ${endpoint}`);
     };
-    const result = await PATCH(new Request("https://localhost/api/dashboard/orders", {
-      method: "PATCH", body: JSON.stringify({ id, action: "save", config: newConfig, totalPrice: 1000 }),
+    const result = await PATCH(apiRequest("https://localhost/api/dashboard/orders", {
+      method: "PATCH", body: JSON.stringify({ id, revision: 1, action: "save", config: newConfig, totalPrice: 1000 }),
     }));
     assert.equal(result.status, 200);
     assert.equal(update.p_id, id);
@@ -813,8 +834,8 @@ test("saving an admin edit prunes removed image metadata atomically and deletes 
   }
 });
 
-test("WhatsApp text distinguishes a plain customer chat from a live invitation; social image follows the opening", async () => {
-  const [{ customerWhatsAppUrl }, { invitationPreviewImage }, { createInitialInvitation, openingAssets }] = await Promise.all([
+test("WhatsApp text distinguishes a plain customer chat from a live invitation; social image avoids private photos", async () => {
+  const [{ customerWhatsAppUrl }, { invitationPreviewImage }, { createInitialInvitation }] = await Promise.all([
     vite.ssrLoadModule("/lib/whatsapp-messages.ts"),
     vite.ssrLoadModule("/lib/invitation-social.ts"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
@@ -830,13 +851,13 @@ test("WhatsApp text distinguishes a plain customer chat from a live invitation; 
   const config = createInitialInvitation();
   config.opening = { type: "curtain", asset: "classic-curtain", initials: "A" };
   const origin = "https://www.paperless-invites.com";
-  assert.equal(invitationPreviewImage(config, origin), `${origin}${openingAssets.curtain[0].urls[config.palette]}`);
+  assert.equal(invitationPreviewImage(config, origin), `${origin}/social/invitation-preview.jpg`);
   const publicPage = await readFile(new URL("../app/[slug]/page.tsx", import.meta.url), "utf8");
   assert.match(publicPage, /generateMetadata/);
   assert.match(publicPage, /openGraph: \{ type: "website"/);
 });
 
-test("live invitation metadata advertises its opening artwork at the canonical public URL", async () => {
+test("live invitation metadata advertises generic share artwork at the canonical public URL", async () => {
   const [{ generateMetadata }, { createInitialInvitation }] = await Promise.all([
     vite.ssrLoadModule("/app/[slug]/page.tsx"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
@@ -856,7 +877,7 @@ test("live invitation metadata advertises its opening artwork at the canonical p
     }]);
     const metadata = await generateMetadata({ params: Promise.resolve({ slug: "john-and-sameer" }) });
     assert.equal(metadata.openGraph.url, "https://www.paperless-invites.com/john-and-sameer");
-    assert.match(metadata.openGraph.images[0].url, /builder-envelope-classic-beige\.webp/);
+    assert.match(metadata.openGraph.images[0].url, /social\/invitation-preview\.jpg/);
     assert.equal(metadata.openGraph.type, "website");
   } finally {
     globalThis.fetch = originalFetch;
@@ -914,7 +935,7 @@ test("supports automatic invitation routes and order lifecycle storage", async (
   assert.match(dashboardApi, /action === "deactivate"/);
   assert.match(dashboardApi, /action === "review"/);
   assert.match(dashboardApi, /action === "prepare-link"/);
-  assert.match(dashboardApi, /export async function DELETE/);
+  assert.match(dashboardApi, /export const DELETE = withAdmin/);
   assert.doesNotMatch(customerApi, /export async function GET/);
   assert.match(customerApi, /createUniqueInvitationSlug\(\{ id, config: body\.config \}\)/);
   assert.doesNotMatch(designer, /localStorage/);
@@ -1087,15 +1108,8 @@ test("customer API rejects custom source and admin saves persist only sanitized 
   custom.fields.css = `h2 { font-size: 80px; } @media (max-width: 600px) { h2 { font-size: 24px; } }`;
   config.sections.push(custom);
 
-  const customerResponse = await customerPost(new Request("https://localhost/api/invitations", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ config }),
-  }));
-  assert.equal(customerResponse.status, 403);
-  assert.match((await customerResponse.json()).error, /only be added by an administrator/);
 
-  const order = { id, status: "pending", slug: "admin-customer", active_until: null, total_price: 1500, created_at: "2026-09-15T00:00:00Z", deployed_at: null, inactive_at: null, config: designer.createInitialInvitation() };
+  const order = { id, revision: 1, status: "pending", slug: "admin-customer", active_until: null, total_price: 1500, created_at: "2026-09-15T00:00:00Z", deployed_at: null, inactive_at: null, config: designer.createInitialInvitation() };
   order.config.contact = config.contact;
   const previousUrl = process.env.SUPABASE_URL;
   const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -1106,19 +1120,29 @@ test("customer API rejects custom source and admin saves persist only sanitized 
   try {
     globalThis.fetch = async (input, init = {}) => {
       const endpoint = String(input);
+      if (providerSecurity(endpoint)) return providerSecurity(endpoint);
       if (endpoint.includes("/rest/v1/invitations?") && (!init.method || init.method === "GET")) return Response.json([order]);
       if (endpoint.includes("/rest/v1/invitation_media?") && (!init.method || init.method === "GET")) return Response.json([]);
-      if (endpoint.endsWith("/rest/v1/rpc/update_invitation_with_media")) {
+      if (endpoint.endsWith("/rest/v1/rpc/claim_media_cleanup")) return Response.json([]);
+      if (endpoint.endsWith("/rest/v1/rpc/save_invitation_version")) {
         const update = JSON.parse(init.body);
         savedConfig = update.p_values.config;
         return Response.json([{ ...order, ...update.p_values }]);
       }
       throw new Error(`Unexpected ${init.method ?? "GET"} request: ${endpoint}`);
     };
-    const adminResponse = await adminPatch(new Request("https://localhost/api/dashboard/orders", {
+  const customerResponse = await customerPost(apiRequest("https://localhost/api/invitations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ config }),
+  }));
+  assert.equal(customerResponse.status, 403);
+  assert.match((await customerResponse.json()).error, /only be added by an administrator/);
+
+    const adminResponse = await adminPatch(apiRequest("https://localhost/api/dashboard/orders", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, action: "save", config, totalPrice: 1500 }),
+      body: JSON.stringify({ id, revision: 1, action: "save", config, totalPrice: 1500 }),
     }));
     assert.equal(adminResponse.status, 200);
     assert.ok(savedConfig);

@@ -11,7 +11,8 @@ export function CoastalBismillah() {
 
   useEffect(() => {
     const heroSection = document.querySelector<HTMLElement>("section[aria-labelledby='couple-names']");
-    setHero(heroSection);
+    const frame = requestAnimationFrame(() => setHero(heroSection));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   if (!hero) return null;

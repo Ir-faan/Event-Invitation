@@ -18,17 +18,17 @@ export function CoastalGiftSection() {
 
     const existing = invitation.querySelector<HTMLElement>("[data-coastal-gift-section]");
     if (existing) {
-      setMountNode(existing);
-      return;
+      const frame = requestAnimationFrame(() => setMountNode(existing));
+      return () => cancelAnimationFrame(frame);
     }
 
     const node = document.createElement("div");
     node.dataset.coastalGiftSection = "true";
     parent.insertBefore(node, footer);
-    setMountNode(node);
+    const frame = requestAnimationFrame(() => setMountNode(node));
 
     return () => {
-      setMountNode(null);
+      cancelAnimationFrame(frame);
       node.remove();
     };
   }, []);

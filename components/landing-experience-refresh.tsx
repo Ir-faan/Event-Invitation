@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
+
 import { useEffect } from "react";
 import {
   ArrowDownRight,
   ArrowRight,
   Check,
-  ChevronDown,
   Clock3,
   CreditCard,
   Eye,
@@ -150,7 +151,7 @@ export function LandingExperienceRefresh() {
           <a href="#compare">Why digital</a>
           <a href="#pricing">Pricing</a>
         </nav>
-        <a href="/design-invitation" className="nav-action">Design yours <ArrowRight aria-hidden="true" /></a>
+        <Link href="/design-invitation" className="nav-action">Design yours <ArrowRight aria-hidden="true" /></Link>
         <details className="mobile-menu">
           <summary aria-label="Open navigation"><Menu aria-hidden="true" /></summary>
           <div>
@@ -159,7 +160,7 @@ export function LandingExperienceRefresh() {
             <a href="#process">How it works</a>
             <a href="#compare">Why digital</a>
             <a href="#pricing">Pricing</a>
-            <a href="/design-invitation">Design yours</a>
+            <Link href="/design-invitation">Design yours</Link>
           </div>
         </details>
       </header>
@@ -172,7 +173,7 @@ export function LandingExperienceRefresh() {
           <h1 id="hero-title">The most elegant <em>save the date.</em></h1>
           <p>Beautiful digital invitations for weddings and special days. Choose the details you love, preview them live and share your finished invitation in a tap.</p>
           <div className="hero-actions">
-            <a className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></a>
+            <Link className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></Link>
             <a className="text-link" href="#collection">See what you can create <ArrowDownRight aria-hidden="true" /></a>
           </div>
         </div>
@@ -212,7 +213,7 @@ export function LandingExperienceRefresh() {
                 <h3>{item.name}</h3>
                 <p>Invitation inspiration</p>
               </div>
-              <a href="/design-invitation" aria-label={`Design an invitation inspired by ${item.name}`}><ArrowDownRight aria-hidden="true" /></a>
+              <Link href={index === 1 ? "/templates/rose-afterglow" : "/design-invitation"} aria-label={index === 1 ? "Open the Rose Afterglow invitation" : `Design an invitation inspired by ${item.name}`}><ArrowDownRight aria-hidden="true" /></Link>
             </article>
           ))}
         </div>
@@ -269,7 +270,7 @@ export function LandingExperienceRefresh() {
             <span><Layers3 aria-hidden="true" /><b>Choose your parts</b><small>Add only the sections and interactive moments you want.</small></span>
             <span><Palette aria-hidden="true" /><b>Your colours & photos</b><small>Shape the look around your own event and style.</small></span>
           </div>
-          <a className="button button-wine" href="/design-invitation">Start designing yours <ArrowRight aria-hidden="true" /></a>
+          <Link className="button button-wine" href="/design-invitation">Start designing yours <ArrowRight aria-hidden="true" /></Link>
         </div>
 
         <div className="customizer-demo reveal" aria-label="Preview of the invitation creation page">
@@ -461,7 +462,7 @@ export function LandingExperienceRefresh() {
 
         <div className="pricing-action reveal">
           <p><strong>Ready to start?</strong> Choose your options and build the invitation you want.</p>
-          <a className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></a>
+          <Link className="button button-wine" href="/design-invitation">Design your invitation <ArrowRight aria-hidden="true" /></Link>
         </div>
       </section>
 
@@ -471,7 +472,7 @@ export function LandingExperienceRefresh() {
             <a href="#top" className="footer-logo"><span className="brand-seal">PI</span><span>Paperless Invites</span></a>
             <h2>Your celebration.<br /><em>Your invitation.</em></h2>
             <p>Elegant digital invitations you can shape around your own colours, photos and story.</p>
-            <a className="footer-design-button" href="/design-invitation">Design yours <ArrowRight aria-hidden="true" /></a>
+            <Link className="footer-design-button" href="/design-invitation">Design yours <ArrowRight aria-hidden="true" /></Link>
           </div>
 
           <div className="footer-column">
@@ -486,7 +487,7 @@ export function LandingExperienceRefresh() {
           <div className="footer-column footer-start-column">
             <span className="footer-column-title">Start creating</span>
             <p>Choose your options and see a live phone preview before sending your design.</p>
-            <a href="/design-invitation" className="footer-arrow-link">Open the invitation designer <ArrowRight aria-hidden="true" /></a>
+            <Link href="/design-invitation" className="footer-arrow-link">Open the invitation designer <ArrowRight aria-hidden="true" /></Link>
             <div className="footer-socials-new" aria-label="Paperless Invites social media coming soon">
               <span title="Facebook"><FacebookLogo /></span>
               <span title="Instagram"><InstagramLogo /></span>

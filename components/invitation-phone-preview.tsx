@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   CalendarDays,
   Clock3,
@@ -25,6 +25,7 @@ import {
   type InvitationSectionItem,
 } from "@/lib/invitation-designer";
 import { CustomSectionRenderer } from "@/components/custom-section-renderer";
+import { safeHttpsUrl } from "@/lib/safe-url";
 import { getCustomSectionSource } from "@/lib/custom-sections";
 
 type PreviewProps = {
@@ -37,6 +38,7 @@ type PreviewProps = {
 };
 
 export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKey, onReplay, priceTotal }: PreviewProps) {
+  const sectionOrder = config.sections.map((section) => section.id).join("|");
   const screenRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKe
     if (viewportMiddle >= sectionTop && viewportMiddle <= sectionBottom) return;
     const top = Math.max(0, sectionTop - 12);
     screen.scrollTo({ top, behavior: "smooth" });
-  }, [focusTarget, focusKey]);
+  }, [focusTarget, focusKey, sectionOrder]);
 
   useEffect(() => {
     screenRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -96,13 +98,13 @@ export function PublishedInvitation({ config, privatePreview = false }: { config
   return (
     <main className={`published-invitation${privatePreview ? " is-private" : ""}`} style={getThemeStyle(config)}>
       <div className="designer-phone-screen published-invitation-screen">
-        <InvitationPreviewContent config={config} replayKey={0} />
+        <InvitationPreviewContent config={config} replayKey={0} published />
       </div>
     </main>
   );
 }
 
-function InvitationPreviewContent({ config, replayKey }: { config: InvitationConfig; replayKey: number }) {
+function InvitationPreviewContent({ config, replayKey, published = false }: { config: InvitationConfig; replayKey: number; published?: boolean }) {
   const footerDate = formatDate(config.hero.date);
   const nameFit = invitationNameFit(config.hero.firstName, config.hero.secondName);
   return (
@@ -110,7 +112,7 @@ function InvitationPreviewContent({ config, replayKey }: { config: InvitationCon
       <OpeningPreview config={config} replayKey={replayKey} />
       <PreviewAmbience />
       <HeroPreview config={config} replayKey={replayKey} />
-      {config.sections.map((section) => <SectionPreview key={section.id} section={section} />)}
+      {config.sections.map((section) => <MemoSectionPreview key={section.id} section={section} published={published} />)}
       <footer className="invite-preview-footer">
         <div className="invite-preview-footer-monogram">{config.hero.firstName.charAt(0)}<Heart aria-hidden="true" />{config.hero.secondName.charAt(0)}</div>
         <strong data-name-fit={nameFit}>{config.hero.firstName} &amp; {config.hero.secondName}</strong>
@@ -457,7 +459,9 @@ function ScratchPhoto({ color, onReveal }: { color: string; onReveal: () => void
   );
 }
 
-function SectionPreview({ section }: { section: InvitationSection }) {
+const MemoSectionPreview = memo(SectionPreview);
+
+function SectionPreview({ section, published = false }: { section: InvitationSection; published?: boolean }) {
   const items = getSectionItems(section);
   switch (section.type) {
     case "countdown":
@@ -570,14 +574,14 @@ function SectionPreview({ section }: { section: InvitationSection }) {
       if (!customSource.html.trim()) {
         return <PreviewSection section={section} className="preview-custom"><Sparkles aria-hidden="true" /><p>This custom part will be discussed and designed with you during a video consultation or by message.</p><small>Your final preview will be prepared after we discuss it together.</small></PreviewSection>;
       }
-      return <CustomSectionRenderer sectionId={section.id} sectionName={section.title} html={customSource.html} css={customSource.css} />;
+      return <CustomSectionRenderer sectionId={section.id} sectionName={section.title} html={customSource.html} css={customSource.css} lazy={published} />;
   }
 }
 
 function EventCard({ event }: { event: InvitationSectionItem }) {
   const query = `${event.venue ?? ""} ${event.address ?? ""}`.trim();
   const mapEmbed = `https://www.google.com/maps?q=${encodeURIComponent(query || "Mauritius")}&output=embed`;
-  const directions = event.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || "Mauritius")}`;
+  const directions = safeHttpsUrl(event.mapUrl) || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || "Mauritius")}`;
   return (
     <article className="preview-event-card">
       <div className="preview-event-icon"><Sparkles aria-hidden="true" /></div>
@@ -588,7 +592,7 @@ function EventCard({ event }: { event: InvitationSectionItem }) {
         <span><Clock3 aria-hidden="true" />{formatTime(event.time)}</span>
         <span><MapPin aria-hidden="true" />{event.venue || "Choose a venue"}<small>{event.address}</small></span>
       </div>
-      <div className="preview-map-frame"><iframe src={mapEmbed} title={`Map to ${event.venue || "event"}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /></div>
+      <div className="preview-map-frame"><iframe src={mapEmbed} title={`Map to ${event.venue || "event"}`} loading="lazy" referrerPolicy="no-referrer" /></div>
       <a href={directions} target="_blank" rel="noreferrer">Open directions <Navigation aria-hidden="true" /></a>
     </article>
   );
@@ -617,8 +621,8 @@ function CountdownPreview({ section }: { section: InvitationSection }) {
 
   return (
     <section className="invite-preview-section preview-countdown" data-preview-section={section.id}>
-      <span className="preview-garden-portal preview-portal-left" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></span>
-      <span className="preview-garden-portal preview-portal-right" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></span>
+      <span className="preview-garden-portal preview-portal-left" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" loading="lazy" decoding="async" /></span>
+      <span className="preview-garden-portal preview-portal-right" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" loading="lazy" decoding="async" /></span>
       <span className="preview-section-eyebrow">{section.fields.eyebrow || "You are invited to our big day"}</span>
       <h3>{section.title}</h3>
       <p className="preview-countdown-intro">{section.fields.message}</p>

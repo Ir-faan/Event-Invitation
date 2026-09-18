@@ -1,6 +1,7 @@
-import { getSupabaseEnvironment, publicStorageUrl, supabaseRequest } from "@/lib/supabase-server";
-import { belongsToOrder } from "@/lib/invitation-media-path";
+import { getSupabaseEnvironment, publicStorageUrl } from "@/lib/supabase-server";
+import { mediaPathBelongsToOrder, privateMediaFolder } from "@/lib/private-media-path";
 import { validInvitationId } from "@/lib/invitation-validation";
+import { safeImageUrl } from "@/lib/safe-url";
 import type { InvitationConfig } from "@/lib/invitation-designer";
 
 export type UploadedPhoto = { url: string; path: string; slot: string; mimeType: string; sizeBytes: number; receipt: string };
@@ -49,7 +50,7 @@ export async function verifyUploadCapability(token: unknown, id: unknown): Promi
   const value = await verify<UploadCapability>("upload", token);
   if (!value || !validInvitationId(id) || value.id !== id || typeof value.folder !== "string" || value.folder.includes("/")
     || typeof value.slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.slug)
-    || !value.folder.startsWith(`${value.slug}-${id}-`)
+    || !(value.folder === await privateMediaFolder(id) || value.folder.startsWith(`${value.slug}-${id}-`))
     || !Array.isArray(value.slots) || value.slots.length > 32 || !value.slots.every(validSlot)
     || !Number.isFinite(value.expires) || value.expires < Date.now() || value.expires > Date.now() + maxAge) return null;
   return value;
@@ -62,6 +63,7 @@ export async function issuePhotoReceipt(photo: Omit<UploadedPhoto, "receipt" | "
 export async function verifyPhotos(id: string, input: unknown, capability?: UploadCapability): Promise<UploadedPhoto[] | null> {
   if (!Array.isArray(input) || input.length > 32) return null;
   const seen = new Set<string>();
+  const slots = new Set<string>();
   const verified: UploadedPhoto[] = [];
   for (const item of input) {
     if (!item || typeof item !== "object") return null;
@@ -69,14 +71,15 @@ export async function verifyPhotos(id: string, input: unknown, capability?: Uplo
     if (typeof photo.receipt !== "string" || typeof photo.path !== "string" || typeof photo.url !== "string"
       || !validSlot(photo.slot) || !mimeTypes.has(photo.mimeType ?? "") || !Number.isInteger(photo.sizeBytes)
       || Number(photo.sizeBytes) < 1 || Number(photo.sizeBytes) > 5 * 1024 * 1024
-      || seen.has(photo.path) || photo.url !== publicStorageUrl(photo.path)
-      || !(capability ? photo.path.startsWith(`${capability.folder}/`) : belongsToOrder(photo.path, id))
+      || slots.has(photo.slot) || seen.has(photo.path) || photo.url !== publicStorageUrl(photo.path)
+      || !(capability ? photo.path.startsWith(`${capability.folder}/`) : await mediaPathBelongsToOrder(photo.path, id))
       || (capability && !capability.slots.includes(photo.slot))) return null;
     const signed = await verify<{ id: string; path: string; slot: string; mimeType: string; sizeBytes: number; expires: number }>("receipt", photo.receipt);
     if (!signed || signed.id !== id || signed.path !== photo.path || signed.slot !== photo.slot
       || signed.mimeType !== photo.mimeType || signed.sizeBytes !== photo.sizeBytes
       || signed.expires < Date.now() || signed.expires > Date.now() + maxAge) return null;
     seen.add(photo.path);
+    slots.add(photo.slot);
     verified.push(photo as UploadedPhoto);
   }
   return verified;
@@ -84,20 +87,14 @@ export async function verifyPhotos(id: string, input: unknown, capability?: Uplo
 
 export function photosMatchConfig(config: InvitationConfig, photos: UploadedPhoto[], requireAll: boolean) {
   const publicPrefix = `${getSupabaseEnvironment().url}/storage/v1/object/public/`;
-  const referenced = [config.hero.uploadedUrl, ...config.sections.flatMap((section) => section.images)].filter((url) => url.startsWith(publicPrefix));
+  const images = [config.hero.uploadedUrl, ...config.sections.flatMap((section) => section.images)].filter(Boolean);
+  if (images.some((url) => !safeImageUrl(url))) return false;
+  if (requireAll && images.some((url) => !url.startsWith("/images/") && !url.startsWith(publicPrefix))) return false;
+  const referenced = images.filter((url) => url.startsWith(publicPrefix));
   const provided = new Set(photos.map((photo) => photo.url));
   return photos.every((photo) => referenced.includes(photo.url)) && (!requireAll || referenced.every((url) => provided.has(url)));
 }
 
 export function mediaRows(photos: UploadedPhoto[]) {
   return photos.map((photo) => ({ storage_path: photo.path, public_url: photo.url, slot: photo.slot, mime_type: photo.mimeType, size_bytes: photo.sizeBytes }));
-}
-
-export async function removeStoredPhotos(photos: UploadedPhoto[]) {
-  if (!photos.length) return;
-  const { bucket } = getSupabaseEnvironment();
-  await supabaseRequest(`/storage/v1/object/${encodeURIComponent(bucket)}`, {
-    method: "DELETE", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prefixes: photos.map((photo) => photo.path) }),
-  });
 }

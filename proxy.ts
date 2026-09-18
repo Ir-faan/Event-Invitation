@@ -10,13 +10,13 @@ export async function proxy(request: NextRequest) {
   }
   if (!authIsConfigured()) {
     if (pathname === "/login") return NextResponse.next();
-    return new NextResponse("Dashboard login is not configured. Add Supabase Auth settings.", { status: 503 });
+    return new NextResponse("Admin login is temporarily unavailable.", { status: 503 });
   }
   let session;
   try {
     session = await getAdminSession(request.cookies.get(accessCookieName)?.value, request.cookies.get(refreshCookieName)?.value);
-  } catch (error) {
-    console.error("Unable to verify Supabase administrator", error);
+  } catch {
+    console.error("Unable to verify Supabase administrator");
     return new NextResponse("Admin login is temporarily unavailable.", { status: 503 });
   }
   if (pathname === "/login") {
@@ -32,7 +32,13 @@ export async function proxy(request: NextRequest) {
   if (!["GET", "HEAD", "OPTIONS"].includes(request.method) && !isSameOrigin(request)) {
     return NextResponse.json({ error: "This action must come from the dashboard." }, { status: 403 });
   }
-  const response = NextResponse.next();
+  const forwarded = new Headers(request.headers);
+  if (session.tokens) {
+    const values = (request.headers.get("cookie") || "").split(";").filter((part) => !part.trim().startsWith(accessCookieName + "=") && !part.trim().startsWith(refreshCookieName + "="));
+    values.push(`${accessCookieName}=${session.tokens.access_token}`, `${refreshCookieName}=${session.tokens.refresh_token}`);
+    forwarded.set("cookie", values.join("; "));
+  }
+  const response = NextResponse.next({ request: { headers: forwarded } });
   return session.tokens ? setAdminCookies(response, request, session.tokens) : response;
 }
 

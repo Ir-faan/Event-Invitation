@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowDown,
@@ -49,6 +49,11 @@ const statusLabels: Record<InvitationOrderStatus, string> = {
 
 export function InvitationDashboard() {
   const [orders, setOrders] = useState<InvitationOrderSummary[]>([]);
+  const [total, setTotal] = useState(0);
+  const [visibleOrderValue, setVisibleOrderValue] = useState(0);
+  const [counts, setCounts] = useState({ pending: 0, active: 0, inactive: 0 });
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const loadSequence = useRef(0);
   const [today, setToday] = useState("");
   const [publicOrigin, setPublicOrigin] = useState("");
   const [loading, setLoading] = useState(true);
@@ -75,21 +80,28 @@ export function InvitationDashboard() {
   const deployPreparationId = useRef(0);
 
   const loadOrders = useCallback(async () => {
+    const sequence = ++loadSequence.current;
     setLoading(true);
     setListError("");
     try {
-      const response = await fetch("/api/dashboard/orders", { cache: "no-store" });
-      const data = await response.json() as { orders?: InvitationOrderSummary[]; today?: string; publicOrigin?: string; error?: string };
+      const params = new URLSearchParams({ page: String(page), size: String(pageSize), search: debouncedSearch, statuses: [...activeStatuses].join(","), sort: sort.key, direction: sort.direction });
+      const response = await fetch(`/api/dashboard/orders?${params}`, { cache: "no-store" });
+      const data = await response.json() as { orders?: InvitationOrderSummary[]; total?: number; totalValue?: number; counts?: { pending: number; active: number; inactive: number }; today?: string; publicOrigin?: string; error?: string };
       if (!response.ok || !data.orders) throw new Error(data.error || "Orders could not be loaded.");
+      if (sequence !== loadSequence.current) return;
       setOrders(data.orders);
+      setTotal(data.total || 0);
+      setVisibleOrderValue(data.totalValue || 0);
+      setCounts(data.counts || { pending: 0, active: 0, inactive: 0 });
+      if (page > 1 && page > Math.max(1, Math.ceil((data.total || 0) / pageSize))) setPage(Math.max(1, Math.ceil((data.total || 0) / pageSize)));
       setToday(data.today || new Date().toISOString().slice(0, 10));
       setPublicOrigin(data.publicOrigin || window.location.origin);
     } catch (error) {
-      setListError(error instanceof Error ? error.message : "Orders could not be loaded.");
+      if (sequence === loadSequence.current) setListError(error instanceof Error ? error.message : "Orders could not be loaded.");
     } finally {
-      setLoading(false);
+      if (sequence === loadSequence.current) setLoading(false);
     }
-  }, []);
+  }, [page, pageSize, debouncedSearch, activeStatuses, sort]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { void loadOrders(); }, 0);
@@ -102,25 +114,14 @@ export function InvitationDashboard() {
     return () => window.clearTimeout(timer);
   }, [listError, actionNotice]);
 
-  const counts = useMemo(() => ({
-    pending: orders.filter((order) => order.status === "pending").length,
-    active: orders.filter((order) => order.status === "active").length,
-    inactive: orders.filter((order) => order.status === "inactive").length,
-  }), [orders]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 250);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
-  const filteredOrders = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase();
-    return orders
-      .filter((order) => activeStatuses.size === 0 || activeStatuses.has(order.status))
-      .filter((order) => !query || [order.coupleName, order.customerName, order.phone, order.slug, order.id]
-        .some((value) => value?.toLocaleLowerCase().includes(query)))
-      .sort((a, b) => compareOrders(a, b, sort));
-  }, [activeStatuses, orders, search, sort]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const safePage = Math.min(page, totalPages);
-  const pageOrders = filteredOrders.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const visibleOrderValue = filteredOrders.reduce((sum, order) => sum + order.total_price, 0);
+  const pageOrders = orders;
 
   async function openOrder(id: string) {
     setDetailLoading(true);
@@ -148,6 +149,7 @@ export function InvitationDashboard() {
   }
 
   function updateSort(key: SortKey) {
+    setPage(1);
     setSort((current) => current.key === key
       ? { key, direction: current.direction === "asc" ? "desc" : "asc" }
       : { key, direction: key === "created_at" || key === "total_price" ? "desc" : "asc" });
@@ -162,7 +164,7 @@ export function InvitationDashboard() {
         const response = await fetch("/api/dashboard/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: order.id, action }),
+          body: JSON.stringify({ id: order.id, revision: order.revision, action }),
         });
         const data = await response.json() as { order?: AdminInvitationOrder; error?: string };
         if (!response.ok || !data.order) throw new Error(data.error || "The order could not be duplicated.");
@@ -170,7 +172,7 @@ export function InvitationDashboard() {
         setPage(1);
         setActionNotice(`A separate copy of ${order.coupleName} is ready for review with its own link.`);
       } else if (action === "delete") {
-        const response = await fetch(`/api/dashboard/orders?id=${encodeURIComponent(order.id)}`, { method: "DELETE" });
+        const response = await fetch(`/api/dashboard/orders?id=${encodeURIComponent(order.id)}&revision=${order.revision}`, { method: "DELETE" });
         const data = await response.json() as { deleted?: boolean; error?: string };
         if (!response.ok || !data.deleted) throw new Error(data.error || "The order could not be deleted.");
         setOrders((current) => current.filter((item) => item.id !== order.id));
@@ -178,13 +180,14 @@ export function InvitationDashboard() {
         const response = await fetch("/api/dashboard/orders", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: order.id, action }),
+          body: JSON.stringify({ id: order.id, revision: order.revision, action }),
         });
         const data = await response.json() as { order?: AdminInvitationOrder; error?: string };
         if (!response.ok || !data.order) throw new Error(data.error || "The order could not be updated.");
         setOrders((current) => upsertSummary(current, data.order!.summary));
       }
       setConfirmation(null);
+      await loadOrders();
     } catch (error) {
       setConfirmationError(error instanceof Error ? error.message : "The order could not be updated.");
     } finally {
@@ -202,7 +205,7 @@ export function InvitationDashboard() {
     const response = await fetch("/api/dashboard/orders", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: order.id, action: "prepare-link" }),
+      body: JSON.stringify({ id: order.id, revision: order.revision, action: "prepare-link" }),
     });
     const data = await response.json() as { order?: AdminInvitationOrder; error?: string };
     if (!response.ok || !data.order?.slug) throw new Error(data.error || "The invitation link could not be prepared.");
@@ -259,13 +262,14 @@ export function InvitationDashboard() {
       const response = await fetch("/api/dashboard/orders", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: deployOrder.id, action: "deploy", activeUntil: deployUntil }),
+        body: JSON.stringify({ id: deployOrder.id, revision: deployOrder.revision, action: "deploy", activeUntil: deployUntil }),
       });
       const data = await response.json() as { order?: AdminInvitationOrder; error?: string };
       if (!response.ok || !data.order) throw new Error(data.error || "The invitation could not be deployed.");
       setOrders((current) => upsertSummary(current, data.order!.summary));
       setDeployOrder(data.order.summary);
       setDeploySuccess(true);
+      await loadOrders();
     } catch (error) {
       setDeployError(error instanceof Error ? error.message : "The invitation could not be deployed.");
     } finally {
@@ -296,13 +300,13 @@ export function InvitationDashboard() {
         <div className="orders-overview-layout">
           <section className="orders-list-card">
             <div className="orders-list-toolbar">
-              <div><span>Order desk</span><h1>{filterHeading(activeStatuses)}</h1><p>{filteredOrders.length} {filteredOrders.length === 1 ? "order" : "orders"} in this view</p></div>
-              <label className="orders-search"><Search aria-hidden="true" /><span className="sr-only">Search orders</span><input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search names, phone or link…" /></label>
+              <div><span>Order desk</span><h1>{filterHeading(activeStatuses)}</h1><p>{total} {total === 1 ? "order" : "orders"} in this view</p></div>
+              <label className="orders-search"><Search aria-hidden="true" /><span className="sr-only">Search orders</span><input maxLength={120} value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search names, phone or link…" /></label>
             </div>
 
             {listError && <DashboardError>{listError}</DashboardError>}
             {actionNotice && <p className="orders-action-notice" role="status"><Check aria-hidden="true" />{actionNotice}</p>}
-            {loading ? <DashboardLoading /> : filteredOrders.length ? (
+            {loading ? <DashboardLoading /> : total ? (
               <>
                 <div className="orders-table-scroll">
                   <table className="orders-datatable">
@@ -335,7 +339,7 @@ export function InvitationDashboard() {
                     ))}</tbody>
                   </table>
                 </div>
-                <DataTableFooter count={filteredOrders.length} page={safePage} pageSize={pageSize} totalPages={totalPages} onPage={setPage} onPageSize={(size) => { setPageSize(size); setPage(1); }} />
+                <DataTableFooter count={total} page={safePage} pageSize={pageSize} totalPages={totalPages} onPage={setPage} onPageSize={(size) => { setPageSize(size); setPage(1); }} />
               </>
             ) : <div className="orders-empty"><Search aria-hidden="true" /><h3>No matching orders</h3><p>Change the search or click the active status card again to see all orders.</p></div>}
           </section>
@@ -546,15 +550,6 @@ function DashboardError({ children }: { children: ReactNode }) {
 
 function DashboardLoading() {
   return <div className="orders-loading"><Loader2 className="is-spinning" aria-hidden="true" /><span>Loading invitation orders…</span></div>;
-}
-
-function compareOrders(a: InvitationOrderSummary, b: InvitationOrderSummary, sort: SortState) {
-  const statusRank: Record<InvitationOrderStatus, number> = { pending: 0, active: 1, inactive: 2 };
-  const value = (order: InvitationOrderSummary): string | number => sort.key === "status" ? statusRank[order.status] : order[sort.key];
-  const left = value(a);
-  const right = value(b);
-  const result = typeof left === "number" && typeof right === "number" ? left - right : String(left ?? "").localeCompare(String(right ?? ""), "en", { numeric: true, sensitivity: "base" });
-  return sort.direction === "asc" ? result : -result;
 }
 
 function filterHeading(statuses: Set<InvitationOrderStatus>) {
