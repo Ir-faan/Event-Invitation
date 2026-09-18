@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   CalendarDays,
   Clock3,
@@ -28,6 +28,7 @@ import {
   type PaletteId,
 } from "@/lib/invitation-designer";
 import { CustomSectionRenderer } from "@/components/custom-section-renderer";
+import { safeHttpsUrl } from "@/lib/safe-url";
 import { getCustomSectionSource } from "@/lib/custom-sections";
 
 type PreviewProps = {
@@ -40,6 +41,7 @@ type PreviewProps = {
 };
 
 export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKey, onReplay, priceTotal }: PreviewProps) {
+  const sectionOrder = config.sections.map((section) => section.id).join("|");
   const screenRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export function InvitationPhonePreview({ config, replayKey, focusTarget, focusKe
     if (viewportMiddle >= sectionTop && viewportMiddle <= sectionBottom) return;
     const top = Math.max(0, sectionTop - 12);
     screen.scrollTo({ top, behavior: "smooth" });
-  }, [focusTarget, focusKey]);
+  }, [focusTarget, focusKey, sectionOrder]);
 
   useEffect(() => {
     screenRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -99,13 +101,13 @@ export function PublishedInvitation({ config, privatePreview = false, exampleMod
   return (
     <main className={`published-invitation${privatePreview ? " is-private" : ""}${exampleMode ? " is-example" : ""}`} style={getThemeStyle(config)}>
       <div className="designer-phone-screen published-invitation-screen">
-        <InvitationPreviewContent config={config} replayKey={0} exampleMode={exampleMode} />
+        <InvitationPreviewContent config={config} replayKey={0} published exampleMode={exampleMode} />
       </div>
     </main>
   );
 }
 
-function InvitationPreviewContent({ config, replayKey, exampleMode = false }: { config: InvitationConfig; replayKey: number; exampleMode?: boolean }) {
+function InvitationPreviewContent({ config, replayKey, published = false, exampleMode = false }: { config: InvitationConfig; replayKey: number; published?: boolean; exampleMode?: boolean }) {
   const footerDate = formatDate(config.hero.date);
   const nameFit = invitationNameFit(config.hero.firstName, config.hero.secondName);
   return (
@@ -113,7 +115,7 @@ function InvitationPreviewContent({ config, replayKey, exampleMode = false }: { 
       <OpeningPreview config={config} replayKey={replayKey} exampleMode={exampleMode} />
       <PreviewAmbience />
       <HeroPreview config={config} replayKey={replayKey} exampleMode={exampleMode} />
-      {config.sections.map((section) => <SectionPreview key={section.id} section={section} palette={config.palette} exampleMode={exampleMode} />)}
+      {config.sections.map((section) => <MemoSectionPreview key={section.id} section={section} palette={config.palette} exampleMode={exampleMode} published={published} />)}
       <footer className="invite-preview-footer">
         <div className="invite-preview-footer-monogram">{config.hero.firstName.charAt(0)}<Heart aria-hidden="true" />{config.hero.secondName.charAt(0)}</div>
         <strong data-name-fit={nameFit}>{config.hero.firstName} &amp; {config.hero.secondName}</strong>
@@ -465,7 +467,9 @@ function ScratchPhoto({ color, onReveal }: { color: string; onReveal: () => void
   );
 }
 
-function SectionPreview({ section, palette, exampleMode = false }: { section: InvitationSection; palette: PaletteId; exampleMode?: boolean }) {
+const MemoSectionPreview = memo(SectionPreview);
+
+function SectionPreview({ section, palette, exampleMode = false, published = false }: { section: InvitationSection; palette: PaletteId; exampleMode?: boolean; published?: boolean }) {
   const items = getSectionItems(section);
   switch (section.type) {
     case "countdown":
@@ -581,7 +585,7 @@ function SectionPreview({ section, palette, exampleMode = false }: { section: In
       if (!customSource.html.trim()) {
         return <PreviewSection section={section} className="preview-custom" exampleMode={exampleMode}><Sparkles aria-hidden="true" /><p>This custom part will be discussed and designed with you during a video consultation or by message.</p><small>Your final preview will be prepared after we discuss it together.</small></PreviewSection>;
       }
-      return <div className="example-custom-section">{exampleMode && <ExampleSectionLabel>{sectionDefinitions[section.type].name}</ExampleSectionLabel>}<CustomSectionRenderer sectionId={section.id} sectionName={section.title} html={customSource.html} css={customSource.css} palette={palette} /></div>;
+      return <div className="example-custom-section">{exampleMode && <ExampleSectionLabel>{sectionDefinitions[section.type].name}</ExampleSectionLabel>}<CustomSectionRenderer sectionId={section.id} sectionName={section.title} html={customSource.html} css={customSource.css} palette={palette} lazy={published} /></div>;
   }
 }
 
@@ -589,8 +593,9 @@ function EventCard({ event }: { event: InvitationSectionItem }) {
   const query = `${event.venue ?? ""} ${event.address ?? ""}`.trim();
   const encodedDestination = encodeURIComponent(query || "Mauritius");
   const mapEmbed = `https://www.google.com/maps?q=${encodedDestination}&output=embed`;
+  const venueUrl = safeHttpsUrl(event.mapUrl);
   const navigationOptions = [
-    ...(event.mapUrl ? [{ label: "Venue link", shortLabel: "Venue", href: event.mapUrl }] : []),
+    ...(venueUrl ? [{ label: "Venue link", shortLabel: "Venue", href: venueUrl }] : []),
     { label: "Google Maps", shortLabel: "Google", href: `https://www.google.com/maps/dir/?api=1&destination=${encodedDestination}` },
     { label: "Apple Maps", shortLabel: "Apple", href: `https://maps.apple.com/?daddr=${encodedDestination}&dirflg=d` },
     { label: "Waze", shortLabel: "Waze", href: `https://www.waze.com/ul?q=${encodedDestination}&navigate=yes` },
@@ -605,7 +610,7 @@ function EventCard({ event }: { event: InvitationSectionItem }) {
         <span><Clock3 aria-hidden="true" />{formatTime(event.time)}</span>
         <span><MapPin aria-hidden="true" />{event.venue || "Choose a venue"}<small>{event.address}</small></span>
       </div>
-      <div className="preview-map-frame"><iframe src={mapEmbed} title={`Map to ${event.venue || "event"}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /></div>
+      <div className="preview-map-frame"><iframe src={mapEmbed} title={`Map to ${event.venue || "event"}`} loading="lazy" referrerPolicy="no-referrer" /></div>
       <details className="preview-direction-picker">
         <summary>Directions <Navigation aria-hidden="true" /></summary>
         <div className="preview-direction-options" data-option-count={navigationOptions.length}>
@@ -651,8 +656,8 @@ function CountdownPreview({ section, exampleMode = false }: { section: Invitatio
   return (
     <section className="invite-preview-section preview-countdown" data-preview-section={section.id}>
       {exampleMode && <ExampleSectionLabel>{sectionDefinitions[section.type].name}</ExampleSectionLabel>}
-      <span className="preview-garden-portal preview-portal-left" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></span>
-      <span className="preview-garden-portal preview-portal-right" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" /></span>
+      <span className="preview-garden-portal preview-portal-left" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" loading="lazy" decoding="async" /></span>
+      <span className="preview-garden-portal preview-portal-right" aria-hidden="true"><img src="/images/rose-afterglow.webp" alt="" loading="lazy" decoding="async" /></span>
       <span className="preview-section-eyebrow">{section.fields.eyebrow || "You are invited to our big day"}</span>
       <h3>{section.title}</h3>
       <p className="preview-countdown-intro">{section.fields.message}</p>

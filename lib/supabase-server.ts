@@ -4,6 +4,13 @@ type SupabaseEnvironment = {
   bucket: string;
 };
 
+export class SupabaseError extends Error {
+  constructor(public readonly status: number, public readonly code?: string) {
+    // Provider messages can contain table data, SQL details or object paths.
+    super(`Supabase request failed (${status})${code ? ` [${code}]` : ""}`);
+  }
+}
+
 export function getSupabaseEnvironment(): SupabaseEnvironment {
   const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -27,8 +34,8 @@ export async function supabaseRequest(path: string, init: RequestInit = {}) {
 
   const response = await fetch(`${url}${path}`, { ...init, headers });
   if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`Supabase request failed (${response.status}): ${detail.slice(0, 300)}`);
+    const detail = await response.json().catch(() => ({})) as { code?: unknown };
+    throw new SupabaseError(response.status, typeof detail.code === "string" && /^[A-Z0-9_]{1,20}$/.test(detail.code) ? detail.code : undefined);
   }
   return response;
 }

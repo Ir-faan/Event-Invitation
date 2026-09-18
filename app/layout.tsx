@@ -22,9 +22,6 @@ import "./landing-template-palette-polish.css";
 import "./landing-faq.css";
 import "./landing-faq-followup.css";
 import "./landing-examples.css";
-import { FooterSocialLinkFix } from "@/components/footer-social-link-fix";
-import { LandingMainPolish } from "@/components/landing-main-polish";
-import { LandingTemplateCardTilt } from "@/components/landing-template-card-tilt";
 
 export const metadata: Metadata = {
   title: "Paperless Invites — The most elegant save the date",
@@ -44,9 +41,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <FooterSocialLinkFix />
-        <LandingMainPolish />
-        <LandingTemplateCardTilt />
         {children}
       </body>
     </html>

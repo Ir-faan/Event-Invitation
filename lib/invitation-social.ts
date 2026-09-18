@@ -7,7 +7,10 @@ export const invitationSocialImage = {
   type: "image/jpeg",
 } as const;
 
-export function invitationPreviewImage(origin: string): string {
+/** Generic branded artwork: never send a customer's uploaded photo to a crawler.
+ * The second argument keeps the earlier internal call shape backward compatible. */
+export function invitationPreviewImage(originOrConfig: string | InvitationConfig, legacyOrigin?: string): string {
+  const origin = typeof originOrConfig === "string" ? originOrConfig : legacyOrigin!;
   return new URL(invitationSocialImage.path, `${origin.replace(/\/$/, "")}/`).href;
 }
 

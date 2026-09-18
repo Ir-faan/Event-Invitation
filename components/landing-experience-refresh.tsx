@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowDownRight,
@@ -31,25 +28,29 @@ const palettes = [
   { name: "Purple / Lilac", colours: ["#75617f", "#b8a2c1", "#f1eaf3"] },
 ];
 
-// Each marquee row has its own images. Six photo cards + two opening cards keeps openings at 25%.
+// Match the final hydrated gallery so the browser does not download one image
+// set and then have a DOM helper replace it with another.
 const movingShowcase = [
   { image: "/images/builder-hero-beige.webp", label: "Warm beige hero", type: "photo" },
+  { image: "/images/builder-hero-ballroom-olive.webp", label: "Olive ballroom hero", type: "photo" },
+  { image: "/images/builder-hero-garden-dusty-blue.webp", label: "Dusty blue garden hero", type: "photo" },
+  { image: "/images/builder-hero-islamic-hall-burgundy.webp", label: "Burgundy wedding hall hero", type: "photo" },
   { image: "/images/builder-interactive-henna-hands.webp", label: "Scratch reveal — henna hands", type: "photo" },
-  { image: "/images/builder-hero-garden-olive.webp", label: "Olive garden hero", type: "photo" },
   { image: "/images/builder-interactive-orchid-bouquet.webp", label: "Scratch reveal — orchid bouquet", type: "photo" },
-  { image: "/images/builder-hero-ballroom-dusty-blue.webp", label: "Dusty blue ballroom hero", type: "photo" },
   { image: "/images/builder-interactive-island-walk.webp", label: "Scratch reveal — island walk", type: "photo" },
+  { image: "/images/builder-interactive-bouquet.webp", label: "Scratch reveal — bridal bouquet", type: "photo" },
   { image: "/images/builder-envelope-botanical-beige.webp", label: "Botanical envelope opening", type: "opening" },
   { image: "/images/builder-curtain-classic-burgundy.webp", label: "Burgundy curtain reveal", type: "opening" },
 ];
 
 const movingShowcaseSecondRow = [
-  { image: "/images/builder-hero-burgundy.webp", label: "Burgundy wedding hero", type: "photo" },
-  { image: "/images/builder-interactive-bouquet.webp", label: "Scratch reveal — bridal bouquet", type: "photo" },
-  { image: "/images/builder-hero-islamic-hall-lilac.webp", label: "Lilac wedding hall hero", type: "photo" },
   { image: "/images/builder-interactive-garden-walk.webp", label: "Scratch reveal — garden walk", type: "photo" },
-  { image: "/images/builder-hero-ballroom-pink.webp", label: "Pink ballroom hero", type: "photo" },
   { image: "/images/builder-interactive-hands.webp", label: "Scratch reveal — couple hands", type: "photo" },
+  { image: "/images/coastal-reverie.webp", label: "Coastal wedding invitation", type: "photo" },
+  { image: "/images/moonlit-bloom.webp", label: "Moonlit wedding invitation", type: "photo" },
+  { image: "/images/rose-afterglow.webp", label: "Rose wedding invitation", type: "photo" },
+  { image: "/images/rose-couple-hands-default.webp", label: "Couple hands invitation", type: "photo" },
+  { image: "/images/rose-scratch-hero-olive.webp", label: "Olive scratch invitation", type: "photo" },
   { image: "/images/builder-envelope-classic-olive.webp", label: "Olive envelope opening", type: "opening" },
   { image: "/images/builder-curtain-botanical-dusty-blue.webp", label: "Dusty blue curtain reveal", type: "opening" },
 ];
@@ -62,10 +63,10 @@ const designProcess = [
 ];
 
 const includedParts = [
-  "Countdown to the big day",
-  "Order of Events / Our Journey",
-  "Event Details & Location",
-  "Gift Preferences",
+  "Countdown",
+  "Our Timeline",
+  "Event Details + Location",
+  "Important Notes",
 ];
 
 const extraParts = [
@@ -81,31 +82,10 @@ const consultationMessage = "Hi, I would like some help designing my invitation 
 const customPartMessage = "Hi, I would like to add a custom part to my invitation.";
 
 function getWhatsAppLink(message: string) {
-  return whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}` : "#";
+  return whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}` : undefined;
 }
 
 export function LandingExperienceRefresh({ exampleCards }: { exampleCards: InvitationExampleCard[] }) {
-  useEffect(() => {
-    const reveals = document.querySelectorAll<HTMLElement>(".landing-refresh .reveal");
-    const observer = new IntersectionObserver(
-      (entries) => entries.forEach((entry) => entry.isIntersecting && entry.target.classList.add("is-visible")),
-      { threshold: 0.12 },
-    );
-    reveals.forEach((element) => observer.observe(element));
-
-    const handleScroll = () => {
-      const maximum = document.documentElement.scrollHeight - window.innerHeight;
-      document.documentElement.style.setProperty("--scroll-progress", `${maximum > 0 ? window.scrollY / maximum : 0}`);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
   const consultationWhatsAppLink = getWhatsAppLink(consultationMessage);
   const customPartWhatsAppLink = getWhatsAppLink(customPartMessage);
 
@@ -180,7 +160,7 @@ export function LandingExperienceRefresh({ exampleCards }: { exampleCards: Invit
           </div>
           <div className="spotlight-phone" aria-hidden="true">
             <div className="phone-speaker" />
-            <img src="/images/builder-hero-beige.webp" alt="" />
+            <img src="/images/builder-hero-beige.webp" alt="" fetchPriority="high" />
             <div className="phone-copy"><span>PAPERLESS INVITES</span><strong>Your story<br />begins here</strong><i>Save the date</i></div>
           </div>
         </div>
@@ -203,7 +183,7 @@ export function LandingExperienceRefresh({ exampleCards }: { exampleCards: Invit
                 <p>{item.coupleNames}</p>
                 <strong>Approx. Rs {item.price.toLocaleString("en-US")}</strong>
               </div>
-              <Link target="_blank" href={`/examples/${item.slug}`} aria-label={`Open ${item.name}, an invitation for ${item.coupleNames}`}><span>View example</span><ArrowDownRight aria-hidden="true" /></Link>
+              <Link target="_blank" rel="noopener noreferrer" href={`/examples/${item.slug}`} aria-label={`Open ${item.name}, an invitation for ${item.coupleNames}`}><span>View example</span><ArrowDownRight aria-hidden="true" /></Link>
             </article>
           ))}
         </div>
@@ -279,7 +259,7 @@ export function LandingExperienceRefresh({ exampleCards }: { exampleCards: Invit
       <section className="envelope-section" aria-labelledby="envelope-title">
         <div className="envelope-visual reveal">
           <div className="envelope-halo" aria-hidden="true" />
-          <img src="/images/digital-envelope.webp" alt="Ivory digital envelope with a burgundy wax seal" />
+          <img src="/images/digital-envelope.webp" alt="Ivory digital envelope with a burgundy wax seal" loading="lazy" decoding="async" />
           <span className="floating-note note-one">Your colours</span>
           <span className="floating-note note-two">Your story</span>
           <span className="floating-note note-three">Your moment</span>
@@ -392,7 +372,6 @@ export function LandingExperienceRefresh({ exampleCards }: { exampleCards: Invit
                   className="button button-wine"
                   href={customPartWhatsAppLink}
                   aria-disabled={!whatsappNumber}
-                  onClick={(event) => !whatsappNumber && event.preventDefault()}
                   target={whatsappNumber ? "_blank" : undefined}
                   rel={whatsappNumber ? "noreferrer" : undefined}
                 >
@@ -432,7 +411,6 @@ export function LandingExperienceRefresh({ exampleCards }: { exampleCards: Invit
                 className="button button-wine whatsapp-button"
                 href={consultationWhatsAppLink}
                 aria-disabled={!whatsappNumber}
-                onClick={(event) => !whatsappNumber && event.preventDefault()}
                 target={whatsappNumber ? "_blank" : undefined}
                 rel={whatsappNumber ? "noreferrer" : undefined}
               >
@@ -497,7 +475,7 @@ export function LandingExperienceRefresh({ exampleCards }: { exampleCards: Invit
 function MovingCard({ card, small = false }: { card: { image: string; label: string; type: string }; small?: boolean }) {
   return (
     <figure className={`showcase-card moving-image-card ${card.type === "opening" ? "opening-card" : ""} ${small ? "small" : ""}`}>
-      <img src={card.image} alt="" />
+      <img src={card.image} alt="" loading="lazy" decoding="async" />
       <figcaption>{card.type === "opening" ? "OPENING STYLE" : card.label.includes("Scratch") ? "SCRATCH TO REVEAL" : "HERO PHOTO"}</figcaption>
     </figure>
   );

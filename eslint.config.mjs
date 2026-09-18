@@ -13,13 +13,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
-  {
-    files: ["components/landing-experience.tsx"],
-    rules: {
-      // Native images give the animated card wall predictable layout and transforms.
-      "@next/next/no-img-element": "off",
-    },
-  },
+
 ]);
 
 export default eslintConfig;

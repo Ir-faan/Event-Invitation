@@ -1,3 +1,4 @@
+import { safeHttpsUrl, safeImageUrl } from "@/lib/safe-url";
 import {
   paletteOptions,
   sectionDefinitions,
@@ -14,6 +15,7 @@ function validSectionField(type: string, key: string, value: unknown) {
   if (typeof value !== "string") return false;
   if (type === "custom" && key === customSectionHtmlField) return value.length <= maxCustomSectionHtmlLength;
   if (type === "custom" && key === customSectionCssField) return value.length <= maxCustomSectionCssLength;
+  if (key === "mapUrl" && value && !safeHttpsUrl(value)) return false;
   return value.length <= 5_000;
 }
 
@@ -48,6 +50,7 @@ export function isInvitationConfig(value: unknown): value is InvitationConfig {
       && Number(config.hero.presetIndex) <= 20
       && typeof config.hero.uploadedUrl === "string"
       && config.hero.uploadedUrl.length <= 2_000
+      && (!config.hero.uploadedUrl || Boolean(safeImageUrl(config.hero.uploadedUrl)))
       && (config.hero.date === undefined || (
         typeof config.hero.date === "string"
         && config.hero.date.length <= 40
@@ -63,10 +66,11 @@ export function isInvitationConfig(value: unknown): value is InvitationConfig {
       && Array.isArray(config.sections)
       && config.sections.length > 0
       && config.sections.length <= 40
+      && new Set(config.sections.map((section) => section?.id)).size === config.sections.length
       && config.sections.every((section) => Boolean(
         section
           && typeof section.id === "string"
-          && section.id.length <= 100
+          && /^[a-zA-Z0-9_-]{1,100}$/.test(section.id)
           && Object.hasOwn(sectionDefinitions, section.type)
           && typeof section.included === "boolean"
           && typeof section.title === "string"
@@ -74,10 +78,11 @@ export function isInvitationConfig(value: unknown): value is InvitationConfig {
           && section.fields
           && typeof section.fields === "object"
           && !Array.isArray(section.fields)
+          && Object.keys(section.fields).length <= 40
           && Object.entries(section.fields).every(([key, entry]) => validSectionField(section.type, key, entry))
           && Array.isArray(section.images)
           && section.images.length <= 8
-          && section.images.every((image) => typeof image === "string" && image.length <= 2_000)
+          && section.images.every((image) => typeof image === "string" && image.length <= 2_000 && Boolean(safeImageUrl(image)))
           && (section.items === undefined || (
             Array.isArray(section.items)
             && section.items.length <= 100
@@ -86,6 +91,7 @@ export function isInvitationConfig(value: unknown): value is InvitationConfig {
                 && typeof item === "object"
                 && !Array.isArray(item)
                 && Object.keys(item).length <= 20
+                && (!item.mapUrl || Boolean(safeHttpsUrl(item.mapUrl)))
                 && Object.values(item).every((entry) => typeof entry === "string" && entry.length <= 5_000),
             ))
           )),

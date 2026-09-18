@@ -110,10 +110,10 @@ export function sanitizeCustomSectionHtml(value = "") {
       th: ["colspan", "rowspan", "headers", "scope"],
       time: ["datetime"],
     },
-    allowedSchemes: ["http", "https", "mailto", "tel"],
+    allowedSchemes: ["https", "mailto", "tel"],
     allowedSchemesByTag: {
-      img: ["http", "https", "data"],
-      source: ["http", "https", "data"],
+      img: ["https", "data"],
+      source: ["https", "data"],
     },
     allowProtocolRelative: false,
     disallowedTagsMode: "discard",
@@ -141,7 +141,8 @@ export function sanitizeCustomSectionCss(value = "") {
   return value
     .replace(/<\s*\/?\s*(?:style|script|iframe|object|embed)\b[^>]*>/giu, "")
     .replace(/expression\s*\(/giu, "")
-    .replace(/javascript\s*:/giu, "");
+    .replace(/javascript\s*:/giu, "")
+    .replace(/</g, "\\3c ");
 }
 
 export function sanitizeInvitationCustomSections(config: InvitationConfig): InvitationConfig {

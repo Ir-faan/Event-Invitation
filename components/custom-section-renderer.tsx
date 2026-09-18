@@ -9,13 +9,15 @@ type CustomSectionRendererProps = {
   sectionName: string;
   html: string;
   css: string;
-  palette: PaletteId;
+  palette?: PaletteId;
+  lazy?: boolean;
 };
 
 type HeightSyncReason = "load" | "observer" | "asset";
 
 export const customSectionPreviewDebounceMs = 250;
 const customSectionHeightTolerance = 1;
+const maxCustomSectionHeight = 20_000;
 
 const customSectionBaseCss = `
 html, body { width: 100%; min-width: 0; margin: 0; padding: 0; background: transparent; }
@@ -54,7 +56,7 @@ export function buildCustomSectionDocument(html: string, css: string, palette: P
  * A sandboxed iframe is used instead of Shadow DOM because viewport media
  * queries must follow the simulated phone width in the editor.
  */
-export function CustomSectionRenderer({ sectionId, sectionName, html, css, palette }: CustomSectionRendererProps) {
+export function CustomSectionRenderer({ sectionId, sectionName, html, css, palette = "beige", lazy = false }: CustomSectionRendererProps) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const resizeAnimationFrameRef = useRef<number | null>(null);
@@ -99,7 +101,7 @@ export function CustomSectionRenderer({ sectionId, sectionName, html, css, palet
       const root = document.getElementById("custom-section-root");
       if (!frame || !root || frame.contentDocument !== document || observedDocumentRef.current !== document) return;
       const measuredHeight = Math.max(root.scrollHeight, root.getBoundingClientRect().height, 1);
-      const nextHeight = Math.ceil(measuredHeight);
+      const nextHeight = Math.min(maxCustomSectionHeight, Math.ceil(measuredHeight));
       const currentHeight = frame.getBoundingClientRect().height;
       const difference = nextHeight - currentHeight;
       if (Math.abs(difference) <= customSectionHeightTolerance) return;
@@ -137,7 +139,11 @@ export function CustomSectionRenderer({ sectionId, sectionName, html, css, palet
     root.querySelectorAll("img").forEach((image) => {
       const onLoad = () => scheduleHeightSync(document, "asset");
       image.addEventListener("load", onLoad);
-      imageLoadCleanupsRef.current.push(() => image.removeEventListener("load", onLoad));
+      image.addEventListener("error", onLoad);
+      imageLoadCleanupsRef.current.push(() => {
+        image.removeEventListener("load", onLoad);
+        image.removeEventListener("error", onLoad);
+      });
     });
     void document.fonts?.ready.then(() => scheduleHeightSync(document, "asset"));
     scheduleHeightSync(document, "load");
@@ -162,7 +168,7 @@ export function CustomSectionRenderer({ sectionId, sectionName, html, css, palet
         srcDoc={documentHtml}
         sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         referrerPolicy="no-referrer"
-        loading="eager"
+        loading={lazy ? "lazy" : "eager"}
         onLoad={watchContentSize}
       />
     </section>

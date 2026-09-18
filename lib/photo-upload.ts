@@ -2,7 +2,6 @@ import type { UploadedPhoto } from "@/lib/media-submission";
 
 export const maxOriginalImageBytes = 5 * 1024 * 1024;
 const targetUploadBytes = 900 * 1024;
-export type UploadFolderIdentity = { link: string; customerName: string };
 
 export function isHeicPhoto(file: File) {
   return ["image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence"].includes(file.type.toLowerCase())
@@ -39,6 +38,9 @@ export async function preparePhoto(file: File): Promise<File> {
       image.onerror = () => reject(new Error(`Could not read ${file.name}. Please choose a different photo.`));
       image.src = objectUrl;
     });
+    if (image.naturalWidth > 12_000 || image.naturalHeight > 12_000 || image.naturalWidth * image.naturalHeight > 40_000_000) {
+      throw new Error(`${file.name} has too many pixels. Please resize it before uploading.`);
+    }
     for (const maxSide of [1800, 1600, 1280, 1024]) {
       const ratio = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
       const canvas = document.createElement("canvas");
@@ -50,14 +52,12 @@ export async function preparePhoto(file: File): Promise<File> {
       for (const quality of [.88, .82, .76]) {
         const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", quality));
         if (blob?.type === "image/webp" && blob.size <= targetUploadBytes) {
-          // A tiny original JPEG/WebP can be smaller than recompressing it.
-          if (!isHeicPhoto(file) && file.size <= targetUploadBytes && blob.size >= file.size) return file;
           const name = file.name.replace(/\.[^.]+$/, "") || "photo";
           return new File([blob], `${name}.webp`, { type: "image/webp", lastModified: file.lastModified });
         }
       }
     }
-    if (!isHeicPhoto(file) && file.size <= targetUploadBytes) return file;
+
     throw new Error(`${file.name} is too large after optimization. Please use a smaller photo (under 900 KB).`);
   } finally {
     URL.revokeObjectURL(objectUrl);
@@ -77,45 +77,47 @@ export async function uploadPendingPhotos(
   pendingFiles: Record<string, File[]>,
   endpoint: string,
   prepared: Map<File, File>,
-  uploaded: Map<File, UploadedPhoto>,
+  uploaded: Map<string, UploadedPhoto>,
   uploadToken?: string,
-  folderIdentity?: UploadFolderIdentity,
 ) {
   const uploadedBySlot: Record<string, string[]> = {};
-  for (const [slot, files] of Object.entries(pendingFiles)) {
-    uploadedBySlot[slot] = [];
-    for (let index = 0; index < files.length; index += 1) {
-      const file = files[index];
+  const jobs = Object.entries(pendingFiles).flatMap(([slot, files]) => {
+    uploadedBySlot[slot] = new Array(files.length);
+    return files.map((file, index) => ({ slot, file, index }));
+  });
+  let cursor = 0;
+  let failure: unknown;
+  async function worker() {
+    while (!failure && cursor < jobs.length) {
+      const { slot, file, index } = jobs[cursor++];
       const currentSlot = `${slot}:${index}`;
-      let photo = uploaded.get(file);
-      if (!photo || photo.slot !== currentSlot) {
-        const form = new FormData();
-        form.set("file", prepared.get(file) ?? file);
-        form.set("invitationId", invitationId);
-        if (uploadToken) form.set("uploadToken", uploadToken);
-        if (folderIdentity) {
-          form.set("link", folderIdentity.link);
-          form.set("customerName", folderIdentity.customerName);
+      try {
+        let photo = uploaded.get(currentSlot);
+        if (!photo) {
+          const form = new FormData();
+          form.set("file", prepared.get(file) ?? file);
+          form.set("invitationId", invitationId);
+          if (uploadToken) form.set("uploadToken", uploadToken);
+          form.set("slot", currentSlot);
+          const response = await fetch(endpoint, { method: "POST", body: form });
+          const result = await response.json().catch(() => ({})) as Partial<UploadedPhoto> & { error?: string };
+          if (!response.ok || !result.url || !result.receipt || !result.path) {
+            if (response.status === 413) throw new Error(`${file.name} exceeded the upload limit. Please try a smaller photo.`);
+            throw new Error(result.error || `${file.name} could not be uploaded. No order was saved; please try again.`);
+          }
+          photo = result as UploadedPhoto;
+          uploaded.set(currentSlot, photo);
         }
-        form.set("slot", currentSlot);
-        const response = await fetch(endpoint, { method: "POST", body: form });
-        // An upstream 413 may be plain text ("Payload Too Large"), not JSON.
-        const raw = await response.text();
-        let result: Partial<UploadedPhoto> & { error?: string } = {};
-        try { result = JSON.parse(raw) as typeof result; } catch { /* An edge server may return HTML or plain text. */ }
-        if (!response.ok || !result.url || !result.receipt || !result.path) {
-          if (response.status === 413) throw new Error(`${file.name} exceeded the upload limit. It was not saved. Please try a smaller photo.`);
-          throw new Error(result.error || `${file.name} could not be uploaded. No order was saved; please try again.`);
-        }
-        photo = result as UploadedPhoto;
-        uploaded.set(file, photo);
-      }
-      uploadedBySlot[slot].push(photo.url);
+        uploadedBySlot[slot][index] = photo.url;
+      } catch (error) { failure = error; }
     }
   }
+  // Wait for BOTH workers before compensation; no late upload escapes cleanup.
+  await Promise.all([worker(), worker()]);
+  if (failure) throw failure;
   return uploadedBySlot;
 }
 
-export function selectedUploadedPhotos(pendingFiles: Record<string, File[]>, uploaded: Map<File, UploadedPhoto>) {
-  return Object.values(pendingFiles).flatMap((files) => files.map((file) => uploaded.get(file)).filter((photo): photo is UploadedPhoto => Boolean(photo)));
+export function selectedUploadedPhotos(pendingFiles: Record<string, File[]>, uploaded: Map<string, UploadedPhoto>) {
+  return Object.entries(pendingFiles).flatMap(([slot, files]) => files.map((_, index) => uploaded.get(`${slot}:${index}`)).filter((photo): photo is UploadedPhoto => Boolean(photo)));
 }

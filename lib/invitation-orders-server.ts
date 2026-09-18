@@ -1,18 +1,25 @@
+import { cacheForRequest } from "vinext/cache";
+import { publicInvitationConfig } from "@/lib/public-invitation";
+import type { InvitationConfig } from "@/lib/invitation-designer";
+import { RequestError } from "@/lib/request-security";
+import { privateDigest } from "@/lib/rate-limit";
 import {
   makeInvitationSlug,
-  summarizeOrder,
   todayInMauritius,
   type InvitationOrderRecord,
   type InvitationOrderSummary,
 } from "@/lib/invitation-orders";
 import { supabaseRequest } from "@/lib/supabase-server";
 
-const orderFields = "id,status,slug,active_until,total_price,created_at,deployed_at,inactive_at,config";
+const orderFields = "id,revision,status,slug,active_until,total_price,created_at,deployed_at,inactive_at,config";
 export const defaultPublicSiteOrigin = "https://www.paperless-invites.com";
 
 export function getConfiguredPublicSiteOrigin() {
-  const configured = process.env.PUBLIC_SITE_URL?.replace(/\/$/, "");
-  return configured && /^https?:\/\//i.test(configured) ? configured : null;
+  if (!process.env.PUBLIC_SITE_URL) return null;
+  try {
+    const configured = new URL(process.env.PUBLIC_SITE_URL);
+    return configured.protocol === "https:" && !configured.username && !configured.password ? configured.origin : null;
+  } catch { return null; }
 }
 
 export async function expirePastInvitations() {
@@ -25,16 +32,23 @@ export async function expirePastInvitations() {
   });
 }
 
-export async function listInvitationOrders(): Promise<InvitationOrderSummary[]> {
+export async function listInvitationOrders(search: URLSearchParams) {
+  const page = Number(search.get("page") || 1);
+  const size = Number(search.get("size") || 10);
+  const query = (search.get("search") || "").trim();
+  const statuses = (search.get("statuses") ?? "pending").split(",").filter(Boolean);
+  const sort = search.get("sort") || "created_at";
+  const direction = search.get("direction") || "desc";
+  if (!Number.isSafeInteger(page) || page < 1 || page > 1_000_000 || ![10, 25, 50].includes(size) || query.length > 120
+    || statuses.some((status) => !["pending", "active", "inactive"].includes(status))
+    || !["coupleName", "customerName", "eventDate", "created_at", "total_price", "status"].includes(sort)
+    || !["asc", "desc"].includes(direction)) throw new RequestError("Invalid order filters.");
   await expirePastInvitations();
-  const params = new URLSearchParams({
-    select: orderFields,
-    order: "created_at.desc",
-    limit: "250",
+  const response = await supabaseRequest("/rest/v1/rpc/list_invitation_orders", {
+    method: "POST", headers: { "Content-Type": "application/json" }, cache: "no-store",
+    body: JSON.stringify({ p_page: page, p_size: size, p_query: query, p_statuses: statuses, p_sort: sort, p_direction: direction }),
   });
-  const response = await supabaseRequest(`/rest/v1/invitations?${params.toString()}`, { cache: "no-store" });
-  const rows = (await response.json()) as InvitationOrderRecord[];
-  return rows.map(summarizeOrder);
+  return await response.json() as { orders: InvitationOrderSummary[]; total: number; totalValue: number; counts: { pending: number; active: number; inactive: number } };
 }
 
 export async function getInvitationOrder(id: string): Promise<InvitationOrderRecord | null> {
@@ -44,36 +58,40 @@ export async function getInvitationOrder(id: string): Promise<InvitationOrderRec
   return rows[0] ?? null;
 }
 
-export async function getPublicInvitationBySlug(slug: string): Promise<InvitationOrderRecord | null> {
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;
-  const params = new URLSearchParams({ select: orderFields, slug: `eq.${slug}`, limit: "1" });
-  const response = await supabaseRequest(`/rest/v1/invitations?${params.toString()}`, { cache: "no-store" });
-  const rows = (await response.json()) as InvitationOrderRecord[];
-  const order = rows[0];
-  if (!order || order.status !== "active") return null;
-  if (!order.active_until || order.active_until < todayInMauritius()) {
-    const update = new URLSearchParams({ id: `eq.${order.id}` });
-    await supabaseRequest(`/rest/v1/invitations?${update.toString()}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Prefer: "return=minimal" },
-      body: JSON.stringify({ status: "inactive", inactive_at: new Date().toISOString() }),
-      cache: "no-store",
-    });
-    return null;
-  }
-  return order;
+type PublicInvitation = { slug: string; config: InvitationConfig };
+const requestLookups = cacheForRequest(() => new Map<string, Promise<PublicInvitation | null>>());
+// Each new request checks status/expiry/revision: undeploy is immediate across
+// Worker isolates. Only the immutable revision's public content is cached.
+const publicSnapshots = new Map<string, { config: InvitationConfig; expires: number }>();
+export function getPublicInvitationBySlug(slug: string): Promise<PublicInvitation | null> {
+  const lookups = requestLookups();
+  if (!lookups.has(slug)) lookups.set(slug, loadPublicInvitation(slug));
+  return lookups.get(slug)!;
+}
+async function loadPublicInvitation(slug: string): Promise<PublicInvitation | null> {
+  if (slug.length > 100 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;
+  const params = new URLSearchParams({ select: "id,revision", slug: `eq.${slug}`, status: "eq.active", active_until: `gte.${todayInMauritius()}`, limit: "1" });
+  const response = await supabaseRequest(`/rest/v1/invitations?${params}`, { cache: "no-store" });
+  const row = (await response.json() as Array<{ id: string; revision: number }>)[0];
+  if (!row) return null;
+  const key = `${row.id}:${row.revision}`;
+  const cached = publicSnapshots.get(key);
+  if (cached && cached.expires > Date.now()) return { slug, config: cached.config };
+  params.set("select", "config");
+  params.set("revision", `eq.${row.revision}`);
+  const detail = await supabaseRequest(`/rest/v1/invitations?${params}`, { cache: "no-store" });
+  const value = (await detail.json() as Array<{ config: InvitationConfig }>)[0];
+  if (!value) return null;
+  const config = publicInvitationConfig(value.config);
+  if (publicSnapshots.size >= 16) publicSnapshots.delete(publicSnapshots.keys().next().value!);
+  publicSnapshots.set(key, { config, expires: Date.now() + 5 * 60_000 });
+  return { slug, config };
 }
 
 export async function createUniqueInvitationSlug(order: Pick<InvitationOrderRecord, "id" | "config">) {
-  const base = makeInvitationSlug(order.config);
-  for (let suffix = 0; suffix < 100; suffix += 1) {
-    const candidate = suffix ? `${base}-${suffix + 1}` : base;
-    const params = new URLSearchParams({ select: "id", slug: `eq.${candidate}`, id: `neq.${order.id}`, limit: "1" });
-    const response = await supabaseRequest(`/rest/v1/invitations?${params.toString()}`, { cache: "no-store" });
-    const matches = (await response.json()) as Array<{ id: string }>;
-    if (!matches.length) return candidate;
-  }
-  return `${base}-${order.id.slice(0, 8)}`;
+  // Preserve saved links. Newly allocated links contain 6 charaacter suffix
+  const base = makeInvitationSlug(order.config).slice(0, 52).replace(/-+$/, "");
+  return `${base}-${(await privateDigest(`public-link:${order.id}`)).slice(0, 6)}`;
 }
 
 export async function invitationSlugIsAvailable(slug: string, orderId: string) {
@@ -83,11 +101,11 @@ export async function invitationSlugIsAvailable(slug: string, orderId: string) {
   return matches.length === 0;
 }
 
-export function getPublicSiteOrigin(request: Request) {
+export function getPublicSiteOrigin(request?: Request) {
   const configured = getConfiguredPublicSiteOrigin();
   if (configured) return configured;
-  const requestUrl = new URL(request.url);
+  const requestUrl = new URL(request?.url || defaultPublicSiteOrigin);
   // Never put a localhost address in a link meant to be sent to a customer.
-  if (["localhost", "127.0.0.1", "[::1]"].includes(requestUrl.hostname)) return defaultPublicSiteOrigin;
-  return requestUrl.origin;
+  if (requestUrl.protocol !== "https:" || ["localhost", "127.0.0.1", "[::1]"].includes(requestUrl.hostname)) return defaultPublicSiteOrigin;
+  return requestUrl.username || requestUrl.password ? defaultPublicSiteOrigin : requestUrl.origin;
 }
