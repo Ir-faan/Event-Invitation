@@ -89,10 +89,9 @@ async function loadPublicInvitation(slug: string): Promise<PublicInvitation | nu
 }
 
 export async function createUniqueInvitationSlug(order: Pick<InvitationOrderRecord, "id" | "config">) {
-  // Preserve saved links. Newly allocated links contain 128 bits unrelated to
-  // names or the internal order UUID, and need no check-then-insert query.
+  // Preserve saved links. Newly allocated links contain 6 charaacter suffix
   const base = makeInvitationSlug(order.config).slice(0, 52).replace(/-+$/, "");
-  return `${base}-${(await privateDigest(`public-link:${order.id}`)).slice(0, 32)}`;
+  return `${base}-${(await privateDigest(`public-link:${order.id}`)).slice(0, 6)}`;
 }
 
 export async function invitationSlugIsAvailable(slug: string, orderId: string) {

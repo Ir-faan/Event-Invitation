@@ -61,8 +61,8 @@ export async function POST(request: Request) {
     if (body.id !== undefined || body.uploadToken !== undefined || body.operation !== undefined || body.media !== undefined) {
       return NextResponse.json({ error: "Customers can only create new invitations." }, { status: 400 });
     }
-    await limitRequest(request, "submission-start", 10, 900);
-    await limitRequest(request, "submission-global", 500, 86400, "all");
+    await limitRequest(request, "submission-start", 10, 3600);
+    await limitRequest(request, "submission-global", 100, 86400, "all");
     const key = request.headers.get("idempotency-key");
     if (!validInvitationId(key)) throw new RequestError("Please reload the designer before submitting.");
     const digest = await privateDigest(`submission:${key}`);
