@@ -681,8 +681,8 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   async function saveDesign(event: FormEvent) {
     event.preventDefault();
     if (saveState === "saving" || adminAction) return;
-    if (processingPhotosRef.current) { setSaveError("Your photos are still being prepared. Please wait until they appear in the preview, then save."); return; }
-    if (Object.values(pendingFiles).reduce((count, files) => count + files.length, 0) > 32) {
+    if (previewProcessingRef.current) { setSaveError("Please wait for your HEIC photo preview to finish preparing, then save."); return; }
+    if (Object.values(pendingFilesRef.current).reduce((count, files) => count + files.length, 0) > 32) {
       setSaveError("Choose no more than 32 photos in this invitation.");
       return;
     }
@@ -703,22 +703,22 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     try {
       let workingConfig = removeLocalPhotoUrls(config);
       await preparePhotosForSave();
+      const filesToUpload = pendingFilesRef.current;
       if (adminMode && currentAdminOrder) {
-        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
+        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, filesToUpload, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
         if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
         const updated = await updateAdminOrder(currentAdminOrder.id, currentAdminOrder.revision, currentAdminOrder.status === "active" ? "deploy" : "save", {
           config: workingConfig,
           totalPrice: adminPrice,
           slug: adminSlug,
-          media: selectedUploadedPhotos(pendingFiles, uploadedPhotoUrlsRef.current),
+          media: selectedUploadedPhotos(filesToUpload, uploadedPhotoUrlsRef.current),
           ...(currentAdminOrder.status === "active" ? { activeUntil: adminActiveUntil } : {}),
         });
         setConfig(normalizeInvitationConfig(updated.config));
         setCurrentAdminOrder(updated);
         setAdminPrice(updated.total_price);
         setAdminSlug(updated.slug ?? "");
-        setPendingFiles({});
-        preparedPhotoRef.current.clear();
+        clearAllLocalPhotoState();
         uploadedPhotoUrlsRef.current.clear();
         setSaveState("saved");
         onAdminOrderChange?.(updated);
@@ -726,21 +726,20 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
         return;
       }
 
-      const slots = Object.entries(pendingFiles).flatMap(([slot, files]) => files.map((_, index) => `${slot}:${index}`));
+      const slots = Object.entries(filesToUpload).flatMap(([slot, files]) => files.map((_, index) => `${slot}:${index}`));
       submissionKeyRef.current ??= crypto.randomUUID();
       const submission = submissionRef.current ?? await createInvitation(workingConfig, slots, submissionKeyRef.current);
       if (slots.length) {
         if (!submission.uploadToken) throw new Error("The secure photo upload could not be started.");
         submissionRef.current = submission;
-        const uploadedBySlot = await uploadPendingPhotos(submission.id, pendingFiles, "/api/invitations/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current, submission.uploadToken);
+        const uploadedBySlot = await uploadPendingPhotos(submission.id, filesToUpload, "/api/invitations/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current, submission.uploadToken);
         workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
-        await finalizeInvitationMedia(workingConfig, submission, selectedUploadedPhotos(pendingFiles, uploadedPhotoUrlsRef.current));
+        await finalizeInvitationMedia(workingConfig, submission, selectedUploadedPhotos(filesToUpload, uploadedPhotoUrlsRef.current));
       }
 
       setConfig(workingConfig);
-      setPendingFiles({});
+      clearAllLocalPhotoState();
       submissionRef.current = null;
-      preparedPhotoRef.current.clear();
       uploadedPhotoUrlsRef.current.clear();
       setSaveState("submitted");
       setShowSuccess(true);
@@ -752,6 +751,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
         const committed = await cleanupUploadedPhotos("/api/invitations", submissionRef.current.id, [...uploadedPhotoUrlsRef.current.values()], submissionRef.current.uploadToken);
         if (committed) {
           submissionRef.current = null;
+          clearAllLocalPhotoState();
           uploadedPhotoUrlsRef.current.clear();
           setSaveState("submitted");
           setShowSuccess(true);
@@ -777,8 +777,8 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
 
   async function runAdminLifecycle(nextAction: "deploy" | "deactivate" | "review") {
     if (!currentAdminOrder || adminAction || saveState === "saving") return;
-    if (processingPhotosRef.current) { setSaveError("Please wait for your photos to finish optimizing before publishing."); return; }
-    if (Object.values(pendingFiles).reduce((count, files) => count + files.length, 0) > 32) {
+    if (previewProcessingRef.current) { setSaveError("Please wait for your HEIC photo preview to finish preparing before publishing."); return; }
+    if (Object.values(pendingFilesRef.current).reduce((count, files) => count + files.length, 0) > 32) {
       setSaveError("Choose no more than 32 new photos in this invitation.");
       return;
     }
@@ -789,9 +789,11 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     if (nextAction === "deploy" && pendingPhotoCount) setPhotoProcessingTarget("save");
     try {
       let workingConfig = removeLocalPhotoUrls(config);
+      let filesToUpload = pendingFilesRef.current;
       if (nextAction === "deploy") {
         await preparePhotosForSave();
-        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, pendingFiles, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
+        filesToUpload = pendingFilesRef.current;
+        const uploadedBySlot = await uploadPendingPhotos(currentAdminOrder.id, filesToUpload, "/api/dashboard/orders/media", preparedPhotoRef.current, uploadedPhotoUrlsRef.current);
         if (Object.keys(uploadedBySlot).length) workingConfig = applyUploadedUrls(workingConfig, uploadedBySlot);
       }
       const updated = await updateAdminOrder(currentAdminOrder.id, currentAdminOrder.revision, nextAction, nextAction === "deploy" ? {
@@ -799,15 +801,14 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
         totalPrice: adminPrice,
         slug: adminSlug,
         activeUntil: adminActiveUntil,
-        media: selectedUploadedPhotos(pendingFiles, uploadedPhotoUrlsRef.current),
+        media: selectedUploadedPhotos(filesToUpload, uploadedPhotoUrlsRef.current),
       } : {});
       setCurrentAdminOrder(updated);
       setConfig(normalizeInvitationConfig(updated.config));
       setAdminPrice(updated.total_price);
       setAdminSlug(updated.slug ?? "");
       setAdminActiveUntil(suggestActiveUntil(updated, normalizeInvitationConfig(updated.config), today));
-      setPendingFiles({});
-      preparedPhotoRef.current.clear();
+      clearAllLocalPhotoState();
       uploadedPhotoUrlsRef.current.clear();
       onAdminOrderChange?.(updated);
       setAdminNotice(nextAction === "deploy"
