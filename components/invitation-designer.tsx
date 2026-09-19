@@ -116,6 +116,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   const [saveError, setSaveError] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [photoSizeNoticeKey, setPhotoSizeNoticeKey] = useState(0);
+  const [photoCountNoticeKey, setPhotoCountNoticeKey] = useState(0);
   const [showDesktopTip, setShowDesktopTip] = useState(true);
   const [replayKey, setReplayKey] = useState(0);
   const [previewFocus, setPreviewFocus] = useState<PreviewFocus>({ target: "hero", key: 0 });
@@ -218,6 +219,12 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     const timer = window.setTimeout(() => setPhotoSizeNoticeKey(0), 3000);
     return () => window.clearTimeout(timer);
   }, [photoSizeNoticeKey]);
+
+  useEffect(() => {
+    if (!photoCountNoticeKey) return;
+    const timer = window.setTimeout(() => setPhotoCountNoticeKey(0), 3000);
+    return () => window.clearTimeout(timer);
+  }, [photoCountNoticeKey]);
 
   function updateConfig(updater: (current: InvitationConfig) => InvitationConfig) {
     if (saveState === "saving" || adminAction) return;
@@ -467,9 +474,14 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   }
 
   async function selectGlimpsePhotos(sectionId: string, list: FileList | null) {
-    const currentCount = config.sections.find((section) => section.id === sectionId)?.images.length ?? 0;
-    const files = Array.from(list ?? []).slice(0, Math.max(0, 8 - currentCount));
+    const files = Array.from(list ?? []);
     if (!files.length) return;
+    const currentCount = config.sections.find((section) => section.id === sectionId)?.images.length ?? 0;
+    if (currentCount + files.length > 8) {
+      if (!adminMode) setPhotoCountNoticeKey((key) => key + 1);
+      else setSaveError("A maximum of 8 pictures is allowed in Glimpse of Us.");
+      return;
+    }
     if (showFileValidationError(files)) return;
     if (processingPhotosRef.current) { setSaveError("Please wait for your current photos to finish preparing before choosing more."); return; }
     const needsConversion = files.some(isHeicPhoto);
@@ -485,7 +497,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
       urls.push(...previews.map((preview) => URL.createObjectURL(preview)));
       objectUrls.current.push(...urls);
       setPendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), ...files] }));
-      updateSection(sectionId, (section) => ({ ...section, images: [...section.images, ...urls].slice(0, 8) }));
+      updateSection(sectionId, (section) => ({ ...section, images: [...section.images, ...urls] }));
       activatePreview(sectionId);
     } catch (cause) {
       urls.forEach((url) => URL.revokeObjectURL(url));
@@ -760,6 +772,12 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
         <div key={photoSizeNoticeKey} className="designer-upload-size-tip" role="alert">
           <Info aria-hidden="true" />
           <span><strong>Image too large.</strong> Please choose a photo of 5 MB or smaller.</span>
+        </div>
+      )}
+      {!adminMode && !readOnlyMode && photoCountNoticeKey > 0 && (
+        <div key={photoCountNoticeKey} className="designer-upload-size-tip" role="alert">
+          <Info aria-hidden="true" />
+          <span><strong>Too many pictures.</strong> A maximum of 8 pictures is allowed.</span>
         </div>
       )}
 
