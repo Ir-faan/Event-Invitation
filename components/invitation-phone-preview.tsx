@@ -157,13 +157,54 @@ function getThemeStyle(config: InvitationConfig) {
 }
 
 function OpeningPreview({ config, replayKey, exampleMode = false }: { config: InvitationConfig; replayKey: number; exampleMode?: boolean }) {
+  const [opening, setOpening] = useState(false);
+  const fallbackTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setOpening(false);
+    if (fallbackTimerRef.current !== null) window.clearTimeout(fallbackTimerRef.current);
+    if (config.opening.type === "none") return;
+    fallbackTimerRef.current = window.setTimeout(() => {
+      fallbackTimerRef.current = null;
+      setOpening(true);
+    }, 5000);
+    return () => {
+      if (fallbackTimerRef.current !== null) window.clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    };
+  }, [config.opening.type, config.opening.asset, config.palette, replayKey]);
+
   if (config.opening.type === "none") return null;
   const palette = getPalette(config.palette);
+
+  function startOpening() {
+    if (opening) return;
+    if (fallbackTimerRef.current !== null) {
+      window.clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    }
+    setOpening(true);
+  }
+
+  function handleOpeningKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    startOpening();
+  }
 
   if (config.opening.type === "envelope") {
     const asset = openingAssets.envelope.find((item) => item.id === config.opening.asset) ?? openingAssets.envelope[0];
     return (
-      <div className="preview-opening preview-opening-envelope" key={`envelope-${replayKey}`} style={{ "--opening-tint": palette.theme.primary } as CSSProperties}>
+      <div
+        className={`preview-opening preview-opening-envelope${opening ? " is-opening" : ""}`}
+        key={`envelope-${replayKey}`}
+        style={{ "--opening-tint": palette.theme.primary } as CSSProperties}
+        role="button"
+        tabIndex={0}
+        aria-label="Open invitation"
+        onClick={startOpening}
+        onKeyDown={handleOpeningKeyDown}
+      >
         {exampleMode && <ExampleSectionLabel light>Opening · Envelope</ExampleSectionLabel>}
         <div className="preview-envelope-panel preview-envelope-left"><img src={asset.urls[config.palette]} alt="" /></div>
         <div className="preview-envelope-panel preview-envelope-right"><img src={asset.urls[config.palette]} alt="" /></div>
@@ -174,11 +215,20 @@ function OpeningPreview({ config, replayKey, exampleMode = false }: { config: In
 
   const asset = openingAssets.curtain.find((item) => item.id === config.opening.asset) ?? openingAssets.curtain[0];
   return (
-    <div className="preview-opening preview-opening-curtain" key={`curtain-${replayKey}`} style={{ "--curtain-image": `url(${asset.urls[config.palette]})`, "--opening-tint": palette.theme.primary } as CSSProperties}>
+    <div
+      className={`preview-opening preview-opening-curtain${opening ? " is-opening" : ""}`}
+      key={`curtain-${replayKey}`}
+      style={{ "--curtain-image": `url(${asset.urls[config.palette]})`, "--opening-tint": palette.theme.primary } as CSSProperties}
+      role="button"
+      tabIndex={0}
+      aria-label="Reveal invitation"
+      onClick={startOpening}
+      onKeyDown={handleOpeningKeyDown}
+    >
       {exampleMode && <ExampleSectionLabel light>Opening · Curtain</ExampleSectionLabel>}
       <div className="preview-curtain-half preview-curtain-left" />
       <div className="preview-curtain-half preview-curtain-right" />
-      <span>Our story begins</span>
+      <span>Tap to reveal</span>
     </div>
   );
 }
