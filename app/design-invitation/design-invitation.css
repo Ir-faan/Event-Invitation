@@ -52,6 +52,10 @@
   filter: brightness(.97);
 }
 .designer-home-link:active { transform: translateY(0); }
+.designer-page .designer-home-link,
+.designer-page .designer-home-link:hover,
+.designer-page .designer-home-link:focus-visible { color: #fff; }
+.designer-page .designer-home-link svg { color: #fff; stroke: currentColor; }
 .designer-title { display: flex; align-items: center; gap: .8rem; }
 .designer-brand-mark { display: grid; place-items: center; width: 3.2rem; height: 3.2rem; flex: 0 0 auto; border: 1px solid color-mix(in srgb,var(--builder-accent) 35%,transparent); border-radius: 50%; color: var(--builder-accent); background: rgba(255,255,255,.65); font-size: .72rem; font-weight: 800; letter-spacing: .14em; }
 .designer-title p, .designer-title h1 { margin: 0; }
