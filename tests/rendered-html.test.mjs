@@ -135,7 +135,7 @@ test("includes exact palette artwork for the builder", async () => {
 });
 
 test("uses the revised hero, photo choices and additional-part prices", async () => {
-  const { bismillahAssets, builderAssetVersion, calculateInvitationPrice, createInitialInvitation, createSection, getCoupleInitials, heroPresets, interactiveFrameAssets, interactiveHeroPresets, openingAssets, sectionDefinitions } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
+  const { bismillahAssets, invitationAssetVersion, calculateInvitationPrice, createInitialInvitation, createSection, getCoupleInitials, heroPresets, interactiveFrameAssets, interactiveHeroPresets, openingAssets, sectionDefinitions } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
   const config = createInitialInvitation();
   config.hero.type = "interactive";
   config.sections.push(createSection("countdown"), createSection("glimpse"));
@@ -157,7 +157,7 @@ test("uses the revised hero, photo choices and additional-part prices", async ()
     ...Object.values(bismillahAssets),
     ...Object.values(openingAssets).flatMap((assets) => assets.flatMap((asset) => Object.values(asset.urls))),
   ];
-  assert.ok(versionedAssetUrls.every((url) => url.endsWith(`?v=${builderAssetVersion}`)));
+  assert.ok(versionedAssetUrls.every((url) => url.endsWith(`?v=${invitationAssetVersion}`)));
   assert.deepEqual(calculateInvitationPrice(config), {
     base: 1000,
     opening: 0,
@@ -169,10 +169,10 @@ test("uses the revised hero, photo choices and additional-part prices", async ()
 
 test("protects mobile preview interactions and layout regressions", async () => {
   const [designer, preview, customRenderer, styles, setupPage, examplePage] = await Promise.all([
-    readFile(new URL("../components/invitation-designer.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../components/invitation-phone-preview.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../components/custom-section-renderer.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
+    readFile(new URL("../components/designer/invitation-designer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation/invitation-preview.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation/custom-section-renderer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/design-invitation/invitation.css", import.meta.url), "utf8"),
     readFile(new URL("../app/examples/[slug]/setup/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/examples/[slug]/page.tsx", import.meta.url), "utf8"),
   ]);
@@ -204,7 +204,7 @@ test("protects mobile preview interactions and layout regressions", async () => 
   assert.match(styles, /\.preview-message \{[^}]*display: flex;[^}]*align-items: center;[^}]*justify-content: center/);
   assert.match(styles, /\.preview-memory-card \{[^}]*width: 100%;[^}]*max-width: 100%;[^}]*margin-inline: auto/);
   assert.match(styles, /\.preview-direction-options \{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\)/);
-  assert.match(styles, /\.preview-table-list \{[^}]*grid-template-columns: repeat\(auto-fit,minmax\(min\(7\.25rem,100%\),1fr\)\)/);
+  assert.match(styles, /\.preview-table-list \{[^}]*grid-template-columns: repeat\(6,minmax\(0,1fr\)\)/);
   assert.match(styles, /\.designer-preview-price \{/);
   assert.match(styles, /\.designer-opening-thumb \{ height: auto; aspect-ratio: 2 \/ 3/);
   assert.match(styles, /\.invite-preview-hero-shade::after \{ content: none/);
@@ -330,7 +330,7 @@ test("example invitations are data-driven, varied, and priced by the shared calc
 
 test("example mode labels every invitation part without affecting normal invitations", async () => {
   const [{ PublishedInvitation }, { getInvitationExample, invitationExamples }] = await Promise.all([
-    vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
+    vite.ssrLoadModule("/components/invitation/invitation-preview.tsx"),
     vite.ssrLoadModule("/lib/invitation-examples.ts"),
   ]);
   const example = getInvitationExample("olive-serenity");
@@ -361,10 +361,10 @@ test("example mode labels every invitation part without affecting normal invitat
 
 test("the existing designer renders exact example settings in a locked read-only mode", async () => {
   const [{ InvitationDesigner }, { getInvitationExample, getInvitationExamplePrice }, readOnlyStyles, designerStyles] = await Promise.all([
-    vite.ssrLoadModule("/components/invitation-designer.tsx"),
+    vite.ssrLoadModule("/components/designer/invitation-designer.tsx"),
     vite.ssrLoadModule("/lib/invitation-examples.ts"),
     readFile(new URL("../app/examples/examples.css", import.meta.url), "utf8"),
-    readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/design-invitation/invitation.css", import.meta.url), "utf8"),
   ]);
   const example = getInvitationExample("burgundy-romance");
   assert.ok(example);
@@ -394,38 +394,34 @@ test("the existing designer renders exact example settings in a locked read-only
 });
 
 test("example photographs use compact WebP files and dedicated landing thumbnails", async () => {
-  const full = [
-    "example-couple-olive-garden.webp",
-    "example-couple-burgundy-henna.webp",
-    "example-couple-dusty-blue-hall.webp",
-    "example-couple-lilac-garden.webp",
-  ];
+  const full = ["olive-garden.webp", "burgundy-henna.webp", "dusty-blue-hall.webp", "lilac-garden.webp"];
   const thumbs = [
-    "ivory-promise-thumb.webp",
-    "olive-serenity-thumb.webp",
-    "dusty-blue-elegance-thumb.webp",
-    "burgundy-romance-thumb.webp",
-    "blush-reverie-thumb.webp",
-    "lavender-whispers-thumb.webp",
-    "pearl-garden-thumb.webp",
-    "midnight-bloom-thumb.webp",
-    "golden-nikkah-thumb.webp",
-    "lilac-moonlight-thumb.webp",
+    "ivory-promise.webp",
+    "olive-serenity.webp",
+    "dusty-blue-elegance.webp",
+    "burgundy-romance.webp",
+    "blush-reverie.webp",
+    "lavender-whispers.webp",
+    "pearl-garden.webp",
+    "midnight-bloom.webp",
+    "golden-nikkah.webp",
+    "lilac-moonlight.webp",
   ];
-  const directory = new URL("../public/images/examples/", import.meta.url);
-  const fullStats = await Promise.all(full.map((name) => stat(new URL(name, directory))));
-  const thumbStats = await Promise.all(thumbs.map((name) => stat(new URL(name, directory))));
+  const photoDirectory = new URL("../public/examples/photos/", import.meta.url);
+  const thumbnailDirectory = new URL("../public/examples/thumbnails/", import.meta.url);
+  const fullStats = await Promise.all(full.map((name) => stat(new URL(name, photoDirectory))));
+  const thumbStats = await Promise.all(thumbs.map((name) => stat(new URL(name, thumbnailDirectory))));
   assert.ok(fullStats.every((item) => item.size < 250_000));
   assert.ok(thumbStats.every((item) => item.size < 80_000));
 });
 
 test("long couple names use measured shared sizing and wrap only at spaces", async () => {
   const [{ PublishedInvitation, calculateFittedNameSize }, { createInitialInvitation }, styles, publishedStyles, previewSource] = await Promise.all([
-    vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
+    vite.ssrLoadModule("/components/invitation/invitation-preview.tsx"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
-    readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/design-invitation/invitation.css", import.meta.url), "utf8"),
     readFile(new URL("../app/[slug]/published-invitation.css", import.meta.url), "utf8"),
-    readFile(new URL("../components/invitation-phone-preview.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation/invitation-preview.tsx", import.meta.url), "utf8"),
   ]);
   const config = createInitialInvitation();
   config.hero.firstName = "MichaelJohn";
@@ -446,7 +442,7 @@ test("long couple names use measured shared sizing and wrap only at spaces", asy
 });
 
 test("renders the private order dashboard shell without a public login", async () => {
-  const { InvitationDashboard: Dashboard } = await vite.ssrLoadModule("/components/invitation-dashboard.tsx");
+  const { InvitationDashboard: Dashboard } = await vite.ssrLoadModule("/components/dashboard/invitation-dashboard.tsx");
   const html = renderToStaticMarkup(React.createElement(Dashboard));
   assert.match(html, /Order desk/);
   assert.match(html, /Need your review/);
@@ -461,7 +457,7 @@ test("renders the private order dashboard shell without a public login", async (
 
 test("renders admin orders in the shared designer with collapsed editing steps", async () => {
   const [{ InvitationDesigner }, { createInitialInvitation }, { summarizeOrder }] = await Promise.all([
-    vite.ssrLoadModule("/components/invitation-designer.tsx"),
+    vite.ssrLoadModule("/components/designer/invitation-designer.tsx"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
     vite.ssrLoadModule("/lib/invitation-orders.ts"),
   ]);
@@ -504,9 +500,9 @@ test("renders admin orders in the shared designer with collapsed editing steps",
 test("live desktop invitations match the centred private preview while mobile still fills the viewport", async () => {
   const [css, designerCss, templateCss, { PublishedInvitation }, { createInitialInvitation }] = await Promise.all([
     readFile(new URL("../app/[slug]/published-invitation.css", import.meta.url), "utf8"),
-    readFile(new URL("../app/design-invitation/design-invitation.css", import.meta.url), "utf8"),
-    readFile(new URL("../app/templates/coastal-reverie/coastal-reverie.module.css", import.meta.url), "utf8"),
-    vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
+    readFile(new URL("../app/design-invitation/invitation.css", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation/templates/coastal-reverie.module.css", import.meta.url), "utf8"),
+    vite.ssrLoadModule("/components/invitation/invitation-preview.tsx"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
   ]);
   const html = renderToStaticMarkup(React.createElement(PublishedInvitation, { config: createInitialInvitation() }));
@@ -539,10 +535,10 @@ test("live desktop invitations match the centred private preview while mobile st
 test("deployment modal remains readable and every WhatsApp contact uses the WhatsApp glyph", async () => {
   const [styles, dashboard, designer, sharedIcon, landing] = await Promise.all([
     readFile(new URL("../app/dashboard/dashboard.css", import.meta.url), "utf8"),
-    readFile(new URL("../components/invitation-dashboard.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../components/invitation-designer.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../components/whatsapp-icon.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../components/landing-experience-refresh.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/dashboard/invitation-dashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/designer/invitation-designer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/shared/whatsapp-icon.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/landing/pricing-section.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(styles, /\.orders-deploy-modal \{[^}]*max-height: calc\(100dvh - 1\.5rem\)/);
   assert.match(styles, /\.orders-deploy-modal \.orders-deploy-actions \{[^}]*repeat\(2,minmax\(0,1fr\)\)/);
@@ -553,13 +549,13 @@ test("deployment modal remains readable and every WhatsApp contact uses the What
   assert.match(designer, /import \{ WhatsAppIcon \}/);
   assert.doesNotMatch(designer, /MessageCircle/);
   assert.match(sharedIcon, /export function WhatsAppIcon/);
-  assert.match(landing, /Discuss your custom idea <WhatsAppLogo \/>/);
+  assert.match(landing, /SocialIconLink href=\{links\.customPartWhatsApp\} label="WhatsApp"/);
 });
 
 test("the dashboard has mobile cards, expiring feedback, and a WhatsApp publishing action", async () => {
   const [css, dashboard] = await Promise.all([
     readFile(new URL("../app/dashboard/dashboard.css", import.meta.url), "utf8"),
-    readFile(new URL("../components/invitation-dashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/dashboard/invitation-dashboard.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(css, /@media \(max-width: 700px\)[\s\S]*?\.orders-datatable tbody tr \{[^}]*display: grid/);
   assert.match(css, /\.orders-datatable td::before \{ content: attr\(data-label\)/);
@@ -1170,10 +1166,10 @@ test("supports automatic invitation routes and order lifecycle storage", async (
     readFile(new URL("../app/dashboard/preview/[id]/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/dashboard/orders/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/invitations/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../components/invitation-designer.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../components/invitation-dashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/designer/invitation-designer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/dashboard/invitation-dashboard.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/dashboard/dashboard.css", import.meta.url), "utf8"),
-    readFile(new URL("../components/order-confirmation-modal.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation/order-confirmation-modal.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(migration, /status in \('pending', 'active', 'inactive'\)/);
   assert.match(migration, /active_until/);
@@ -1260,9 +1256,9 @@ test("renders the complete Rose Afterglow invitation", async () => {
 
 test("keeps both invitation templates structurally independent", async () => {
   const [coastalComponent, coastalStyles, roseComponent] = await Promise.all([
-    readFile(new URL("../components/coastal-reverie-invitation.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/templates/coastal-reverie/coastal-reverie.module.css", import.meta.url), "utf8"),
-    readFile(new URL("../components/rose-afterglow-invitation.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation/templates/coastal-reverie.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation/templates/coastal-reverie.module.css", import.meta.url), "utf8"),
+    readFile(new URL("../components/invitation/templates/rose-afterglow.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.doesNotMatch(coastalComponent, /RoseAfterglow|rosePhase|rose-scratch|rose-wedding/);
@@ -1308,9 +1304,9 @@ test("custom sections preserve order and responsive CSS while removing dangerous
 
 test("one isolated custom renderer serves live preview and published invitation in array order", async () => {
   const [{ PublishedInvitation }, { InvitationDesigner }, { buildCustomSectionDocument }, designer, orders] = await Promise.all([
-    vite.ssrLoadModule("/components/invitation-phone-preview.tsx"),
-    vite.ssrLoadModule("/components/invitation-designer.tsx"),
-    vite.ssrLoadModule("/components/custom-section-renderer.tsx"),
+    vite.ssrLoadModule("/components/invitation/invitation-preview.tsx"),
+    vite.ssrLoadModule("/components/designer/invitation-designer.tsx"),
+    vite.ssrLoadModule("/components/invitation/custom-section-renderer.tsx"),
     vite.ssrLoadModule("/lib/invitation-designer.ts"),
     vite.ssrLoadModule("/lib/invitation-orders.ts"),
   ]);

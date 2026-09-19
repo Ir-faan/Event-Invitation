@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { CoastalReverieInvitation } from "@/components/coastal-reverie-invitation";
-import { CoastalGiftSection } from "@/components/coastal-gift-section";
-import { CoastalBismillah } from "@/components/coastal-bismillah";
+import { CoastalReverieInvitation } from "@/components/invitation/templates/coastal-reverie";
+import { CoastalGiftSection } from "@/components/invitation/templates/coastal-gift-section";
+import { CoastalBismillah } from "@/components/invitation/templates/coastal-bismillah";
 import {
   CoastalTraditionalCard,
   type TraditionalCardDetails,
-} from "@/components/coastal-traditional-card";
+} from "@/components/invitation/templates/coastal-traditional-card";
 
 export const metadata: Metadata = {
   title: "Salma & Sam — Coastal Reverie",

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { InvitationDesigner } from "@/components/invitation-designer";
-import "./design-invitation.css";
-import "./mobile-ui-modifications.css";
-import "./designer-gradient-accents.css";
+import { InvitationDesigner } from "@/components/designer/invitation-designer";
+import "./invitation.css";
+import "./editor.css";
 
 export const metadata: Metadata = {
   title: "Design your invitation — Paperless Invites",

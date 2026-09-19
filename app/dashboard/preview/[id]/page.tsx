@@ -3,12 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, LockKeyhole } from "lucide-react";
 import type { Metadata } from "next";
-import { PublishedInvitation } from "@/components/invitation-phone-preview";
+import { PublishedInvitation } from "@/components/invitation/invitation-preview";
 import { normalizeInvitationConfig } from "@/lib/invitation-designer";
 import { getInvitationOrder } from "@/lib/invitation-orders-server";
 import { validInvitationId } from "@/lib/invitation-validation";
 import { sanitizeInvitationCustomSections } from "@/lib/custom-sections";
-import "@/app/design-invitation/design-invitation.css";
+import "@/app/design-invitation/invitation.css";
 import "@/app/[slug]/published-invitation.css";
 import "../../preview.css";
 

@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { InvitationDesigner } from "@/components/invitation-designer";
+import { InvitationDesigner } from "@/components/designer/invitation-designer";
 import { getInvitationExample, invitationExamples } from "@/lib/invitation-examples";
-import "@/app/design-invitation/design-invitation.css";
-import "@/app/design-invitation/mobile-ui-modifications.css";
-import "@/app/design-invitation/designer-gradient-accents.css";
+import "@/app/design-invitation/invitation.css";
+import "@/app/design-invitation/editor.css";
 import "../../examples.css";
 
 export const dynamicParams = false;

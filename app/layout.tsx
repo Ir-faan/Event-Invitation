@@ -1,27 +1,8 @@
 import type { Metadata } from "next";
-import "./globals.css";
-import "./landing-paperless.css";
-import "./landing-contact-polish.css";
-import "./coastal-reverie-decorations.css";
-import "./envelope-opening-fixes.css";
-import "./traditional-card-fixes.css";
-import "./coastal-programme-gift-polish.css";
-import "./rose-scratch-sparkles.css";
-import "./footer-redesign.css";
-import "./landing-refresh.css";
-import "./landing-preview-fix.css";
-import "./landing-navbar-cleanup.css";
-import "./footer-contact-cleanup.css";
-import "./landing-palette-compact.css";
-import "./landing-gallery-row-fix.css";
-import "./landing-comparison-paper-text-fix.css";
-import "./landing-marquee-clean.css";
-import "./landing-template-gallery-compact.css";
-import "./landing-mobile-polish.css";
-import "./landing-template-palette-polish.css";
-import "./landing-faq.css";
-import "./landing-faq-followup.css";
-import "./landing-examples.css";
+import "./styles/global.css";
+import "./styles/landing/base.css";
+import "./styles/invitation-templates.css";
+import "./styles/landing/page.css";
 
 export const metadata: Metadata = {
   title: "Paperless Invites — The most elegant save the date",

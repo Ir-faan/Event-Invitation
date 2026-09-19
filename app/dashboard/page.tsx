@@ -1,9 +1,8 @@
 import { requireAdminPage } from "@/lib/admin-guard";
 import type { Metadata } from "next";
-import { InvitationDashboard } from "@/components/invitation-dashboard";
-import "@/app/design-invitation/design-invitation.css";
-import "@/app/design-invitation/mobile-ui-modifications.css";
-import "@/app/design-invitation/designer-gradient-accents.css";
+import { InvitationDashboard } from "@/components/dashboard/invitation-dashboard";
+import "@/app/design-invitation/invitation.css";
+import "@/app/design-invitation/editor.css";
 import "./dashboard.css";
 
 export const metadata: Metadata = {

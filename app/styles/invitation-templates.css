@@ -1,0 +1,884 @@
+/* Generated photographic florals for Coastal Reverie.
+   Kept separate from the template layout and scoped to #invitation-top. */
+
+#invitation-top #counting,
+#invitation-top section[aria-labelledby="story-title"],
+#invitation-top section[aria-labelledby="events-title"],
+#invitation-top section[aria-labelledby="seating-title"],
+#invitation-top section[aria-labelledby="programme-title"],
+#invitation-top > footer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+#invitation-top #counting > [data-wedding-reveal],
+#invitation-top section[aria-labelledby="story-title"] [data-wedding-reveal],
+#invitation-top section[aria-labelledby="events-title"] > [data-wedding-reveal],
+#invitation-top section[aria-labelledby="events-title"] article,
+#invitation-top section[aria-labelledby="seating-title"] > div,
+#invitation-top section[aria-labelledby="programme-title"] > [data-wedding-reveal],
+#invitation-top section[aria-labelledby="programme-title"] article,
+#invitation-top > footer > * {
+  position: relative;
+  z-index: 3;
+}
+
+#invitation-top #counting::after,
+#invitation-top section[aria-labelledby="story-title"]::before,
+#invitation-top section[aria-labelledby="story-title"]::after,
+#invitation-top section[aria-labelledby="events-title"]::before,
+#invitation-top section[aria-labelledby="events-title"]::after,
+#invitation-top section[aria-labelledby="seating-title"]::before,
+#invitation-top section[aria-labelledby="seating-title"]::after,
+#invitation-top section[aria-labelledby="programme-title"]::before,
+#invitation-top section[aria-labelledby="programme-title"]::after,
+#invitation-top > footer::before,
+#invitation-top > footer::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 1rem 2.4rem rgba(73, 56, 44, .09));
+  will-change: transform;
+}
+
+/* Countdown — soft pink floral corner. */
+#invitation-top #counting::after {
+  width: clamp(18rem, 29vw, 29rem);
+  aspect-ratio: 4 / 3;
+  right: clamp(-7rem, -4vw, -2rem);
+  top: clamp(-5rem, -3vw, -2rem);
+  background-image: url("/templates/coastal-reverie/decorations/countdown.webp");
+  opacity: .84;
+  transform: scaleX(-1) rotate(-4deg);
+  animation: coastalPhotoFloat 11s ease-in-out infinite;
+}
+
+/* Story — vertical rose cascade, deliberately different from the corners. */
+#invitation-top section[aria-labelledby="story-title"]::before,
+#invitation-top section[aria-labelledby="story-title"]::after {
+  width: clamp(9rem, 14vw, 14rem);
+  aspect-ratio: 294 / 440;
+  background-image: url("/templates/coastal-reverie/decorations/story.webp");
+}
+
+#invitation-top section[aria-labelledby="story-title"]::before {
+  left: clamp(-4.5rem, -2.5vw, -1.5rem);
+  top: 12%;
+  opacity: .62;
+  transform: rotate(-5deg);
+  animation: coastalPhotoSway 13s ease-in-out infinite;
+}
+
+#invitation-top section[aria-labelledby="story-title"]::after {
+  right: clamp(-5rem, -3vw, -2rem);
+  bottom: 7%;
+  opacity: .34;
+  transform: scaleX(-1) rotate(7deg);
+  animation: coastalPhotoSway 14s ease-in-out -6s infinite reverse;
+}
+
+/* Event details — fuller rose bouquet around the large open edges. */
+#invitation-top section[aria-labelledby="events-title"]::before,
+#invitation-top section[aria-labelledby="events-title"]::after {
+  width: clamp(17rem, 27vw, 27rem);
+  aspect-ratio: 4 / 3;
+  background-image: url("/templates/coastal-reverie/decorations/events.webp");
+}
+
+#invitation-top section[aria-labelledby="events-title"]::before {
+  left: clamp(-8rem, -5vw, -3rem);
+  bottom: clamp(-6rem, -4vw, -2rem);
+  opacity: .72;
+  transform: rotate(7deg);
+  animation: coastalPhotoFloat 12s ease-in-out infinite;
+}
+
+#invitation-top section[aria-labelledby="events-title"]::after {
+  right: clamp(-8rem, -5vw, -3rem);
+  top: clamp(-6rem, -4vw, -2rem);
+  opacity: .42;
+  transform: scaleX(-1) rotate(7deg);
+  animation: coastalPhotoFloat 13s ease-in-out -5s infinite reverse;
+}
+
+/* Seating — dried florals kept deliberately faint so table names remain dominant. */
+#invitation-top section[aria-labelledby="seating-title"]::before,
+#invitation-top section[aria-labelledby="seating-title"]::after {
+  width: clamp(14rem, 22vw, 22rem);
+  aspect-ratio: 4 / 3;
+  background-image: url("/templates/coastal-reverie/decorations/seating.webp");
+}
+
+#invitation-top section[aria-labelledby="seating-title"]::before {
+  left: clamp(-7rem, -4vw, -3rem);
+  bottom: clamp(-5rem, -3vw, -2rem);
+  opacity: .34;
+  transform: rotate(-5deg);
+  animation: coastalPhotoSway 12s ease-in-out infinite;
+}
+
+#invitation-top section[aria-labelledby="seating-title"]::after {
+  right: clamp(-8rem, -5vw, -4rem);
+  top: clamp(-5rem, -3vw, -2rem);
+  opacity: .22;
+  transform: scaleX(-1) rotate(5deg);
+  animation: coastalPhotoSway 13s ease-in-out -6s infinite reverse;
+}
+
+/* Programme — wide dried garland sweeping through the bottom edge. */
+#invitation-top section[aria-labelledby="programme-title"]::before,
+#invitation-top section[aria-labelledby="programme-title"]::after {
+  width: clamp(22rem, 39vw, 39rem);
+  aspect-ratio: 440 / 248;
+  background-image: url("/templates/coastal-reverie/decorations/programme.webp");
+}
+
+#invitation-top section[aria-labelledby="programme-title"]::before {
+  left: clamp(-10rem, -6vw, -4rem);
+  bottom: clamp(-7rem, -4vw, -3rem);
+  opacity: .58;
+  transform: rotate(3deg);
+  animation: coastalPhotoFloat 13s ease-in-out infinite;
+}
+
+#invitation-top section[aria-labelledby="programme-title"]::after {
+  right: clamp(-12rem, -8vw, -6rem);
+  top: clamp(-8rem, -5vw, -4rem);
+  opacity: .19;
+  transform: scaleX(-1) rotate(-7deg);
+  animation: coastalPhotoFloat 15s ease-in-out -7s infinite reverse;
+}
+
+/* Footer — repeat the fuller rose bouquet as a closing flourish. */
+#invitation-top > footer::before,
+#invitation-top > footer::after {
+  width: clamp(18rem, 30vw, 30rem);
+  aspect-ratio: 4 / 3;
+  bottom: clamp(-8rem, -5vw, -3rem);
+  background-image: url("/templates/coastal-reverie/decorations/events.webp");
+}
+
+#invitation-top > footer::before {
+  left: clamp(-8rem, -5vw, -3rem);
+  opacity: .66;
+  transform: rotate(4deg);
+  animation: coastalPhotoFloat 13s ease-in-out infinite;
+}
+
+#invitation-top > footer::after {
+  right: clamp(-8rem, -5vw, -3rem);
+  opacity: .46;
+  transform: scaleX(-1) rotate(4deg);
+  animation: coastalPhotoFloat 13s ease-in-out -6s infinite reverse;
+}
+
+@keyframes coastalPhotoFloat {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -.5rem; }
+}
+
+@keyframes coastalPhotoSway {
+  0%, 100% { translate: 0 0; }
+  50% { translate: .3rem -.35rem; }
+}
+
+/* Tablet */
+@media (max-width: 980px) {
+  #invitation-top #counting::after { width: 20rem; right: -7rem; }
+
+  #invitation-top section[aria-labelledby="story-title"]::before,
+  #invitation-top section[aria-labelledby="story-title"]::after { width: 10rem; }
+
+  #invitation-top section[aria-labelledby="events-title"]::before,
+  #invitation-top section[aria-labelledby="events-title"]::after { width: 19rem; }
+
+  #invitation-top section[aria-labelledby="programme-title"]::before,
+  #invitation-top section[aria-labelledby="programme-title"]::after { width: 27rem; }
+}
+
+/* Mobile — smaller, pushed farther into the edges, and never over the main text. */
+@media (max-width: 760px) {
+  #invitation-top #counting::after {
+    width: 13rem;
+    right: -5.5rem;
+    top: -2.5rem;
+    opacity: .60;
+  }
+
+  #invitation-top section[aria-labelledby="story-title"]::before {
+    width: 7rem;
+    left: -3.6rem;
+    top: 18%;
+    opacity: .32;
+  }
+
+  #invitation-top section[aria-labelledby="story-title"]::after {
+    width: 6.5rem;
+    right: -3.5rem;
+    bottom: 5%;
+    opacity: .20;
+  }
+
+  #invitation-top section[aria-labelledby="events-title"]::before {
+    width: 11rem;
+    left: -5.5rem;
+    bottom: -2.5rem;
+    opacity: .36;
+  }
+
+  #invitation-top section[aria-labelledby="events-title"]::after {
+    width: 10rem;
+    right: -5rem;
+    top: -2rem;
+    opacity: .24;
+  }
+
+  #invitation-top section[aria-labelledby="seating-title"]::before {
+    width: 8.5rem;
+    left: -4.5rem;
+    bottom: -2rem;
+    opacity: .20;
+  }
+
+  #invitation-top section[aria-labelledby="seating-title"]::after {
+    width: 8rem;
+    right: -4.5rem;
+    top: -1.5rem;
+    opacity: .13;
+  }
+
+  #invitation-top section[aria-labelledby="programme-title"]::before {
+    width: 15rem;
+    left: -7.5rem;
+    bottom: -2.5rem;
+    opacity: .32;
+  }
+
+  #invitation-top section[aria-labelledby="programme-title"]::after {
+    width: 13rem;
+    right: -7rem;
+    top: -2rem;
+    opacity: .12;
+  }
+
+  #invitation-top > footer::before,
+  #invitation-top > footer::after {
+    width: 12rem;
+    bottom: -4rem;
+  }
+
+  #invitation-top > footer::before { left: -5rem; opacity: .42; }
+  #invitation-top > footer::after { right: -5rem; opacity: .30; }
+}
+
+@media (max-width: 480px) {
+  #invitation-top #counting::after { width: 11rem; right: -5rem; opacity: .52; }
+
+  #invitation-top section[aria-labelledby="events-title"]::before,
+  #invitation-top section[aria-labelledby="events-title"]::after,
+  #invitation-top section[aria-labelledby="seating-title"]::after,
+  #invitation-top section[aria-labelledby="programme-title"]::after {
+    display: none;
+  }
+
+  #invitation-top section[aria-labelledby="story-title"]::before { width: 6rem; left: -3.5rem; }
+  #invitation-top section[aria-labelledby="programme-title"]::before { width: 12rem; left: -6.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #invitation-top #counting::after,
+  #invitation-top section[aria-labelledby="story-title"]::before,
+  #invitation-top section[aria-labelledby="story-title"]::after,
+  #invitation-top section[aria-labelledby="events-title"]::before,
+  #invitation-top section[aria-labelledby="events-title"]::after,
+  #invitation-top section[aria-labelledby="seating-title"]::before,
+  #invitation-top section[aria-labelledby="seating-title"]::after,
+  #invitation-top section[aria-labelledby="programme-title"]::before,
+  #invitation-top section[aria-labelledby="programme-title"]::after,
+  #invitation-top > footer::before,
+  #invitation-top > footer::after {
+    animation: none !important;
+  }
+}
+
+/* Envelope-opening interaction polish.
+   Keep the wax seal clickable without drawing an extra circular ring before opening. */
+button[aria-label="Open Salma and Sam's wedding invitation"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button[aria-label="Open Salma and Sam's wedding invitation"]::after {
+  content: none !important;
+  display: none !important;
+}
+
+button[aria-label="Open Salma and Sam's wedding invitation"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  filter: brightness(1.04);
+}
+
+/* Hero cleanup: remove the circular S & S monogram above the couple names. */
+section[aria-labelledby="couple-names"] [class*="monogram"] {
+  display: none !important;
+}
+
+/* Hero readability: keep the white typography and bright photography, but add
+   a soft localized contrast pocket behind the copy instead of darkening the
+   whole image. */
+section[aria-labelledby="couple-names"] [class*="heroVeil"] {
+  background:
+    radial-gradient(
+      ellipse at 50% 51%,
+      rgba(47, 34, 25, 0.52) 0%,
+      rgba(50, 36, 27, 0.38) 30%,
+      rgba(54, 39, 29, 0.16) 54%,
+      rgba(54, 39, 29, 0) 74%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(47, 34, 25, 0.18) 0%,
+      rgba(56, 40, 30, 0.08) 36%,
+      rgba(46, 32, 24, 0.48) 100%
+    ) !important;
+}
+
+section[aria-labelledby="couple-names"] [class*="heroCopy"] {
+  text-shadow:
+    0 0.12rem 0.28rem rgba(38, 27, 20, 0.66),
+    0 0.45rem 1.35rem rgba(38, 27, 20, 0.48) !important;
+}
+
+section[aria-labelledby="couple-names"] [class*="heroCopy"] h1 {
+  text-shadow:
+    0 0.16rem 0.36rem rgba(36, 25, 18, 0.72),
+    0 0.55rem 1.6rem rgba(36, 25, 18, 0.54) !important;
+}
+
+section[aria-labelledby="couple-names"] [class*="scrollInvitation"] {
+  text-shadow: 0 0.18rem 0.65rem rgba(34, 24, 18, 0.62);
+}
+
+[data-traditional-card] {
+  border: 1px solid rgba(185, 143, 79, .2) !important;
+}
+
+/* The generated frame is a real transparent image. Keep it fully visible
+   above the ivory card background while all editable text sits above it. */
+[data-traditional-border] {
+  position: absolute !important;
+  z-index: 3 !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  display: block !important;
+  object-fit: fill !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: saturate(1.04) contrast(1.03) drop-shadow(0 .05rem .08rem rgba(107, 76, 39, .12));
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+[data-traditional-content] {
+  position: relative !important;
+  z-index: 4 !important;
+}
+
+@media (max-width: 760px) {
+  [data-traditional-shell] {
+    width: 84vw !important;
+    height: 60svh !important;
+    max-width: 22rem !important;
+    max-height: 60svh !important;
+  }
+
+  [data-traditional-card] {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  [data-traditional-content] {
+    width: 56% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    justify-content: center !important;
+    padding: 7svh 0 4.2svh !important;
+  }
+}
+
+/* Never silently enlarge the card on short phones. The requested mobile
+   size remains 60% of the viewport height. */
+@media (max-height: 650px) and (max-width: 760px) {
+  [data-traditional-shell] {
+    height: 60svh !important;
+    max-height: 60svh !important;
+  }
+
+  [data-traditional-content] {
+    padding-top: 5.6svh !important;
+    padding-bottom: 3.2svh !important;
+  }
+}
+
+/* Coastal Reverie: smooth the gift transition, make the mobile day programme
+   use the full available width, and keep adjacent sections visually connected. */
+
+/* The gift component is rendered inside a portal wrapper, so target both the
+   wrapper and the actual section. Keep one continuous vertical beige gradient. */
+main#invitation-top > [data-coastal-gift-section] {
+  background: #f5e8dc !important;
+}
+
+main#invitation-top > [data-coastal-gift-section] > section[aria-labelledby="gift-title"] {
+  background: linear-gradient(
+    180deg,
+    #f5e8dc 0%,
+    #f7ece2 34%,
+    #faf2e9 55%,
+    #f7ece2 76%,
+    #f5e8dc 100%
+  ) !important;
+}
+
+/* Tighter transitions between the requested neighbouring sections. The goal is
+   to preserve breathing room without making each boundary feel like a blank page. */
+main#invitation-top > section[aria-labelledby="story-title"] {
+  padding-top: clamp(4.4rem, 6.5vw, 6.4rem) !important;
+}
+
+main#invitation-top > section[aria-labelledby="seating-title"] {
+  padding-bottom: clamp(4rem, 5.6vw, 5.3rem) !important;
+}
+
+main#invitation-top > section[aria-labelledby="programme-title"] {
+  padding-top: clamp(4.2rem, 6vw, 5.8rem) !important;
+  padding-bottom: clamp(4rem, 5.6vw, 5.2rem) !important;
+}
+
+main#invitation-top > [data-coastal-gift-section] > section[aria-labelledby="gift-title"] {
+  padding-top: clamp(4rem, 5.8vw, 5.3rem) !important;
+  padding-bottom: clamp(3.8rem, 5.4vw, 5rem) !important;
+}
+
+main#invitation-top > footer {
+  padding-top: clamp(4rem, 5.7vw, 5rem) !important;
+}
+
+@media (max-width: 760px) {
+  /* Countdown -> Our Journey */
+  main#invitation-top > section[aria-labelledby="countdown-title"] {
+    min-height: 29.5rem !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="countdown-title"] > div[class*="countdownContent"] {
+    padding-bottom: 3.2rem !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="story-title"] {
+    padding-top: 3.55rem !important;
+  }
+
+  /* Seating Arrangement -> Day Programme */
+  main#invitation-top > section[aria-labelledby="seating-title"] {
+    padding-bottom: 3.45rem !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] {
+    padding: 3.55rem 1rem 3.25rem !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:first-child {
+    width: min(23rem, 100%);
+    margin: 0 auto;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:first-child h2 {
+    margin-bottom: .8rem;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:first-child > span {
+    max-width: 18rem;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+
+  /* The horizontal desktop timeline is not useful on a narrow screen. */
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(2) {
+    display: none !important;
+  }
+
+  /* Turn the programme into a compact stack of equal full-width schedule rows. */
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) {
+    width: min(23.5rem, 100%) !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: .8rem !important;
+    margin: 2.45rem auto 0 !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article {
+    position: relative;
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+    display: grid !important;
+    grid-template-columns: 3rem minmax(0, 1fr) auto !important;
+    grid-template-rows: auto auto !important;
+    grid-template-areas:
+      "icon title time"
+      "icon note time" !important;
+    align-items: center !important;
+    column-gap: .8rem !important;
+    row-gap: .18rem !important;
+    min-height: 4.75rem !important;
+    padding: .72rem .72rem .72rem .68rem !important;
+    border: 1px solid rgba(101, 75, 57, .12);
+    border-radius: 1rem;
+    background:
+      linear-gradient(135deg, rgba(255, 250, 242, .5), rgba(255, 250, 242, .24));
+    box-shadow:
+      0 .55rem 1.25rem rgba(73, 50, 35, .045),
+      inset 0 1px rgba(255, 255, 255, .42);
+    text-align: left !important;
+  }
+
+  /* Remove the old mobile timeline line that created a large blank right side. */
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article::before {
+    display: none !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article > div {
+    grid-area: icon !important;
+    align-self: center !important;
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    margin: 0 !important;
+    border-color: rgba(101, 75, 57, .2) !important;
+    background: rgba(255, 250, 242, .68) !important;
+    box-shadow: 0 .2rem .65rem rgba(73, 50, 35, .05);
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article > div svg {
+    width: .9rem !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article > h3 {
+    grid-area: title !important;
+    align-self: end !important;
+    min-width: 0;
+    margin: 0 !important;
+    font-size: 1.02rem !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article > p {
+    grid-area: note !important;
+    align-self: start !important;
+    min-width: 0;
+    margin: 0 !important;
+    color: rgba(73, 56, 44, .62) !important;
+    font-size: .72rem !important;
+    line-height: 1.35 !important;
+    white-space: normal;
+  }
+
+  main#invitation-top > section[aria-labelledby="programme-title"] > div:nth-child(3) > article > time {
+    grid-area: time !important;
+    align-self: center !important;
+    justify-self: end !important;
+    min-width: 4.35rem !important;
+    min-height: 1.8rem !important;
+    margin: 0 !important;
+    padding: 0 .62rem !important;
+    border-radius: 999px !important;
+    font-size: .61rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Day Programme -> Gift -> Footer */
+  main#invitation-top > [data-coastal-gift-section] > section[aria-labelledby="gift-title"] {
+    padding-top: 3.2rem !important;
+    padding-bottom: 3.15rem !important;
+  }
+
+  main#invitation-top > footer {
+    padding-top: 3.45rem !important;
+    padding-bottom: 4.2rem !important;
+  }
+}
+
+/* Rose Afterglow scratch-complete celebration.
+   Keep the reveal to sparkles only: no halo, ring or circular glow. */
+
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] {
+  left: 50% !important;
+  top: 50% !important;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 0 .65rem rgba(255, 238, 177, .38));
+}
+
+/* Explicitly remove any circle / halo. */
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"]::before,
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"]::after {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* Main particles move at one continuous speed. Using linear motion here avoids
+   the visible slow-down / pause / speed-up effect caused by easing each
+   intermediate keyframe segment separately. */
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span {
+  color: #f1d68f !important;
+  font-size: clamp(1rem, 3vw, 1.55rem) !important;
+  text-shadow:
+    0 0 .35rem rgba(255,255,244,.98),
+    0 0 1rem rgba(255,226,145,.9),
+    0 0 1.6rem rgba(210,166,77,.46) !important;
+  animation-name: roseScratchSmoothBurst !important;
+  animation-duration: 1.12s !important;
+  animation-timing-function: linear !important;
+  animation-fill-mode: both !important;
+  will-change: transform, opacity;
+}
+
+/* Each main particle keeps two extra sparkle clusters, but their motion now
+   uses the same continuous timing instead of separate ease-out phases. */
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::before,
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::after {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::before {
+  content: "✦";
+  color: rgba(255, 245, 199, .98);
+  font-size: .64em;
+  text-shadow:
+    1.25rem -.65rem 0 rgba(255,248,217,.96),
+    -1.05rem .78rem 0 rgba(241,208,128,.9),
+    1.7rem .92rem 0 rgba(255,240,184,.88),
+    -1.55rem -1.05rem 0 rgba(255,252,230,.82),
+    .4rem 1.65rem 0 rgba(224,184,101,.82),
+    0 0 .75rem rgba(255, 234, 156, .95);
+  animation: roseScratchSatelliteSmoothA 1.12s linear var(--spark-delay) both;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span::after {
+  content: "✧";
+  color: rgba(255, 252, 226, 1);
+  font-size: .82em;
+  text-shadow:
+    1.05rem .95rem 0 rgba(255,244,201,.92),
+    -1.35rem -.72rem 0 rgba(236,199,113,.88),
+    1.8rem -.3rem 0 rgba(255,251,221,.86),
+    -1.7rem 1.18rem 0 rgba(250,224,157,.82),
+    -.2rem -1.7rem 0 rgba(255,248,215,.84),
+    0 0 .8rem rgba(255, 230, 145, .9);
+  animation: roseScratchSatelliteSmoothB 1.12s linear var(--spark-delay) both;
+}
+
+@keyframes roseScratchSmoothBurst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(.15rem) scale(.42);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(.9rem) scale(.5);
+  }
+  88% {
+    opacity: .88;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(5.65rem) scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(6.4rem) scale(1.1);
+  }
+}
+
+@keyframes roseScratchSatelliteSmoothA {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-10deg) translate(.08rem, .04rem) scale(.45);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(-7deg) translate(.22rem, -.1rem) scale(.52);
+  }
+  88% {
+    opacity: .82;
+    transform: translate(-50%, -50%) rotate(11deg) translate(1.18rem, -.76rem) scale(1.01);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(14deg) translate(1.35rem, -.88rem) scale(1.08);
+  }
+}
+
+@keyframes roseScratchSatelliteSmoothB {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(8deg) translate(-.08rem, .06rem) scale(.45);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(5deg) translate(-.22rem, .14rem) scale(.52);
+  }
+  88% {
+    opacity: .8;
+    transform: translate(-50%, -50%) rotate(-12deg) translate(-1.14rem, .9rem) scale(1.01);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-15deg) translate(-1.3rem, 1.02rem) scale(1.08);
+  }
+}
+
+/* The longer sparkle field now uses one uninterrupted linear drift. Both
+   layers begin together and stay in motion for the full animation, so there
+   is no second start after an apparent pause. */
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::before,
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::after {
+  position: absolute !important;
+  z-index: 11 !important;
+  display: block !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 0 !important;
+  height: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+  opacity: 0;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::before {
+  content: "✦" !important;
+  color: rgba(255, 246, 205, .98) !important;
+  font-size: clamp(.8rem, 2.5vw, 1.15rem) !important;
+  text-shadow:
+    0 -2.6rem 0 rgba(255,249,220,.95),
+    2.1rem -2.1rem 0 rgba(241,207,121,.9),
+    3.2rem -.7rem 0 rgba(255,238,179,.94),
+    3rem 1.9rem 0 rgba(255,251,226,.88),
+    1.3rem 3.1rem 0 rgba(231,194,109,.88),
+    -1.3rem 3rem 0 rgba(255,243,193,.92),
+    -3.1rem 1.55rem 0 rgba(255,251,226,.9),
+    -3.15rem -.85rem 0 rgba(230,187,93,.88),
+    -1.85rem -2.55rem 0 rgba(255,239,181,.94),
+    .55rem -3.45rem 0 rgba(255,252,231,.9),
+    3.75rem .55rem 0 rgba(243,211,135,.86),
+    -3.8rem .35rem 0 rgba(255,244,198,.88),
+    0 0 .8rem rgba(255,231,145,.92);
+  animation: roseScratchContinuousDriftA 3.2s linear both !important;
+}
+
+main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::after {
+  content: "✧" !important;
+  color: rgba(255, 251, 224, .98) !important;
+  font-size: clamp(.68rem, 2vw, 1rem) !important;
+  text-shadow:
+    1.05rem -2.9rem 0 rgba(255,243,193,.92),
+    2.9rem -1.55rem 0 rgba(236,198,105,.9),
+    3.35rem 1rem 0 rgba(255,249,217,.92),
+    2.2rem 3rem 0 rgba(245,218,151,.88),
+    -.15rem 3.65rem 0 rgba(255,251,227,.9),
+    -2.4rem 2.75rem 0 rgba(237,199,108,.86),
+    -3.55rem .8rem 0 rgba(255,241,186,.9),
+    -3.05rem -1.65rem 0 rgba(255,251,226,.9),
+    -.95rem -3.25rem 0 rgba(229,188,97,.88),
+    3.95rem -.25rem 0 rgba(255,246,205,.86),
+    -3.9rem -.35rem 0 rgba(247,218,145,.88),
+    0 0 .7rem rgba(255,231,145,.9);
+  animation: roseScratchContinuousDriftB 3.2s linear both !important;
+}
+
+@keyframes roseScratchContinuousDriftA {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.38) rotate(-4deg);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(.52) rotate(-2.9deg);
+  }
+  90% {
+    opacity: .82;
+    transform: translate(-50%, -50%) scale(1.64) rotate(5.9deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.78) rotate(7deg);
+  }
+}
+
+@keyframes roseScratchContinuousDriftB {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.36) rotate(5deg);
+  }
+  10% {
+    opacity: .96;
+    transform: translate(-50%, -50%) scale(.51) rotate(3.7deg);
+  }
+  90% {
+    opacity: .78;
+    transform: translate(-50%, -50%) scale(1.71) rotate(-6.7deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.86) rotate(-8deg);
+  }
+}
+
+@media (max-width: 760px) {
+  main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] {
+    left: 50% !important;
+    top: 50% !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] [class*="revealSparkles"] > span {
+    font-size: clamp(.9rem, 4.8vw, 1.35rem) !important;
+  }
+
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::before,
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::after {
+    left: 50% !important;
+    top: 50% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main#invitation-top[class*="roseVariant"] [class*="revealSparkles"],
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::before,
+  main#invitation-top[class*="roseVariant"] [class*="scratchHeroRevealed"] [class*="scratchPhotoComposition"]::after {
+    display: none !important;
+  }
+}

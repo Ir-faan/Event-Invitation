@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { PublishedInvitation } from "@/components/invitation-phone-preview";
+import { PublishedInvitation } from "@/components/invitation/invitation-preview";
 import { getPublicInvitationBySlug, getPublicSiteOrigin } from "@/lib/invitation-orders-server";
 import { invitationSocialDetails, invitationSocialImage } from "@/lib/invitation-social";
 import type { Metadata } from "next";
-import "@/app/design-invitation/design-invitation.css";
+import "@/app/design-invitation/invitation.css";
 import "./published-invitation.css";
 
 export const dynamic = "force-dynamic";

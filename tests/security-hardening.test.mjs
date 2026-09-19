@@ -147,7 +147,7 @@ test("guest data drops contact/unknown keys and preserves legacy sections and sa
   const { publicInvitationConfig } = await vite.ssrLoadModule("/lib/public-invitation.ts");
   const { safeImageUrl } = await vite.ssrLoadModule("/lib/safe-url.ts");
   const { createInitialInvitation, createSection } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
-  const { PublishedInvitation } = await vite.ssrLoadModule("/components/invitation-phone-preview.tsx");
+  const { PublishedInvitation } = await vite.ssrLoadModule("/components/invitation/invitation-preview.tsx");
   const config = createInitialInvitation(); config.contact = { name: "Private Customer", phone: "58749327" }; config.secret = "private-extra";
   const legacy = createSection("journey"); legacy.items = []; legacy.fields = { event1Title: "Met here", event1Date: "2010", event1Text: "A memory" };
   config.sections.push(legacy);
@@ -162,7 +162,7 @@ test("guest data drops contact/unknown keys and preserves legacy sections and sa
 test("public privacy projection preserves all section layouts across palettes, openings and heroes", async () => {
   const { publicInvitationConfig } = await vite.ssrLoadModule("/lib/public-invitation.ts");
   const { createInitialInvitation, createSection, normalizeInvitationConfig, paletteOptions, sectionDefinitions } = await vite.ssrLoadModule("/lib/invitation-designer.ts");
-  const { PublishedInvitation } = await vite.ssrLoadModule("/components/invitation-phone-preview.tsx");
+  const { PublishedInvitation } = await vite.ssrLoadModule("/components/invitation/invitation-preview.tsx");
   for (const palette of paletteOptions) for (const opening of ["none", "envelope", "curtain"]) for (const hero of ["basic", "interactive"]) {
     const config = createInitialInvitation(); config.palette = palette.id; config.opening.type = opening; config.hero.type = hero; config.bismillah.enabled = true;
     config.contact = { name: "Private Client", phone: "58749327" };
@@ -174,7 +174,7 @@ test("public privacy projection preserves all section layouts across palettes, o
 });
 
 test("custom CSS cannot close its style element; iframe cannot execute scripts or submit forms", async () => {
-  const { buildCustomSectionDocument, CustomSectionRenderer } = await vite.ssrLoadModule("/components/custom-section-renderer.tsx");
+  const { buildCustomSectionDocument, CustomSectionRenderer } = await vite.ssrLoadModule("/components/invitation/custom-section-renderer.tsx");
   const doc = buildCustomSectionDocument('<form action="/api/dashboard/orders"><script>alert(1)</script><img onerror="alert(1)" src="x"><a href="javascript:alert(1)">x</a></form>', '</style\n><img src=x onerror=alert(1)><style>h2 { color:red }');
   assert.equal((doc.match(/<style>/g) || []).length, 1); assert.equal((doc.match(/<\/style>/g) || []).length, 1);
   assert.doesNotMatch(doc, /<script|<form|<img[^>]*onerror|href="javascript:/i);

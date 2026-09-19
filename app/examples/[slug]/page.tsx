@@ -2,14 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CircleDollarSign, SlidersHorizontal } from "lucide-react";
 import type { Metadata } from "next";
-import { PublishedInvitation } from "@/components/invitation-phone-preview";
+import { PublishedInvitation } from "@/components/invitation/invitation-preview";
 import { normalizeInvitationConfig } from "@/lib/invitation-designer";
 import {
   getInvitationExample,
   getInvitationExamplePrice,
   invitationExamples,
 } from "@/lib/invitation-examples";
-import "@/app/design-invitation/design-invitation.css";
+import "@/app/design-invitation/invitation.css";
 import "@/app/[slug]/published-invitation.css";
 import "../examples.css";
 

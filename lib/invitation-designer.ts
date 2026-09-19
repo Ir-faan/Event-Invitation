@@ -122,86 +122,89 @@ export type InvitationThemeVariableName = (typeof invitationThemeVariableDefinit
 
 type HeroPreset = { id: string; name: string; url: string; objectPosition: string; zoom: number; hidden?: boolean };
 
-/** Bump this value whenever the generated designer artwork changes. */
-export const builderAssetVersion = "20260911-1";
+/** Bump this value whenever the invitation artwork changes. */
+export const invitationAssetVersion = "20260911-1";
 
-function builderAssetUrl(fileName: string) {
-  return `/images/${fileName}?v=${builderAssetVersion}`;
+function invitationAssetUrl(path: string) {
+  return `/invitation/${path}?v=${invitationAssetVersion}`;
 }
 
 function matchedHeroPresets(palette: PaletteId, signatureUrl: string): HeroPreset[] {
   return [
     { id: `${palette}-full`, name: "Signature scene", url: signatureUrl, objectPosition: "center center", zoom: 1 },
-    // Keep the legacy index so older saved orders retain the correct following presets.
-    // The close crop is no longer offered in the designer and is normalized to the signature scene.
+    // Preserve the legacy index so existing saved invitations keep the same following presets.
     { id: `${palette}-close`, name: "Closer crop", url: signatureUrl, objectPosition: "center 68%", zoom: 1.14, hidden: true },
-    { id: `${palette}-ballroom`, name: "Grand ballroom", url: builderAssetUrl(`builder-hero-ballroom-${palette}.webp`), objectPosition: "center center", zoom: 1 },
-    { id: `${palette}-garden`, name: "Garden ceremony", url: builderAssetUrl(`builder-hero-garden-${palette}.webp`), objectPosition: "center center", zoom: 1 },
-    { id: `${palette}-islamic-hall`, name: "Pure elegance", url: builderAssetUrl(`builder-hero-islamic-hall-${palette}.webp`), objectPosition: "center center", zoom: 1 },
+    { id: `${palette}-ballroom`, name: "Grand ballroom", url: invitationAssetUrl(`heroes/ballroom/${palette}.webp`), objectPosition: "center center", zoom: 1 },
+    { id: `${palette}-garden`, name: "Garden ceremony", url: invitationAssetUrl(`heroes/garden/${palette}.webp`), objectPosition: "center center", zoom: 1 },
+    { id: `${palette}-islamic-hall`, name: "Pure elegance", url: invitationAssetUrl(`heroes/islamic-hall/${palette}.webp`), objectPosition: "center center", zoom: 1 },
   ];
 }
 
-/** Every selectable scene retains its composition when the palette changes. */
 export const heroPresets: Record<PaletteId, HeroPreset[]> = {
-  beige: matchedHeroPresets("beige", builderAssetUrl("builder-hero-beige.webp")),
-  olive: matchedHeroPresets("olive", builderAssetUrl("builder-hero-olive.webp")),
-  "dusty-blue": matchedHeroPresets("dusty-blue", builderAssetUrl("builder-hero-dusty-blue.webp")),
-  burgundy: matchedHeroPresets("burgundy", builderAssetUrl("builder-hero-burgundy.webp")),
-  pink: matchedHeroPresets("pink", builderAssetUrl("builder-hero-pink.webp")),
-  lilac: matchedHeroPresets("lilac", builderAssetUrl("builder-hero-lilac.webp")),
+  beige: matchedHeroPresets("beige", invitationAssetUrl("heroes/signature/beige.webp")),
+  olive: matchedHeroPresets("olive", invitationAssetUrl("heroes/signature/olive.webp")),
+  "dusty-blue": matchedHeroPresets("dusty-blue", invitationAssetUrl("heroes/signature/dusty-blue.webp")),
+  burgundy: matchedHeroPresets("burgundy", invitationAssetUrl("heroes/signature/burgundy.webp")),
+  pink: matchedHeroPresets("pink", invitationAssetUrl("heroes/signature/pink.webp")),
+  lilac: matchedHeroPresets("lilac", invitationAssetUrl("heroes/signature/lilac.webp")),
 };
 
-/** Intimate portrait photos reserved for the scratch-to-reveal hero. */
 export const interactiveHeroPresets: HeroPreset[] = [
-  { id: "interactive-henna-hands", name: "Henna promise", url: builderAssetUrl("builder-interactive-henna-hands.webp"), objectPosition: "center center", zoom: 1 },
-  { id: "interactive-orchid-bouquet", name: "Orchid exchange", url: builderAssetUrl("builder-interactive-orchid-bouquet.webp"), objectPosition: "center center", zoom: 1 },
-  { id: "interactive-island-walk", name: "Island sunrise", url: builderAssetUrl("builder-interactive-island-walk.webp"), objectPosition: "center center", zoom: 1 },
+  { id: "interactive-henna-hands", name: "Henna promise", url: invitationAssetUrl("heroes/interactive/henna-hands.webp"), objectPosition: "center center", zoom: 1 },
+  { id: "interactive-orchid-bouquet", name: "Orchid exchange", url: invitationAssetUrl("heroes/interactive/orchid-bouquet.webp"), objectPosition: "center center", zoom: 1 },
+  { id: "interactive-island-walk", name: "Island sunrise", url: invitationAssetUrl("heroes/interactive/island-walk.webp"), objectPosition: "center center", zoom: 1 },
 ];
 
 export const interactiveFrameAssets: Record<PaletteId, string> = {
-  beige: builderAssetUrl("builder-frame-beige.webp"),
-  olive: builderAssetUrl("builder-frame-olive.webp"),
-  "dusty-blue": builderAssetUrl("builder-frame-dusty-blue.webp"),
-  burgundy: builderAssetUrl("builder-frame-burgundy.webp"),
-  pink: builderAssetUrl("builder-frame-pink.webp"),
-  lilac: builderAssetUrl("builder-frame-lilac.webp"),
+  beige: invitationAssetUrl("frames/beige.webp"),
+  olive: invitationAssetUrl("frames/olive.webp"),
+  "dusty-blue": invitationAssetUrl("frames/dusty-blue.webp"),
+  burgundy: invitationAssetUrl("frames/burgundy.webp"),
+  pink: invitationAssetUrl("frames/pink.webp"),
+  lilac: invitationAssetUrl("frames/lilac.webp"),
 };
 
-/** One faithful source is rendered in white for every palette. */
+const bismillahAsset = invitationAssetUrl("bismillah/default.webp");
 export const bismillahAssets: Record<PaletteId, string> = {
-  beige: builderAssetUrl("builder-bismillah-beige.webp"),
-  olive: builderAssetUrl("builder-bismillah-beige.webp"),
-  "dusty-blue": builderAssetUrl("builder-bismillah-beige.webp"),
-  burgundy: builderAssetUrl("builder-bismillah-beige.webp"),
-  pink: builderAssetUrl("builder-bismillah-beige.webp"),
-  lilac: builderAssetUrl("builder-bismillah-beige.webp"),
+  beige: bismillahAsset,
+  olive: bismillahAsset,
+  "dusty-blue": bismillahAsset,
+  burgundy: bismillahAsset,
+  pink: bismillahAsset,
+  lilac: bismillahAsset,
 };
+
+export const invitationPricing = {
+  base: 1000,
+  opening: 200,
+  interactiveHero: 200,
+} as const;
 
 export const openingOptions = [
   { id: "none" as const, name: "No opening", description: "Guests see the invitation immediately.", price: 0 },
-  { id: "envelope" as const, name: "Envelope & wax seal", description: "A full-screen envelope opens from the centre.", price: 200 },
-  { id: "curtain" as const, name: "Curtain reveal", description: "Elegant curtains part exactly from the middle.", price: 200 },
+  { id: "envelope" as const, name: "Envelope & wax seal", description: "A full-screen envelope opens from the centre.", price: invitationPricing.opening },
+  { id: "curtain" as const, name: "Curtain reveal", description: "Elegant curtains part exactly from the middle.", price: invitationPricing.opening },
 ] as const;
 
-function paletteAssetUrls(prefix: string): Record<PaletteId, string> {
+function paletteAssetUrls(path: string): Record<PaletteId, string> {
   return {
-    beige: builderAssetUrl(`${prefix}-beige.webp`),
-    olive: builderAssetUrl(`${prefix}-olive.webp`),
-    "dusty-blue": builderAssetUrl(`${prefix}-dusty-blue.webp`),
-    burgundy: builderAssetUrl(`${prefix}-burgundy.webp`),
-    pink: builderAssetUrl(`${prefix}-pink.webp`),
-    lilac: builderAssetUrl(`${prefix}-lilac.webp`),
+    beige: invitationAssetUrl(`${path}/beige.webp`),
+    olive: invitationAssetUrl(`${path}/olive.webp`),
+    "dusty-blue": invitationAssetUrl(`${path}/dusty-blue.webp`),
+    burgundy: invitationAssetUrl(`${path}/burgundy.webp`),
+    pink: invitationAssetUrl(`${path}/pink.webp`),
+    lilac: invitationAssetUrl(`${path}/lilac.webp`),
   };
 }
 
 export const openingAssets = {
   envelope: [
-    { id: "classic-envelope", name: "Classic botanical", urls: paletteAssetUrls("builder-envelope-classic") },
-    { id: "botanical-envelope", name: "Garden botanical", urls: paletteAssetUrls("builder-envelope-botanical") },
+    { id: "classic-envelope", name: "Classic botanical", urls: paletteAssetUrls("openings/envelopes/classic") },
+    { id: "botanical-envelope", name: "Garden botanical", urls: paletteAssetUrls("openings/envelopes/botanical") },
   ],
   curtain: [
-    { id: "classic-curtain", name: "Classic florals", urls: paletteAssetUrls("builder-curtain-classic") },
-    { id: "botanical-curtain", name: "Garden florals", urls: paletteAssetUrls("builder-curtain-botanical") },
+    { id: "classic-curtain", name: "Classic florals", urls: paletteAssetUrls("openings/curtains/classic") },
+    { id: "botanical-curtain", name: "Garden florals", urls: paletteAssetUrls("openings/curtains/botanical") },
   ],
 };
 
@@ -438,8 +441,8 @@ export function normalizeInvitationConfig(config: InvitationConfig): InvitationC
 }
 
 export function calculateInvitationPrice(config: InvitationConfig) {
-  const openingPrice = config.opening.type === "none" ? 0 : 200;
-  const heroPrice = config.hero.type === "interactive" ? 200 : 0;
+  const openingPrice = config.opening.type === "none" ? 0 : invitationPricing.opening;
+  const heroPrice = config.hero.type === "interactive" ? invitationPricing.interactiveHero : 0;
   const remainingIncluded = new Set<SectionType>(includedSectionTypes);
   const sectionsPrice = config.sections.reduce((total, section) => {
     if (section.included && remainingIncluded.has(section.type)) {
@@ -450,10 +453,10 @@ export function calculateInvitationPrice(config: InvitationConfig) {
   }, 0);
 
   return {
-    base: 1000,
+    base: invitationPricing.base,
     opening: openingPrice,
     hero: heroPrice,
     sections: sectionsPrice,
-    total: 1000 + openingPrice + heroPrice + sectionsPrice,
+    total: invitationPricing.base + openingPrice + heroPrice + sectionsPrice,
   };
 }
