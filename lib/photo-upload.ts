@@ -153,6 +153,9 @@ export function createPhotoPreparationManager(
 
     const id = crypto.randomUUID();
     const promise = enqueue(async () => {
+      // The queue may start synchronously; yield once so the stable job identity
+      // is registered before cancellation checks run.
+      await Promise.resolve();
       if (jobs.get(file)?.id !== id) throw new Error("Photo preparation was cancelled.");
       const result = await preparePhoto(file, target, previewSource);
       if (jobs.get(file)?.id !== id) throw new Error("Photo preparation was cancelled.");
