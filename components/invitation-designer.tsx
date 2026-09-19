@@ -579,6 +579,9 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
       return;
     }
 
+    // The previous local preview has already been invalidated. Show the normal
+    // preset while HEIC compatibility conversion prepares a browser-safe preview.
+    updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "preset", presetIndex: 0, uploadedUrl: "" } }));
     startHeicPreview(file, id, "hero", (preview) => {
       if (!isCurrentLocalPhoto(file, id)) return;
       const url = URL.createObjectURL(preview);
