@@ -282,15 +282,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   }
 
   function chooseHero(type: HeroType) {
-    if (config.hero.uploadedUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(config.hero.uploadedUrl);
-      objectUrls.current = objectUrls.current.filter((item) => item !== config.hero.uploadedUrl);
-    }
-    setPendingFiles((current) => {
-      const next = { ...current };
-      delete next.hero;
-      return next;
-    });
+    clearPhotoSlot("hero");
     updateConfig((current) => ({
       ...current,
       hero: { ...current.hero, type, photoSource: "preset", presetIndex: 0, uploadedUrl: "" },
@@ -299,15 +291,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   }
 
   function chooseHeroPreset(index: number) {
-    if (config.hero.uploadedUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(config.hero.uploadedUrl);
-      objectUrls.current = objectUrls.current.filter((item) => item !== config.hero.uploadedUrl);
-    }
-    setPendingFiles((current) => {
-      const next = { ...current };
-      delete next.hero;
-      return next;
-    });
+    clearPhotoSlot("hero");
     updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "preset", presetIndex: index, uploadedUrl: "" } }));
     activatePreview("hero");
   }
@@ -392,12 +376,13 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   function removeSection(id: string) {
     const section = config.sections.find((item) => item.id === id);
     if (!section || section.included) return;
+    const slot = `section:${id}:images`;
+    clearPhotoSlot(slot);
     section.images.filter((url) => url.startsWith("blob:")).forEach((url) => {
-      URL.revokeObjectURL(url);
-      objectUrls.current = objectUrls.current.filter((item) => item !== url);
+      if (previewFileByUrlRef.current.has(url)) return;
+      revokePreviewUrl(url);
     });
     updateConfig((current) => ({ ...current, sections: current.sections.filter((item) => item.id !== id) }));
-    setPendingFiles((current) => Object.fromEntries(Object.entries(current).filter(([key]) => !key.includes(id))));
   }
 
   function moveSection(id: string, direction: -1 | 1) {
