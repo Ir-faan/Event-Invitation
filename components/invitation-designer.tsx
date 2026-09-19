@@ -141,7 +141,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   const photoSlotByFileRef = useRef(new Map<File, string>());
   const previewFileByUrlRef = useRef(new Map<string, File>());
   const previewSourceByFileRef = useRef(new Map<File, Blob>());
-  const heicPreviewJobsRef = useRef(new Map<File, { id: string; promise: Promise<void> }>());
+  const heicPreviewJobsRef = useRef(new Map<File, { id: string; target: "" | "hero" | `section:${string}:images`; promise: Promise<void> }>());
   const glimpseHeicReservationsRef = useRef(new Map<string, Set<File>>());
   const processingPhotosRef = useRef(0);
   const previewProcessingRef = useRef(0);
@@ -424,6 +424,11 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     setPhotoProcessing(processingPhotosRef.current);
   }
 
+  function refreshPreviewProcessingTarget() {
+    const active = [...heicPreviewJobsRef.current.values()].pop();
+    setPhotoProcessingTarget((current) => current === "save" ? current : active?.target ?? "");
+  }
+
   function setPreviewProcessing(delta: number) {
     previewProcessingRef.current = Math.max(0, previewProcessingRef.current + delta);
     setPhotoPreviewProcessing(previewProcessingRef.current);
@@ -472,6 +477,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     if (previewJob) {
       heicPreviewJobsRef.current.delete(file);
       setPreviewProcessing(-1);
+      refreshPreviewProcessingTarget();
     }
 
     manager.cancel(file);
@@ -546,9 +552,10 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
       if (heicPreviewJobsRef.current.get(file)?.id === id) {
         heicPreviewJobsRef.current.delete(file);
         setPreviewProcessing(-1);
+        refreshPreviewProcessingTarget();
       }
     });
-    heicPreviewJobsRef.current.set(file, { id, promise });
+    heicPreviewJobsRef.current.set(file, { id, target, promise });
     void promise.catch(() => undefined);
   }
 
