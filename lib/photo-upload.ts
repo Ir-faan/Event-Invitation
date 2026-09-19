@@ -101,32 +101,28 @@ export async function preparePhoto(file: File, target: PhotoOptimizationTarget =
   }
 }
 
-type QueueTask<T> = {
-  run: () => Promise<T>;
-  resolve: (value: T) => void;
-  reject: (reason?: unknown) => void;
-};
-
 function createPreparationQueue(concurrency: number) {
-  const waiting: QueueTask<unknown>[] = [];
+  const waiting: Array<() => void> = [];
   let active = 0;
 
   function pump() {
     while (active < concurrency && waiting.length) {
-      const task = waiting.shift()!;
+      const start = waiting.shift()!;
       active += 1;
-      void task.run()
-        .then(task.resolve, task.reject)
-        .finally(() => {
-          active -= 1;
-          pump();
-        });
+      start();
     }
   }
 
   return function enqueue<T>(run: () => Promise<T>) {
     return new Promise<T>((resolve, reject) => {
-      waiting.push({ run, resolve, reject } as QueueTask<unknown>);
+      waiting.push(() => {
+        void run()
+          .then(resolve, reject)
+          .finally(() => {
+            active -= 1;
+            pump();
+          });
+      });
       pump();
     });
   };
