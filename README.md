@@ -2,6 +2,23 @@
 
 A mobile-first digital invitation service with an editorial landing page, two independent invitation examples, a guided invitation designer, and a private order dashboard.
 
+## Project structure
+
+The application is organized by feature so the main product areas are easy to find:
+
+- `app/` contains routes, route-level styles, API handlers, and shared application styles.
+- `components/landing/` contains the landing page and its real UI sections.
+- `components/designer/` contains the customer/admin invitation editor.
+- `components/dashboard/` contains the private order dashboard.
+- `components/invitation/` contains shared invitation rendering, custom sections, seating, confirmation UI, and the standalone invitation templates.
+- `components/shared/` contains small cross-feature UI elements.
+- `lib/` contains domain configuration, validation, persistence, media handling, authentication, and shared helpers.
+- `public/invitation/` contains palette-aware designer artwork.
+- `public/examples/` contains invitation example photos and thumbnails.
+- `public/landing/` contains landing-page-only artwork.
+- `public/templates/` contains assets used by the standalone Coastal Reverie and Rose Afterglow templates.
+
+
 ## Invitation designer
 
 Open `/design-invitation` or choose **Design your invitation** on the landing page. The builder lets a customer:
@@ -34,7 +51,7 @@ For an existing project, verify that `dashboard-migration.sql`, `media-commit-mi
 
 If you saw old media rows without an actual image, the read-only [`supabase/audit-existing-media.sql`](supabase/audit-existing-media.sql) lists them for review. It intentionally does not delete historical orders or photos automatically.
 
-Selected JPG, PNG and WebP photos appear immediately in the local preview. The 5 MB per-photo limit is checked before selection is accepted; optimization begins only when the invitation is saved. At that point the browser converts iPhone HEIC/HEIF photos for decoding and encodes uploads to an optimized WebP (up to 1,800px, aiming below 900 KB). Photos are always re-encoded to remove camera metadata. Server checks independently validate file signatures, MIME/extensions, dimensions and size, and strip private metadata. New Storage folders and public upload slots use opaque HMAC names; existing legacy paths remain valid. Objects stay immutable with a one-year browser/CDN cache lifetime. Gallery photos load lazily. No paid image-transformation feature is required; customer images are already optimized before entering Storage. The public invitation itself is checked on each request so undeployment remains immediate, even though immutable image URLs can stay in a visitor's browser cache.
+Selected JPG, PNG and WebP photos appear immediately in the local preview, while bounded background workers prepare optimized WebP files locally as the customer continues editing. HEIC/HEIF photos keep the compatibility conversion required for browser previewing, then follow the same local optimization path. The 5 MB per-photo limit is checked before a selection is accepted. Hero and Glimpse photos use different size targets, and Save reuses already prepared files instead of recompressing them; uploads still begin only after the customer presses Save. Removing or replacing a local photo revokes its preview URL and invalidates any stale preparation job. Server checks independently validate uploaded bytes, MIME/extensions, dimensions and size, and strip private metadata. New Storage folders and public upload slots use opaque HMAC names; existing legacy paths remain valid. Objects stay immutable with a one-year browser/CDN cache lifetime. Gallery photos load lazily. No paid image-transformation feature is required; customer images are optimized before entering Storage. The public invitation itself is checked on each request so undeployment remains immediate, even though immutable image URLs can stay in a visitor's browser cache.
 
 ## Private order dashboard
 
