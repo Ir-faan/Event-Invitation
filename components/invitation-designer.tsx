@@ -561,7 +561,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     if (jobs.length) await Promise.all(jobs);
   }
 
-  async function selectHeroPhoto(files: FileList | null) {
+  function selectHeroPhoto(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
     if (showFileValidationError([file])) return;
@@ -599,7 +599,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     activatePreview("hero");
   }
 
-  async function selectGlimpsePhotos(sectionId: string, list: FileList | null) {
+  function selectGlimpsePhotos(sectionId: string, list: FileList | null) {
     const files = Array.from(list ?? []);
     if (!files.length) return;
     const slot = `section:${sectionId}:images` as const;
