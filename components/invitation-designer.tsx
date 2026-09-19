@@ -806,13 +806,12 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
                 <div className="designer-subheading"><strong>Choose the {config.opening.type === "envelope" ? "envelope" : "curtain"} style</strong></div>
                 <div className="designer-image-options designer-opening-images">
                   {(config.opening.type === "envelope" ? openingAssets.envelope : openingAssets.curtain).map((asset) => (
-                    <button type="button" key={asset.id} className={config.opening.asset === asset.id ? "is-selected" : ""} onClick={() => {
+                    <button type="button" key={asset.id} aria-label={`Choose ${asset.name}`} className={config.opening.asset === asset.id ? "is-selected" : ""} onClick={() => {
                       updateConfig((current) => ({ ...current, opening: { ...current.opening, asset: asset.id } }));
                       setReplayKey((key) => key + 1);
                       activatePreview("opening");
                     }}>
                       <span className={`designer-opening-thumb ${config.opening.type === "envelope" ? "is-envelope" : ""}`}><img src={asset.urls[config.palette]} alt="" /></span>
-                      <strong>{asset.name}</strong>
                       {config.opening.asset === asset.id && <Check aria-hidden="true" />}
                     </button>
                   ))}
@@ -843,9 +842,8 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
               <div className="designer-subheading"><strong>Choose a photo</strong><span>{config.hero.type === "basic" ? "Each photo keeps the exact same composition when you change colours." : "Choose an intimate couple detail, or upload your own portrait photo."}</span></div>
               <div className="designer-image-options designer-hero-images">
                 {availableHeroPresets.map((asset, index) => asset.hidden ? null : (
-                  <button type="button" key={asset.id} className={config.hero.photoSource === "preset" && config.hero.presetIndex === index ? "is-selected" : ""} onClick={() => chooseHeroPreset(index)}>
-                    <span className="designer-hero-thumb"><img src={asset.url} alt={`${asset.name} preset`} style={{ objectPosition: asset.objectPosition, transform: `scale(${asset.zoom})` }} /></span>
-                    <strong>{asset.name}</strong>
+                  <button type="button" key={asset.id} aria-label={`Choose ${asset.name}`} className={config.hero.photoSource === "preset" && config.hero.presetIndex === index ? "is-selected" : ""} onClick={() => chooseHeroPreset(index)}>
+                    <span className="designer-hero-thumb"><img src={asset.url} alt="" style={{ objectPosition: asset.objectPosition, transform: `scale(${asset.zoom})` }} /></span>
                     {config.hero.photoSource === "preset" && config.hero.presetIndex === index && <Check aria-hidden="true" />}
                   </button>
                 ))}
