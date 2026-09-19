@@ -617,16 +617,16 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
 
     const normalFiles = files.filter((file) => !isHeicPhoto(file));
     if (normalFiles.length) {
-      const urls = normalFiles.map((file) => {
+      const previews = normalFiles.map((file) => {
         const id = registerLocalPhoto(file, slot);
         const url = URL.createObjectURL(file);
         trackPreviewUrl(url, file);
-        startBackgroundOptimization(file, "glimpse", id, file);
-        return url;
+        return { file, id, url };
       });
       updatePendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), ...normalFiles] }));
-      updateSection(sectionId, (section) => ({ ...section, images: [...section.images, ...urls] }));
+      updateSection(sectionId, (section) => ({ ...section, images: [...section.images, ...previews.map(({ url }) => url)] }));
       activatePreview(sectionId);
+      previews.forEach(({ file, id }) => startBackgroundOptimization(file, "glimpse", id, file));
     }
 
     const heicFiles = files.filter(isHeicPhoto);
