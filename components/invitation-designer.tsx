@@ -1177,7 +1177,7 @@ type SectionEditorProps = {
 
 function SectionEditor({ section, index, total, onActivate, onField, onItem, onAddItem, onRemoveItem, onTitle, onMove, onDuplicate, onRemove, onPhotos, onRemovePhoto, photoProgressLabel = "", defaultOpen = true, openWhenAdded = false, adminMode, readOnlyMode = false }: SectionEditorProps) {
   const definition = sectionDefinitions[section.type];
-  const [isOpen, setIsOpen] = useState(readOnlyMode || openWhenAdded || (defaultOpen && (section.type === "event-details" || (!section.included && index === total - 1))));
+  const [isOpen, setIsOpen] = useState(readOnlyMode || openWhenAdded || (defaultOpen && section.type === "countdown"));
   const mobileInitialOpen = useRef(index === 0 || openWhenAdded);
   const isAdminCustomSection = adminMode && section.type === "custom";
 
