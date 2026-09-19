@@ -29,6 +29,21 @@
   object-fit: cover;
 }
 
+/* The olive classic-envelope artwork has a narrow dark strip baked into each
+   vertical edge. Crop only those two landing-page uses so other cards keep
+   their existing framing. */
+.landing-refresh .collection-card > img[src="/images/examples/golden-nikkah-thumb.webp"] {
+  inset: 0 auto 0 -1.6%;
+  width: 103.2%;
+  max-width: none;
+}
+
+.landing-refresh .showcase-card img[src="/images/builder-envelope-classic-olive.webp"] {
+  width: 103.2%;
+  max-width: none;
+  margin-left: -1.6%;
+}
+
 .landing-refresh .collection-number {
   top: .7rem;
   left: .7rem;
