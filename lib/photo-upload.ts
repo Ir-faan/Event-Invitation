@@ -1,7 +1,12 @@
 import type { UploadedPhoto } from "@/lib/media-submission";
 
 export const maxOriginalImageBytes = 5 * 1024 * 1024;
-const targetUploadBytes = 900 * 1024;
+export type PhotoOptimizationTarget = "hero" | "glimpse";
+
+const optimizationTargets: Record<PhotoOptimizationTarget, { maxSide: number; targetBytes: number }> = {
+  hero: { maxSide: 1600, targetBytes: 850 * 1024 },
+  glimpse: { maxSide: 1200, targetBytes: 450 * 1024 },
+};
 
 export function isHeicPhoto(file: File) {
   return ["image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence"].includes(file.type.toLowerCase())
@@ -23,13 +28,36 @@ export async function preparePhotoPreview(file: File): Promise<Blob> {
   return isHeicPhoto(file) ? convertHeicPhoto(file) : file;
 }
 
-/** Keep each request below small edge/proxy body limits, including multipart overhead. */
-export async function preparePhoto(file: File): Promise<File> {
+function webpFile(file: File, blob: Blob) {
+  const name = file.name.replace(/\.[^.]+$/, "") || "photo";
+  return new File([blob], `${name}.webp`, { type: "image/webp", lastModified: file.lastModified });
+}
+
+async function encodeWebp(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+}
+
+function drawScaled(image: HTMLImageElement, maxSide: number) {
+  const ratio = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * ratio));
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Photo optimization is unavailable in this browser.");
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+
+/**
+ * Produce a metadata-free WebP with a target appropriate to how the photo is rendered.
+ * The adaptive path intentionally caps normal work at three WebP encodes.
+ */
+export async function preparePhoto(file: File, target: PhotoOptimizationTarget = "glimpse", previewSource?: Blob): Promise<File> {
   if (file.size > maxOriginalImageBytes) throw new Error(`${file.name} is over 5 MB. Please choose a smaller photo.`);
   if (typeof document === "undefined") throw new Error("Photo optimization is unavailable here. Please use a smaller photo.");
 
-  let imageSource: Blob = file;
-  if (isHeicPhoto(file)) imageSource = await convertHeicPhoto(file);
+  const settings = optimizationTargets[target];
+  const imageSource = previewSource ?? (isHeicPhoto(file) ? await convertHeicPhoto(file) : file);
   const objectUrl = URL.createObjectURL(imageSource);
   const image = new Image();
   try {
@@ -38,36 +66,150 @@ export async function preparePhoto(file: File): Promise<File> {
       image.onerror = () => reject(new Error(`Could not read ${file.name}. Please choose a different photo.`));
       image.src = objectUrl;
     });
+
     if (image.naturalWidth > 12_000 || image.naturalHeight > 12_000 || image.naturalWidth * image.naturalHeight > 40_000_000) {
       throw new Error(`${file.name} has too many pixels. Please resize it before uploading.`);
     }
-    for (const maxSide of [1800, 1600, 1280, 1024]) {
-      const ratio = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));
-      canvas.height = Math.max(1, Math.round(image.naturalHeight * ratio));
-      const context = canvas.getContext("2d");
-      if (!context) break;
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      for (const quality of [.88, .82, .76]) {
-        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", quality));
-        if (blob?.type === "image/webp" && blob.size <= targetUploadBytes) {
-          const name = file.name.replace(/\.[^.]+$/, "") || "photo";
-          return new File([blob], `${name}.webp`, { type: "image/webp", lastModified: file.lastModified });
-        }
-      }
+
+    // An already-small WebP does not benefit from another lossy encode. Server-side
+    // structural validation/metadata cleaning still runs before Storage accepts it.
+    if (!isHeicPhoto(file) && file.type === "image/webp"
+      && file.size <= settings.targetBytes
+      && Math.max(image.naturalWidth, image.naturalHeight) <= settings.maxSide) {
+      return file;
     }
 
-    throw new Error(`${file.name} is too large after optimization. Please use a smaller photo (under 900 KB).`);
+    let canvas = drawScaled(image, settings.maxSide);
+    let blob = await encodeWebp(canvas, .82);
+    if (blob?.type === "image/webp" && blob.size <= settings.targetBytes) return webpFile(file, blob);
+
+    blob = await encodeWebp(canvas, .74);
+    if (blob?.type === "image/webp" && blob.size <= settings.targetBytes) return webpFile(file, blob);
+
+    if (!blob?.size) throw new Error(`${file.name} could not be optimized. Please choose a different photo.`);
+    const adaptiveScale = Math.max(.68, Math.min(.9, Math.sqrt(settings.targetBytes / blob.size) * .95));
+    const reducedMaxSide = Math.max(720, Math.round(settings.maxSide * adaptiveScale));
+    canvas = drawScaled(image, reducedMaxSide);
+    blob = await encodeWebp(canvas, .76);
+    if (blob?.type === "image/webp" && blob.size <= settings.targetBytes) return webpFile(file, blob);
+
+    const targetKb = Math.round(settings.targetBytes / 1024);
+    throw new Error(`${file.name} is too large after optimization. Please use a smaller photo (target under ${targetKb} KB).`);
   } finally {
+    image.src = "";
     URL.revokeObjectURL(objectUrl);
   }
 }
 
-export async function preparePendingPhotos(pendingFiles: Record<string, File[]>, prepared: Map<File, File>) {
-  for (const files of Object.values(pendingFiles)) {
+type QueueTask<T> = {
+  run: () => Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason?: unknown) => void;
+};
+
+function createPreparationQueue(concurrency: number) {
+  const waiting: QueueTask<unknown>[] = [];
+  let active = 0;
+
+  function pump() {
+    while (active < concurrency && waiting.length) {
+      const task = waiting.shift()!;
+      active += 1;
+      void task.run()
+        .then(task.resolve, task.reject)
+        .finally(() => {
+          active -= 1;
+          pump();
+        });
+    }
+  }
+
+  return function enqueue<T>(run: () => Promise<T>) {
+    return new Promise<T>((resolve, reject) => {
+      waiting.push({ run, resolve, reject } as QueueTask<unknown>);
+      pump();
+    });
+  };
+}
+
+type PreparationJob = { id: string; promise: Promise<File> };
+
+export function createPhotoPreparationManager(
+  prepared: Map<File, File>,
+  concurrency = 2,
+  onPendingDelta?: (delta: number) => void,
+) {
+  const enqueue = createPreparationQueue(Math.max(1, concurrency));
+  const jobs = new Map<File, PreparationJob>();
+  const failures = new Map<File, Error>();
+
+  function prepare(file: File, target: PhotoOptimizationTarget, previewSource?: Blob): Promise<File> {
+    const cached = prepared.get(file);
+    if (cached) return Promise.resolve(cached);
+    const failed = failures.get(file);
+    if (failed) return Promise.reject(failed);
+    const current = jobs.get(file);
+    if (current) return current.promise;
+
+    const id = crypto.randomUUID();
+    const promise = enqueue(async () => {
+      if (jobs.get(file)?.id !== id) throw new Error("Photo preparation was cancelled.");
+      const result = await preparePhoto(file, target, previewSource);
+      if (jobs.get(file)?.id !== id) throw new Error("Photo preparation was cancelled.");
+      prepared.set(file, result);
+      return result;
+    }).catch((cause) => {
+      if (jobs.get(file)?.id === id) {
+        const error = cause instanceof Error ? cause : new Error(`${file.name} could not be optimized.`);
+        failures.set(file, error);
+      }
+      throw cause;
+    }).finally(() => {
+      if (jobs.get(file)?.id === id) {
+        jobs.delete(file);
+        onPendingDelta?.(-1);
+      }
+    });
+
+    jobs.set(file, { id, promise });
+    failures.delete(file);
+    onPendingDelta?.(1);
+    // Background jobs are intentionally fire-and-forget until Save awaits them.
+    void promise.catch(() => undefined);
+    return promise;
+  }
+
+  function cancel(file: File) {
+    if (jobs.delete(file)) onPendingDelta?.(-1);
+    prepared.delete(file);
+    failures.delete(file);
+  }
+
+  function clear(notify = true) {
+    const count = jobs.size;
+    jobs.clear();
+    prepared.clear();
+    failures.clear();
+    if (notify && count) onPendingDelta?.(-count);
+  }
+
+  return {
+    prepare,
+    cancel,
+    clear,
+    getError: (file: File) => failures.get(file),
+    hasPending: (file: File) => jobs.has(file),
+  };
+}
+
+export async function preparePendingPhotos(
+  pendingFiles: Record<string, File[]>,
+  prepared: Map<File, File>,
+) {
+  for (const [slot, files] of Object.entries(pendingFiles)) {
+    const target: PhotoOptimizationTarget = slot === "hero" ? "hero" : "glimpse";
     for (const file of files) {
-      if (!prepared.has(file)) prepared.set(file, await preparePhoto(file));
+      if (!prepared.has(file)) prepared.set(file, await preparePhoto(file, target));
     }
   }
 }
@@ -87,6 +229,7 @@ export async function uploadPendingPhotos(
   });
   let cursor = 0;
   let failure: unknown;
+
   async function worker() {
     while (!failure && cursor < jobs.length) {
       const { slot, file, index } = jobs[cursor++];
@@ -94,8 +237,10 @@ export async function uploadPendingPhotos(
       try {
         let photo = uploaded.get(currentSlot);
         if (!photo) {
+          const optimized = prepared.get(file);
+          if (!optimized) throw new Error(`${file.name} has not finished optimizing. Please try saving again.`);
           const form = new FormData();
-          form.set("file", prepared.get(file) ?? file);
+          form.set("file", optimized);
           form.set("invitationId", invitationId);
           if (uploadToken) form.set("uploadToken", uploadToken);
           form.set("slot", currentSlot);
@@ -109,11 +254,14 @@ export async function uploadPendingPhotos(
           uploaded.set(currentSlot, photo);
         }
         uploadedBySlot[slot][index] = photo.url;
-      } catch (error) { failure = error; }
+      } catch (error) {
+        failure = error;
+      }
     }
   }
-  // Wait for BOTH workers before compensation; no late upload escapes cleanup.
-  await Promise.all([worker(), worker()]);
+
+  // Four workers shorten large batches while still bounding mobile/network pressure.
+  await Promise.all([worker(), worker(), worker(), worker()]);
   if (failure) throw failure;
   return uploadedBySlot;
 }
