@@ -111,34 +111,25 @@
    The iframe viewport is deliberately much wider, then scaled down, so it does
    not switch to the designer's mobile layout and look zoomed-in. */
 @media (max-width: 760px) {
-  /* Keep a strong CTA in the visual centre of the mobile navbar. */
+  /* Mobile navbar: brand on the left, menu on the right. */
   .landing-refresh .site-nav {
     position: fixed;
   }
 
   .landing-refresh .site-nav > .nav-action {
-    display: inline-flex !important;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    z-index: 3;
-    transform: translate(-50%, -50%);
-    min-height: 2.55rem;
-    padding: 0 .95rem;
-    border-radius: 999px;
-    color: #fff;
-    background: var(--wine);
-    box-shadow: 0 .55rem 1.25rem rgba(74,25,34,.16);
-    font-size: .66rem;
+    display: none !important;
+  }
+
+  .landing-refresh .site-nav > .brand > span:last-child {
+    display: inline-block;
+    font-size: 0;
     white-space: nowrap;
   }
 
-  .landing-refresh .site-nav > .nav-action:hover {
-    transform: translate(-50%, -50%);
-  }
-
-  .landing-refresh .site-nav > .nav-action svg {
-    width: .8rem;
+  .landing-refresh .site-nav > .brand > span:last-child::after {
+    content: "Paperless Invite";
+    font: 600 .92rem var(--serif);
+    letter-spacing: .02em;
   }
 
   /* Tighten the customise section so the designer preview sits directly below
