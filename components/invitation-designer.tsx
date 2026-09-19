@@ -115,6 +115,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [saveError, setSaveError] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [photoSizeNoticeKey, setPhotoSizeNoticeKey] = useState(0);
   const [showDesktopTip, setShowDesktopTip] = useState(true);
   const [replayKey, setReplayKey] = useState(0);
   const [previewFocus, setPreviewFocus] = useState<PreviewFocus>({ target: "hero", key: 0 });
@@ -211,6 +212,12 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     const timer = window.setTimeout(() => setShowDesktopTip(false), 7000);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!photoSizeNoticeKey) return;
+    const timer = window.setTimeout(() => setPhotoSizeNoticeKey(0), 3000);
+    return () => window.clearTimeout(timer);
+  }, [photoSizeNoticeKey]);
 
   function updateConfig(updater: (current: InvitationConfig) => InvitationConfig) {
     if (saveState === "saving" || adminAction) return;
@@ -388,6 +395,14 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     return "";
   }
 
+  function showFileValidationError(files: File[]) {
+    const error = validateFiles(files);
+    if (!error) return false;
+    if (!adminMode && files.some((file) => file.size > maxOriginalImageBytes)) setPhotoSizeNoticeKey((key) => key + 1);
+    else setSaveError(error);
+    return true;
+  }
+
   function setProcessing(delta: number) {
     processingPhotosRef.current = Math.max(0, processingPhotosRef.current + delta);
     setPhotoProcessing(processingPhotosRef.current);
@@ -406,8 +421,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   async function selectHeroPhoto(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
-    const error = validateFiles([file]);
-    if (error) { setSaveError(error); return; }
+    if (showFileValidationError([file])) return;
     if (processingPhotosRef.current) { setSaveError("Please wait for your current photos to finish preparing before choosing more."); return; }
     const needsConversion = isHeicPhoto(file);
     if (needsConversion) {
@@ -456,8 +470,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     const currentCount = config.sections.find((section) => section.id === sectionId)?.images.length ?? 0;
     const files = Array.from(list ?? []).slice(0, Math.max(0, 8 - currentCount));
     if (!files.length) return;
-    const error = validateFiles(files);
-    if (error) { setSaveError(error); return; }
+    if (showFileValidationError(files)) return;
     if (processingPhotosRef.current) { setSaveError("Please wait for your current photos to finish preparing before choosing more."); return; }
     const needsConversion = files.some(isHeicPhoto);
     const slot = `section:${sectionId}:images` as const;
@@ -743,6 +756,12 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
       </div>
 
       {!adminMode && !readOnlyMode && showDesktopTip && <div className="designer-device-tip" role="status"><Monitor aria-hidden="true" /><span>For the easiest design experience, use a laptop or desktop computer.</span></div>}
+      {!adminMode && !readOnlyMode && photoSizeNoticeKey > 0 && (
+        <div key={photoSizeNoticeKey} className="designer-upload-size-tip" role="alert">
+          <Info aria-hidden="true" />
+          <span><strong>Image too large.</strong> Please choose a photo of 5 MB or smaller.</span>
+        </div>
+      )}
 
       <div className="designer-workspace">
         <form inert={saveState === "saving" || Boolean(adminAction)} id="invitation-designer-form" className="designer-form" onSubmit={saveDesign} noValidate>
