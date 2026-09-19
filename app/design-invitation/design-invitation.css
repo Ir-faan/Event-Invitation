@@ -56,6 +56,16 @@
 .designer-page .designer-home-link:hover,
 .designer-page .designer-home-link:focus-visible { color: #fff; }
 .designer-page .designer-home-link svg { color: #fff; stroke: currentColor; }
+.designer-admin-back {
+  width: 2.7rem;
+  height: 2.7rem;
+  min-height: 2.7rem;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+.designer-admin-header .designer-admin-title { justify-self: center; }
+.designer-admin-title h1 { margin: 0; white-space: nowrap; }
 .designer-title { display: flex; align-items: center; gap: .8rem; }
 .designer-brand-mark { display: grid; place-items: center; width: 3.2rem; height: 3.2rem; flex: 0 0 auto; border: 1px solid color-mix(in srgb,var(--builder-accent) 35%,transparent); border-radius: 50%; color: var(--builder-accent); background: rgba(255,255,255,.65); font-size: .72rem; font-weight: 800; letter-spacing: .14em; }
 .designer-title p, .designer-title h1 { margin: 0; }
@@ -805,6 +815,32 @@
     background: linear-gradient(135deg,color-mix(in srgb,var(--builder-accent) 86%,#fff),var(--builder-accent));
     box-shadow: 0 .45rem 1rem color-mix(in srgb,var(--builder-accent) 22%,transparent);
   }
+  .designer-admin-header {
+    min-height: 4.5rem;
+    grid-template-columns: 2.7rem minmax(0,1fr) 2.7rem;
+    grid-template-rows: 1fr;
+    align-items: center;
+    gap: .5rem;
+    padding: .6rem 0;
+  }
+  .designer-admin-header .designer-admin-back {
+    grid-column: 1;
+    grid-row: 1;
+    width: 2.7rem;
+    height: 2.7rem;
+    min-height: 2.7rem;
+    justify-self: start;
+    justify-content: center;
+    padding: 0;
+  }
+  .designer-admin-header .designer-admin-title {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+    justify-content: center;
+    min-width: 0;
+  }
+  .designer-admin-header .designer-header-price { grid-column: 3; grid-row: 1; }
   .designer-title { grid-column: 1; grid-row: 2; min-width: 0; }
   .designer-header-price { grid-column: 2; grid-row: 2; display: grid; }
   .designer-mobile-preview .designer-header-price { display: none; }
@@ -859,6 +895,7 @@
     justify-content: center;
     min-width: 0;
   }
+  .designer-admin-header .designer-admin-title h1 { font-size: 1.1rem; }
   .designer-title p { display: none; }
   .designer-customer-header .designer-title h1 { margin: 0; font-size: 1.1rem; white-space: nowrap; }
   .designer-title h1 { margin: 0; font-size: 1.1rem; }

@@ -701,15 +701,15 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
           <span key={index} style={{ "--petal-x": `${(index * 29) % 97}%`, "--petal-delay": `${-(index % 7) * 2.1}s`, "--petal-duration": `${15 + (index % 5) * 2.4}s` } as CSSProperties}>{index % 3 === 0 ? "❀" : "·"}</span>
         ))}
       </div>
-      <header className={`designer-header${!adminMode && !readOnlyMode ? " designer-customer-header" : ""}`}>
+      <header className={`designer-header${adminMode ? " designer-admin-header" : !readOnlyMode ? " designer-customer-header" : ""}`}>
         {adminMode
-          ? <button type="button" className="designer-back admin-designer-back" onClick={onAdminBack}><ArrowLeft aria-hidden="true" /> Back to orders</button>
+          ? <button type="button" className="designer-back designer-home-link designer-admin-back" onClick={onAdminBack} aria-label="Back to orders"><ArrowLeft aria-hidden="true" /></button>
           : readOnlyMode
             ? <Link href={`/examples/${exampleSlug}`} className="designer-back"><ArrowLeft aria-hidden="true" /> Back to example</Link>
             : <Link href="/" className="designer-back designer-home-link"><ArrowLeft aria-hidden="true" /> Back to Home</Link>}
-        <div className="designer-title">
+        <div className={`designer-title${adminMode ? " designer-admin-title" : ""}`}>
           <span className="designer-brand-mark">PI</span>
-          <div><p>{adminMode ? `Order ${currentAdminOrder?.id.slice(0, 8)}` : readOnlyMode ? "Read-only design setup" : "Invitation designer"}</p><h1>{adminMode ? "Edit invitation" : readOnlyMode ? exampleName : "Create your invitation"}</h1></div>
+          <div>{!adminMode && <p>{readOnlyMode ? "Read-only design setup" : "Invitation designer"}</p>}<h1>{adminMode ? "Edit Invitation" : readOnlyMode ? exampleName : "Create your invitation"}</h1></div>
         </div>
         <div className="designer-header-price"><span>{adminMode ? "Order price" : readOnlyMode ? "Example price" : "Your price"}</span><strong>Rs {(adminMode ? adminPrice : price.total).toLocaleString("en-US")}</strong></div>
       </header>
