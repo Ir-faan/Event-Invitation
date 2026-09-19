@@ -689,12 +689,12 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
           <span key={index} style={{ "--petal-x": `${(index * 29) % 97}%`, "--petal-delay": `${-(index % 7) * 2.1}s`, "--petal-duration": `${15 + (index % 5) * 2.4}s` } as CSSProperties}>{index % 3 === 0 ? "❀" : "·"}</span>
         ))}
       </div>
-      <header className="designer-header">
+      <header className={`designer-header${!adminMode && !readOnlyMode ? " designer-customer-header" : ""}`}>
         {adminMode
           ? <button type="button" className="designer-back admin-designer-back" onClick={onAdminBack}><ArrowLeft aria-hidden="true" /> Back to orders</button>
           : readOnlyMode
             ? <Link href={`/examples/${exampleSlug}`} className="designer-back"><ArrowLeft aria-hidden="true" /> Back to example</Link>
-            : <Link href="/" className="designer-back"><House aria-hidden="true" /> Back to Home</Link>}
+            : <Link href="/" className="designer-back designer-home-link"><House aria-hidden="true" /> Back to Home</Link>}
         <div className="designer-title">
           <span className="designer-brand-mark">PI</span>
           <div><p>{adminMode ? `Order ${currentAdminOrder?.id.slice(0, 8)}` : readOnlyMode ? "Read-only design setup" : "Invitation designer"}</p><h1>{adminMode ? "Edit invitation" : readOnlyMode ? exampleName : "Create your invitation"}</h1></div>
