@@ -40,7 +40,7 @@ import { InvitationPhonePreview } from "@/components/invitation-phone-preview";
 import { OrderConfirmationModal } from "@/components/order-confirmation-modal";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
-import { isHeicPhoto, maxOriginalImageBytes, preparePendingPhotos, preparePhotoPreview, selectedUploadedPhotos, uploadPendingPhotos } from "@/lib/photo-upload";
+import { createPhotoPreparationManager, isHeicPhoto, maxOriginalImageBytes, preparePhotoPreview, selectedUploadedPhotos, uploadPendingPhotos } from "@/lib/photo-upload";
 import type { UploadedPhoto } from "@/lib/media-submission";
 import { customerWhatsAppUrl, invitationPublicUrl } from "@/lib/whatsapp-messages";
 import {
@@ -111,6 +111,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   const [newlyAddedSectionId, setNewlyAddedSectionId] = useState("");
   const [pendingFiles, setPendingFiles] = useState<Record<string, File[]>>({});
   const [photoProcessing, setPhotoProcessing] = useState(0);
+  const [photoPreviewProcessing, setPhotoPreviewProcessing] = useState(0);
   const [photoProcessingTarget, setPhotoProcessingTarget] = useState<"" | "hero" | "save" | `section:${string}:images`>("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [saveError, setSaveError] = useState("");
@@ -135,8 +136,20 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   const preparedPhotoRef = useRef(new Map<File, File>());
   const uploadedPhotoUrlsRef = useRef(new Map<string, UploadedPhoto>());
   const objectUrls = useRef<string[]>([]);
+  const pendingFilesRef = useRef<Record<string, File[]>>({});
+  const localPhotoIdsRef = useRef(new Map<File, string>());
+  const photoSlotByFileRef = useRef(new Map<File, string>());
+  const previewFileByUrlRef = useRef(new Map<string, File>());
+  const heicPreviewJobsRef = useRef(new Map<File, { id: string; promise: Promise<void> }>());
+  const glimpseHeicReservationsRef = useRef(new Map<string, Set<File>>());
   const processingPhotosRef = useRef(0);
+  const previewProcessingRef = useRef(0);
+  const photoPreparationManagerRef = useRef<ReturnType<typeof createPhotoPreparationManager> | null>(null);
   const sectionMoveAnchor = useRef<{ id: string; top: number; focusedControl: HTMLElement | null } | null>(null);
+
+  if (!photoPreparationManagerRef.current) {
+    photoPreparationManagerRef.current = createPhotoPreparationManager(preparedPhotoRef.current, 2, (delta) => setProcessing(delta));
+  }
   const price = useMemo(() => calculateInvitationPrice(config), [config]);
   const palette = getPalette(config.palette);
   const availableHeroPresets = getHeroPresets(config);
@@ -158,7 +171,16 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     ? `https://wa.me/${whatsappSupportNumber}?text=${encodeURIComponent(whatsappSupportMessage)}`
     : "/#consultation";
 
-  useEffect(() => () => objectUrls.current.forEach((url) => URL.revokeObjectURL(url)), []);
+  useEffect(() => () => {
+    objectUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    objectUrls.current = [];
+    previewFileByUrlRef.current.clear();
+    localPhotoIdsRef.current.clear();
+    photoSlotByFileRef.current.clear();
+    heicPreviewJobsRef.current.clear();
+    glimpseHeicReservationsRef.current.clear();
+    photoPreparationManagerRef.current?.clear(false);
+  }, []);
 
   useEffect(() => {
     function closeOpenPicker(event: PointerEvent) {
