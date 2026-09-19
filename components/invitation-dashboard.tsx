@@ -7,6 +7,7 @@ import {
   ArrowUp,
   ArrowUpDown,
   CalendarClock,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
@@ -436,7 +437,25 @@ function DataTableFooter({ count, page, pageSize, totalPages, onPage, onPageSize
   return (
     <footer className="orders-table-footer">
       <span>Showing {first}–{last} of {count}</span>
-      <label>Rows<select value={pageSize} onChange={(event) => onPageSize(Number(event.target.value))}><option value="10">10</option><option value="25">25</option><option value="50">50</option></select></label>
+      <label className="orders-page-size-native">Rows<select value={pageSize} onChange={(event) => onPageSize(Number(event.target.value))}><option value="10">10</option><option value="25">25</option><option value="50">50</option></select></label>
+      <details className="orders-page-size-mobile">
+        <summary aria-label={`Rows per page: ${pageSize}`}><span>Rows</span><strong>{pageSize}</strong><ChevronDown aria-hidden="true" /></summary>
+        <div>
+          {[10, 25, 50].map((size) => (
+            <button
+              type="button"
+              key={size}
+              className={pageSize === size ? "is-selected" : ""}
+              onClick={(event) => {
+                onPageSize(size);
+                event.currentTarget.closest("details")?.removeAttribute("open");
+              }}
+            >
+              {size}
+            </button>
+          ))}
+        </div>
+      </details>
       <div><button type="button" onClick={() => onPage(page - 1)} disabled={page <= 1}><ChevronLeft /><span className="sr-only">Previous page</span></button><span>Page {page} of {totalPages}</span><button type="button" onClick={() => onPage(page + 1)} disabled={page >= totalPages}><ChevronRight /><span className="sr-only">Next page</span></button></div>
     </footer>
   );
