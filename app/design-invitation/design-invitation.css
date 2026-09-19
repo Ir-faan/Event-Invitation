@@ -791,10 +791,10 @@
   .designer-header { width: calc(100% - 1rem); gap: .5rem; }
   .designer-customer-header {
     min-height: 4.5rem;
-    grid-template-columns: auto minmax(0,1fr);
+    grid-template-columns: 2.7rem minmax(0,1fr) 2.7rem;
     grid-template-rows: 1fr;
     align-items: center;
-    gap: .75rem;
+    gap: .5rem;
     padding: .6rem 0;
   }
   .designer-customer-header .designer-home-link {
@@ -814,8 +814,8 @@
   .designer-customer-header .designer-title {
     grid-column: 2;
     grid-row: 1;
-    justify-self: end;
-    justify-content: flex-end;
+    justify-self: center;
+    justify-content: center;
     min-width: 0;
   }
   .designer-title p { display: none; }

@@ -15,7 +15,6 @@ import {
   Eye,
   ExternalLink,
   Heart,
-  House,
   Image as ImageIcon,
   Info,
   LockKeyhole,
@@ -694,7 +693,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
           ? <button type="button" className="designer-back admin-designer-back" onClick={onAdminBack}><ArrowLeft aria-hidden="true" /> Back to orders</button>
           : readOnlyMode
             ? <Link href={`/examples/${exampleSlug}`} className="designer-back"><ArrowLeft aria-hidden="true" /> Back to example</Link>
-            : <Link href="/" className="designer-back designer-home-link"><House aria-hidden="true" /> Back to Home</Link>}
+            : <Link href="/" className="designer-back designer-home-link"><ArrowLeft aria-hidden="true" /> Back to Home</Link>}
         <div className="designer-title">
           <span className="designer-brand-mark">PI</span>
           <div><p>{adminMode ? `Order ${currentAdminOrder?.id.slice(0, 8)}` : readOnlyMode ? "Read-only design setup" : "Invitation designer"}</p><h1>{adminMode ? "Edit invitation" : readOnlyMode ? exampleName : "Create your invitation"}</h1></div>
