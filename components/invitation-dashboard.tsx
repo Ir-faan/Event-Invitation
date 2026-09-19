@@ -434,11 +434,25 @@ function OrderRow({ order, busy, onOpen, onDeploy, onDelete, onDuplicate, onDeac
 function DataTableFooter({ count, page, pageSize, totalPages, onPage, onPageSize }: { count: number; page: number; pageSize: number; totalPages: number; onPage: (page: number) => void; onPageSize: (size: number) => void }) {
   const first = count ? (page - 1) * pageSize + 1 : 0;
   const last = Math.min(page * pageSize, count);
+  const mobilePageSizeRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    function closePageSizeMenu(event: PointerEvent) {
+      const menu = mobilePageSizeRef.current;
+      const target = event.target;
+      if (!menu?.open || !(target instanceof Node) || menu.contains(target)) return;
+      menu.open = false;
+    }
+
+    document.addEventListener("pointerdown", closePageSizeMenu);
+    return () => document.removeEventListener("pointerdown", closePageSizeMenu);
+  }, []);
+
   return (
     <footer className="orders-table-footer">
       <span>Showing {first}–{last} of {count}</span>
       <label className="orders-page-size-native">Rows<select value={pageSize} onChange={(event) => onPageSize(Number(event.target.value))}><option value="10">10</option><option value="25">25</option><option value="50">50</option></select></label>
-      <details className="orders-page-size-mobile">
+      <details ref={mobilePageSizeRef} className="orders-page-size-mobile">
         <summary aria-label={`Rows per page: ${pageSize}`}><span>Rows</span><strong>{pageSize}</strong><ChevronDown aria-hidden="true" /></summary>
         <div>
           {[10, 25, 50].map((size) => (
