@@ -884,7 +884,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
             activeUntil={adminActiveUntil}
             today={today}
             action={adminAction}
-            photosProcessing={photoProcessing > 0}
+            photosProcessing={photoPreviewProcessing > 0}
             publicOrigin={publicOrigin}
             customerName={config.contact.name}
             customerPhone={config.contact.phone}
@@ -1103,7 +1103,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
             </div>
           )}
           {!readOnlyMode && <div className="designer-submit-panel">
-            <button className={`designer-final-save ${saveState === "submitted" || saveState === "saved" ? "is-complete" : ""}`} type="submit" disabled={photoProcessing > 0 || saveState === "saving" || saveState === "submitted" || saveState === "saved"}>{saveState === "saving" ? <Loader2 className="is-spinning" aria-hidden="true" /> : saveState === "submitted" || saveState === "saved" ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}{saveButtonText}</button>
+            <button className={`designer-final-save ${saveState === "submitted" || saveState === "saved" ? "is-complete" : ""}`} type="submit" disabled={photoPreviewProcessing > 0 || saveState === "saving" || saveState === "submitted" || saveState === "saved"}>{saveState === "saving" ? <Loader2 className="is-spinning" aria-hidden="true" /> : saveState === "submitted" || saveState === "saved" ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}{saveButtonText}</button>
             <p>{adminMode
               ? currentAdminOrder?.status === "active"
                 ? "Updating publishes these edits and the active-until date above to the live invitation, then returns you to the orders table."
