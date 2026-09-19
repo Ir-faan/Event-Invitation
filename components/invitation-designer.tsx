@@ -140,6 +140,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   const localPhotoIdsRef = useRef(new Map<File, string>());
   const photoSlotByFileRef = useRef(new Map<File, string>());
   const previewFileByUrlRef = useRef(new Map<string, File>());
+  const previewSourceByFileRef = useRef(new Map<File, Blob>());
   const heicPreviewJobsRef = useRef(new Map<File, { id: string; promise: Promise<void> }>());
   const glimpseHeicReservationsRef = useRef(new Map<string, Set<File>>());
   const processingPhotosRef = useRef(0);
@@ -175,6 +176,7 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     objectUrls.current.forEach((url) => URL.revokeObjectURL(url));
     objectUrls.current = [];
     previewFileByUrlRef.current.clear();
+    previewSourceByFileRef.current.clear();
     localPhotoIdsRef.current.clear();
     photoSlotByFileRef.current.clear();
     heicPreviewJobsRef.current.clear();
@@ -437,57 +439,174 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     setPhotoProcessing(processingPhotosRef.current);
   }
 
-  async function preparePhotosForSave() {
-    if (!pendingPhotoCount) return;
-    setProcessing(1);
-    try {
-      await preparePendingPhotos(pendingFiles, preparedPhotoRef.current);
-    } finally {
-      setProcessing(-1);
+  function setPreviewProcessing(delta: number) {
+    previewProcessingRef.current = Math.max(0, previewProcessingRef.current + delta);
+    setPhotoPreviewProcessing(previewProcessingRef.current);
+    if (previewProcessingRef.current === 0) {
+      setPhotoProcessingTarget((current) => current === "save" ? current : "");
     }
+  }
+
+  function updatePendingFiles(updater: (current: Record<string, File[]>) => Record<string, File[]>) {
+    const next = updater(pendingFilesRef.current);
+    pendingFilesRef.current = next;
+    setPendingFiles(next);
+  }
+
+  function registerLocalPhoto(file: File, slot: string) {
+    const id = crypto.randomUUID();
+    localPhotoIdsRef.current.set(file, id);
+    photoSlotByFileRef.current.set(file, slot);
+    return id;
+  }
+
+  function isCurrentLocalPhoto(file: File, id: string) {
+    return localPhotoIdsRef.current.get(file) === id;
+  }
+
+  function trackPreviewUrl(url: string, file: File) {
+    objectUrls.current.push(url);
+    previewFileByUrlRef.current.set(url, file);
+  }
+
+  function revokePreviewUrl(url: string) {
+    if (!url.startsWith("blob:")) return;
+    URL.revokeObjectURL(url);
+    objectUrls.current = objectUrls.current.filter((item) => item !== url);
+    previewFileByUrlRef.current.delete(url);
+  }
+
+  function discardLocalPhoto(file: File) {
+    const manager = photoPreparationManagerRef.current!;
+    const hadOptimizationError = Boolean(manager.getError(file));
+    localPhotoIdsRef.current.delete(file);
+    photoSlotByFileRef.current.delete(file);
+    previewSourceByFileRef.current.delete(file);
+
+    const previewJob = heicPreviewJobsRef.current.get(file);
+    if (previewJob) {
+      heicPreviewJobsRef.current.delete(file);
+      setPreviewProcessing(-1);
+    }
+
+    manager.cancel(file);
+    for (const [url, previewFile] of [...previewFileByUrlRef.current.entries()]) {
+      if (previewFile === file) revokePreviewUrl(url);
+    }
+    for (const [slot, reserved] of [...glimpseHeicReservationsRef.current.entries()]) {
+      reserved.delete(file);
+      if (!reserved.size) glimpseHeicReservationsRef.current.delete(slot);
+    }
+    if (hadOptimizationError) setSaveError("");
+  }
+
+  function clearPhotoSlot(slot: string) {
+    const files = [...photoSlotByFileRef.current.entries()]
+      .filter(([, currentSlot]) => currentSlot === slot)
+      .map(([file]) => file);
+    files.forEach(discardLocalPhoto);
+    updatePendingFiles((current) => {
+      if (!(slot in current)) return current;
+      const next = { ...current };
+      delete next[slot];
+      return next;
+    });
+  }
+
+  function clearAllLocalPhotoState() {
+    const previewJobs = heicPreviewJobsRef.current.size;
+    heicPreviewJobsRef.current.clear();
+    if (previewJobs) setPreviewProcessing(-previewJobs);
+    photoPreparationManagerRef.current?.clear(true);
+    localPhotoIdsRef.current.clear();
+    photoSlotByFileRef.current.clear();
+    previewSourceByFileRef.current.clear();
+    glimpseHeicReservationsRef.current.clear();
+    objectUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    objectUrls.current = [];
+    previewFileByUrlRef.current.clear();
+    pendingFilesRef.current = {};
+    setPendingFiles({});
+  }
+
+  function startBackgroundOptimization(file: File, target: "hero" | "glimpse", id: string, previewSource?: Blob) {
+    if (!isCurrentLocalPhoto(file, id)) return;
+    const source = previewSource ?? previewSourceByFileRef.current.get(file);
+    const promise = photoPreparationManagerRef.current!.prepare(file, target, source);
+    void promise.catch((cause) => {
+      if (!isCurrentLocalPhoto(file, id)) return;
+      setSaveError(cause instanceof Error ? cause.message : `${file.name} could not be optimized.`);
+    });
+  }
+
+  function startHeicPreview(
+    file: File,
+    id: string,
+    target: "" | "hero" | `section:${string}:images`,
+    onReady: (preview: Blob) => void,
+  ) {
+    setPhotoProcessingTarget(target);
+    setPreviewProcessing(1);
+    const promise = (async () => {
+      await Promise.resolve();
+      const preview = await preparePhotoPreview(file);
+      if (!isCurrentLocalPhoto(file, id)) return;
+      previewSourceByFileRef.current.set(file, preview);
+      onReady(preview);
+    })().catch((cause) => {
+      if (!isCurrentLocalPhoto(file, id)) return;
+      setSaveError(cause instanceof Error ? cause.message : `${file.name} could not be read.`);
+      discardLocalPhoto(file);
+    }).finally(() => {
+      if (heicPreviewJobsRef.current.get(file)?.id === id) {
+        heicPreviewJobsRef.current.delete(file);
+        setPreviewProcessing(-1);
+      }
+    });
+    heicPreviewJobsRef.current.set(file, { id, promise });
+    void promise.catch(() => undefined);
+  }
+
+  async function preparePhotosForSave() {
+    const manager = photoPreparationManagerRef.current!;
+    const jobs = Object.entries(pendingFilesRef.current).flatMap(([slot, files]) => {
+      const target = slot === "hero" ? "hero" as const : "glimpse" as const;
+      return files.map((file) => manager.prepare(file, target, previewSourceByFileRef.current.get(file)));
+    });
+    if (jobs.length) await Promise.all(jobs);
   }
 
   async function selectHeroPhoto(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
     if (showFileValidationError([file])) return;
-    if (processingPhotosRef.current) { setSaveError("Please wait for your current photos to finish preparing before choosing more."); return; }
-    const needsConversion = isHeicPhoto(file);
-    if (needsConversion) {
-      setPhotoProcessingTarget("hero");
-      setProcessing(1);
-    }
-    try {
-      const preview = await preparePhotoPreview(file);
-      if (config.hero.uploadedUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(config.hero.uploadedUrl);
-        objectUrls.current = objectUrls.current.filter((item) => item !== config.hero.uploadedUrl);
-      }
-      const url = URL.createObjectURL(preview);
-      objectUrls.current.push(url);
-      setPendingFiles((current) => ({ ...current, hero: [file] }));
+
+    clearPhotoSlot("hero");
+    const id = registerLocalPhoto(file, "hero");
+
+    if (!isHeicPhoto(file)) {
+      const url = URL.createObjectURL(file);
+      trackPreviewUrl(url, file);
+      updatePendingFiles((current) => ({ ...current, hero: [file] }));
       updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "upload", uploadedUrl: url } }));
       activatePreview("hero");
-    } catch (cause) { setSaveError(cause instanceof Error ? cause.message : "This photo could not be read."); }
-    finally {
-      if (needsConversion) {
-        setProcessing(-1);
-        setPhotoProcessingTarget("");
-      }
+      startBackgroundOptimization(file, "hero", id, file);
+      return;
     }
+
+    startHeicPreview(file, id, "hero", (preview) => {
+      if (!isCurrentLocalPhoto(file, id)) return;
+      const url = URL.createObjectURL(preview);
+      trackPreviewUrl(url, file);
+      updatePendingFiles((current) => ({ ...current, hero: [file] }));
+      updateConfig((current) => ({ ...current, hero: { ...current.hero, photoSource: "upload", uploadedUrl: url } }));
+      activatePreview("hero");
+      startBackgroundOptimization(file, "hero", id, preview);
+    });
   }
 
   function removeHeroPhoto() {
-    const url = config.hero.uploadedUrl;
-    if (url.startsWith("blob:")) {
-      URL.revokeObjectURL(url);
-      objectUrls.current = objectUrls.current.filter((item) => item !== url);
-    }
-    setPendingFiles((current) => {
-      const next = { ...current };
-      delete next.hero;
-      return next;
-    });
+    clearPhotoSlot("hero");
     updateConfig((current) => ({
       ...current,
       hero: { ...current.hero, photoSource: "preset", presetIndex: 0, uploadedUrl: "" },
@@ -498,37 +617,50 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
   async function selectGlimpsePhotos(sectionId: string, list: FileList | null) {
     const files = Array.from(list ?? []);
     if (!files.length) return;
-    const currentCount = config.sections.find((section) => section.id === sectionId)?.images.length ?? 0;
+    const slot = `section:${sectionId}:images` as const;
+    const reservedCount = glimpseHeicReservationsRef.current.get(slot)?.size ?? 0;
+    const currentCount = (config.sections.find((section) => section.id === sectionId)?.images.length ?? 0) + reservedCount;
     if (currentCount + files.length > 8) {
       if (!adminMode) setPhotoCountNoticeKey((key) => key + 1);
       else setSaveError("A maximum of 8 pictures is allowed in Glimpse of Us.");
       return;
     }
     if (showFileValidationError(files)) return;
-    if (processingPhotosRef.current) { setSaveError("Please wait for your current photos to finish preparing before choosing more."); return; }
-    const needsConversion = files.some(isHeicPhoto);
-    const slot = `section:${sectionId}:images` as const;
-    const urls: string[] = [];
-    if (needsConversion) {
-      setPhotoProcessingTarget(slot);
-      setProcessing(1);
-    }
-    try {
-      const previews: Blob[] = [];
-      for (const file of files) previews.push(await preparePhotoPreview(file));
-      urls.push(...previews.map((preview) => URL.createObjectURL(preview)));
-      objectUrls.current.push(...urls);
-      setPendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), ...files] }));
+
+    const normalFiles = files.filter((file) => !isHeicPhoto(file));
+    if (normalFiles.length) {
+      const urls = normalFiles.map((file) => {
+        const id = registerLocalPhoto(file, slot);
+        const url = URL.createObjectURL(file);
+        trackPreviewUrl(url, file);
+        startBackgroundOptimization(file, "glimpse", id, file);
+        return url;
+      });
+      updatePendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), ...normalFiles] }));
       updateSection(sectionId, (section) => ({ ...section, images: [...section.images, ...urls] }));
       activatePreview(sectionId);
-    } catch (cause) {
-      urls.forEach((url) => URL.revokeObjectURL(url));
-      setSaveError(cause instanceof Error ? cause.message : "These photos could not be read.");
-    } finally {
-      if (needsConversion) {
-        setProcessing(-1);
-        setPhotoProcessingTarget("");
-      }
+    }
+
+    const heicFiles = files.filter(isHeicPhoto);
+    if (!heicFiles.length) return;
+    const reserved = glimpseHeicReservationsRef.current.get(slot) ?? new Set<File>();
+    glimpseHeicReservationsRef.current.set(slot, reserved);
+
+    for (const file of heicFiles) {
+      const id = registerLocalPhoto(file, slot);
+      reserved.add(file);
+      startHeicPreview(file, id, slot, (preview) => {
+        if (!isCurrentLocalPhoto(file, id)) return;
+        const currentReserved = glimpseHeicReservationsRef.current.get(slot);
+        currentReserved?.delete(file);
+        if (currentReserved && !currentReserved.size) glimpseHeicReservationsRef.current.delete(slot);
+        const url = URL.createObjectURL(preview);
+        trackPreviewUrl(url, file);
+        updatePendingFiles((current) => ({ ...current, [slot]: [...(current[slot] ?? []), file] }));
+        updateSection(sectionId, (section) => ({ ...section, images: [...section.images, url] }));
+        activatePreview(sectionId);
+        startBackgroundOptimization(file, "glimpse", id, preview);
+      });
     }
   }
 
@@ -538,21 +670,20 @@ export function InvitationDesigner({ adminOrder, exampleConfig, exampleName = "E
     if (!section || !url) return;
 
     if (url.startsWith("blob:")) {
-      const pendingIndex = section.images
-        .slice(0, imageIndex + 1)
-        .filter((image) => image.startsWith("blob:"))
-        .length - 1;
-      const slot = `section:${sectionId}:images`;
-      URL.revokeObjectURL(url);
-      objectUrls.current = objectUrls.current.filter((item) => item !== url);
-      setPendingFiles((current) => {
-        const next = { ...current };
-        const files = [...(next[slot] ?? [])];
-        files.splice(pendingIndex, 1);
-        if (files.length) next[slot] = files;
-        else delete next[slot];
-        return next;
-      });
+      const file = previewFileByUrlRef.current.get(url);
+      if (file) {
+        discardLocalPhoto(file);
+        const slot = `section:${sectionId}:images`;
+        updatePendingFiles((current) => {
+          const files = (current[slot] ?? []).filter((item) => item !== file);
+          if (files.length) return { ...current, [slot]: files };
+          const next = { ...current };
+          delete next[slot];
+          return next;
+        });
+      } else {
+        revokePreviewUrl(url);
+      }
     }
 
     updateSection(sectionId, (item) => ({
